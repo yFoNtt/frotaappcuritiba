@@ -1,0 +1,109 @@
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Car, 
+  Users, 
+  CreditCard, 
+  Wrench, 
+  Bell, 
+  Settings,
+  LogOut,
+  ChevronLeft,
+  Menu
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+
+const menuItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
+  { icon: Car, label: 'Veículos', path: '/locador/veiculos' },
+  { icon: Users, label: 'Motoristas', path: '/locador/motoristas' },
+  { icon: CreditCard, label: 'Pagamentos', path: '/locador/pagamentos' },
+  { icon: Wrench, label: 'Manutenção', path: '/locador/manutencao' },
+  { icon: Bell, label: 'Alertas', path: '/locador/alertas' },
+  { icon: Settings, label: 'Configurações', path: '/locador/configuracoes' },
+];
+
+export function DashboardSidebar() {
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <aside 
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300",
+        collapsed ? "w-[70px]" : "w-64"
+      )}
+    >
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+          {!collapsed && (
+            <Link to="/locador" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
+                <Car className="h-5 w-5 text-sidebar-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-sidebar-foreground">FrotaApp</span>
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 p-3">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-sidebar-border p-3">
+          <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", collapsed && "justify-center")}>
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
+              <span className="text-sm font-semibold">JS</span>
+            </div>
+            {!collapsed && (
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate text-sm font-medium text-sidebar-foreground">João Silva</p>
+                <p className="truncate text-xs text-sidebar-foreground/60">JS Locações</p>
+              </div>
+            )}
+          </div>
+          <Link
+            to="/"
+            className={cn(
+              "mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              collapsed && "justify-center"
+            )}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </Link>
+        </div>
+      </div>
+    </aside>
+  );
+}
