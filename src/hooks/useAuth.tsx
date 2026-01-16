@@ -121,11 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (roleError) {
           console.error('Error assigning role:', roleError);
-          // Don't return error here, user is created but role assignment failed
-          // The user can still login and role can be assigned later
         }
         
-        setRole(selectedRole);
+        // Sign out immediately after signup so user needs to login manually
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setRole(null);
       }
 
       return { error: null };
