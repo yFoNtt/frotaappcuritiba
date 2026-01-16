@@ -33,8 +33,13 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const updateFilter = (key: keyof VehicleFiltersState, value: string) => {
-    onFiltersChange({ ...filters, [key]: value });
+    // Convert "all" back to empty string for filtering logic
+    const filterValue = value === 'all' ? '' : value;
+    onFiltersChange({ ...filters, [key]: filterValue });
   };
+
+  // Convert empty string to "all" for Select display
+  const getSelectValue = (value: string) => value === '' ? 'all' : value;
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== '');
 
@@ -46,7 +51,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
         <Input
           placeholder="Buscar por marca ou modelo..."
           value={filters.search}
-          onChange={(e) => updateFilter('search', e.target.value)}
+          onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
           className="pl-10"
         />
       </div>
@@ -55,12 +60,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Estado</Label>
-          <Select value={filters.state} onValueChange={(v) => updateFilter('state', v)}>
+          <Select value={getSelectValue(filters.state)} onValueChange={(v) => updateFilter('state', v)}>
             <SelectTrigger>
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {brazilianStates.map((state) => (
                 <SelectItem key={state} value={state}>
                   {state}
@@ -72,12 +77,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Cidade</Label>
-          <Select value={filters.city} onValueChange={(v) => updateFilter('city', v)}>
+          <Select value={getSelectValue(filters.city)} onValueChange={(v) => updateFilter('city', v)}>
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {popularCities.map((city) => (
                 <SelectItem key={city} value={city}>
                   {city}
@@ -89,12 +94,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Marca</Label>
-          <Select value={filters.brand} onValueChange={(v) => updateFilter('brand', v)}>
+          <Select value={getSelectValue(filters.brand)} onValueChange={(v) => updateFilter('brand', v)}>
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {carBrands.map((brand) => (
                 <SelectItem key={brand} value={brand}>
                   {brand}
@@ -106,12 +111,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Preço máximo/semana</Label>
-          <Select value={filters.maxPrice} onValueChange={(v) => updateFilter('maxPrice', v)}>
+          <Select value={getSelectValue(filters.maxPrice)} onValueChange={(v) => updateFilter('maxPrice', v)}>
             <SelectTrigger>
               <SelectValue placeholder="Qualquer" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Qualquer</SelectItem>
+              <SelectItem value="all">Qualquer</SelectItem>
               <SelectItem value="500">Até R$ 500</SelectItem>
               <SelectItem value="600">Até R$ 600</SelectItem>
               <SelectItem value="700">Até R$ 700</SelectItem>
@@ -147,12 +152,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
         <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Ano mínimo</Label>
-            <Select value={filters.minYear} onValueChange={(v) => updateFilter('minYear', v)}>
+            <Select value={getSelectValue(filters.minYear)} onValueChange={(v) => updateFilter('minYear', v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Qualquer</SelectItem>
+                <SelectItem value="all">Qualquer</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2022">2022</SelectItem>
@@ -164,12 +169,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Combustível</Label>
-            <Select value={filters.fuelType} onValueChange={(v) => updateFilter('fuelType', v)}>
+            <Select value={getSelectValue(filters.fuelType)} onValueChange={(v) => updateFilter('fuelType', v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="flex">Flex</SelectItem>
                 <SelectItem value="gasoline">Gasolina</SelectItem>
                 <SelectItem value="diesel">Diesel</SelectItem>
@@ -181,12 +186,12 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Aplicativo</Label>
-            <Select value={filters.app} onValueChange={(v) => updateFilter('app', v)}>
+            <Select value={getSelectValue(filters.app)} onValueChange={(v) => updateFilter('app', v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="uber">Uber</SelectItem>
                 <SelectItem value="99">99</SelectItem>
                 <SelectItem value="indrive">InDrive</SelectItem>
