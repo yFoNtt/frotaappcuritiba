@@ -21,6 +21,15 @@ import LocadorMaintenance from "./pages/locador/Maintenance";
 import LocadorAlerts from "./pages/locador/Alerts";
 import LocadorSettings from "./pages/locador/Settings";
 
+// Admin Dashboard Pages
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminLocadores from "./pages/admin/Locadores";
+import AdminVehicles from "./pages/admin/Vehicles";
+import AdminPlans from "./pages/admin/Plans";
+import AdminMetrics from "./pages/admin/Metrics";
+import AdminSettings from "./pages/admin/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -46,6 +55,15 @@ const App = () => (
           <Route path="/locador/manutencao" element={<LocadorMaintenance />} />
           <Route path="/locador/alertas" element={<LocadorAlerts />} />
           <Route path="/locador/configuracoes" element={<LocadorSettings />} />
+          
+          {/* Admin Dashboard Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/usuarios" element={<AdminUsers />} />
+          <Route path="/admin/locadores" element={<AdminLocadores />} />
+          <Route path="/admin/veiculos" element={<AdminVehicles />} />
+          <Route path="/admin/planos" element={<AdminPlans />} />
+          <Route path="/admin/metricas" element={<AdminMetrics />} />
+          <Route path="/admin/configuracoes" element={<AdminSettings />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
