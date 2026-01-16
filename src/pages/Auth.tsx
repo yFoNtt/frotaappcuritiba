@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { validateDocument, formatDocument } from '@/lib/documentValidation';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -23,6 +24,9 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [document, setDocument] = useState('');
+  const [documentError, setDocumentError] = useState('');
+  const [documentValid, setDocumentValid] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +43,21 @@ export default function Auth() {
       navigate(redirectPath, { replace: true });
     }
   }, [user, role, authLoading, navigate]);
+
+  const handleDocumentChange = (value: string) => {
+    const formatted = formatDocument(value);
+    setDocument(formatted);
+    
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length >= 11) {
+      const validation = validateDocument(cleanValue);
+      setDocumentValid(validation.isValid);
+      setDocumentError(validation.isValid ? '' : validation.message);
+    } else {
+      setDocumentValid(false);
+      setDocumentError('');
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +77,15 @@ export default function Auth() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validate document
+    const docValidation = validateDocument(document);
+    if (!docValidation.isValid) {
+      toast.error(docValidation.message);
+      setDocumentError(docValidation.message);
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       toast.error('As senhas não coincidem');
@@ -81,6 +109,9 @@ export default function Auth() {
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+      setDocument('');
+      setDocumentError('');
+      setDocumentValid(false);
       setMode('login');
     }
 
@@ -194,6 +225,50 @@ export default function Auth() {
             )}
 
             <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
+              {/* CPF/CNPJ Field (only for register) */}
+              {mode === 'register' && (
+                <div className="space-y-2">
+                  <Label htmlFor="document">
+                    {selectedRole === 'locador' ? 'CPF ou CNPJ' : 'CPF'}
+                  </Label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="document"
+                      type="text"
+                      placeholder={selectedRole === 'locador' ? '000.000.000-00 ou 00.000.000/0000-00' : '000.000.000-00'}
+                      value={document}
+                      onChange={(e) => handleDocumentChange(e.target.value)}
+                      className={`pl-10 pr-10 ${
+                        documentError ? 'border-destructive focus-visible:ring-destructive' : 
+                        documentValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                      }`}
+                      required
+                      disabled={loading}
+                      maxLength={selectedRole === 'locador' ? 18 : 14}
+                    />
+                    {document.replace(/\D/g, '').length >= 11 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {documentValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {documentError && (
+                    <p className="text-xs text-destructive">{documentError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {selectedRole === 'locador' 
+                      ? 'Pessoa física: CPF | Pessoa jurídica: CNPJ'
+                      : 'Digite seu CPF (apenas números)'
+                    }
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
