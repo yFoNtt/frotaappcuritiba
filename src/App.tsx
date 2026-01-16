@@ -3,11 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Vehicles from "./pages/Vehicles";
 import VehicleDetails from "./pages/VehicleDetails";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import HowItWorks from "./pages/HowItWorks";
 import ForRenters from "./pages/ForRenters";
 import NotFound from "./pages/NotFound";
@@ -38,36 +39,95 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/veiculos" element={<Vehicles />} />
-          <Route path="/veiculos/:id" element={<VehicleDetails />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Register />} />
-          <Route path="/como-funciona" element={<HowItWorks />} />
-          <Route path="/para-locadores" element={<ForRenters />} />
-          
-          {/* Locador Dashboard Routes */}
-          <Route path="/locador" element={<LocadorDashboard />} />
-          <Route path="/locador/veiculos" element={<LocadorVehicles />} />
-          <Route path="/locador/motoristas" element={<LocadorDrivers />} />
-          <Route path="/locador/pagamentos" element={<LocadorPayments />} />
-          <Route path="/locador/manutencao" element={<LocadorMaintenance />} />
-          <Route path="/locador/alertas" element={<LocadorAlerts />} />
-          <Route path="/locador/configuracoes" element={<LocadorSettings />} />
-          
-          {/* Admin Dashboard Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/usuarios" element={<AdminUsers />} />
-          <Route path="/admin/locadores" element={<AdminLocadores />} />
-          <Route path="/admin/veiculos" element={<AdminVehicles />} />
-          <Route path="/admin/planos" element={<AdminPlans />} />
-          <Route path="/admin/metricas" element={<AdminMetrics />} />
-          <Route path="/admin/configuracoes" element={<AdminSettings />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/veiculos" element={<Vehicles />} />
+            <Route path="/veiculos/:id" element={<VehicleDetails />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/cadastro" element={<Auth />} />
+            <Route path="/como-funciona" element={<HowItWorks />} />
+            <Route path="/para-locadores" element={<ForRenters />} />
+            
+            {/* Locador Dashboard Routes - Protected */}
+            <Route path="/locador" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/veiculos" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorVehicles />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/motoristas" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorDrivers />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/pagamentos" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorPayments />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/manutencao" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorMaintenance />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/alertas" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorAlerts />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/configuracoes" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorSettings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin Dashboard Routes - Protected */}
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/usuarios" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/locadores" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLocadores />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/veiculos" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminVehicles />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/planos" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPlans />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/metricas" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminMetrics />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/configuracoes" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminSettings />
+              </ProtectedRoute>
+            } />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

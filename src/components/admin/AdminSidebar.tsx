@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -15,6 +15,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
@@ -28,7 +30,15 @@ const menuItems = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('Logout realizado com sucesso!');
+    navigate('/');
+  };
 
   return (
     <aside 
@@ -89,20 +99,20 @@ export function AdminSidebar() {
             {!collapsed && (
               <div className="flex-1 overflow-hidden">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">Administrador</p>
-                <p className="truncate text-xs text-sidebar-foreground/60">Founder</p>
+                <p className="truncate text-xs text-sidebar-foreground/60">{user?.email}</p>
               </div>
             )}
           </div>
-          <Link
-            to="/"
+          <button
+            onClick={handleLogout}
             className={cn(
-              "mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
               collapsed && "justify-center"
             )}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             {!collapsed && <span>Sair</span>}
-          </Link>
+          </button>
         </div>
       </div>
     </aside>
