@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,15 +14,23 @@ type AppRole = 'locador' | 'motorista';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, role, loading: authLoading, signIn, signUp } = useAuth();
   
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  // Set initial mode based on route
+  const initialMode = location.pathname === '/cadastro' ? 'register' : 'login';
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Update mode when route changes
+  useEffect(() => {
+    setMode(location.pathname === '/cadastro' ? 'register' : 'login');
+  }, [location.pathname]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -118,28 +126,69 @@ export default function Auth() {
             {/* Role Selection (only for register) */}
             {mode === 'register' && (
               <div className="mb-6">
-                <Label className="mb-2 block text-sm font-medium">Tipo de conta</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
+                <Label className="mb-3 block text-sm font-medium">Selecione o tipo de conta</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
                     type="button"
-                    variant={selectedRole === 'locador' ? 'default' : 'outline'}
-                    className="h-auto flex-col gap-2 py-4"
                     onClick={() => setSelectedRole('locador')}
+                    className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-5 transition-all ${
+                      selectedRole === 'locador'
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
                   >
-                    <Building2 className="h-5 w-5" />
-                    <span className="text-xs">Locador</span>
-                    <span className="text-xs text-muted-foreground">Alugue veículos</span>
-                  </Button>
-                  <Button
+                    {selectedRole === 'locador' && (
+                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <svg className="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                      selectedRole === 'locador' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className={`font-semibold ${selectedRole === 'locador' ? 'text-primary' : 'text-foreground'}`}>
+                        Locador
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tenho veículos para alugar
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
                     type="button"
-                    variant={selectedRole === 'motorista' ? 'default' : 'outline'}
-                    className="h-auto flex-col gap-2 py-4"
                     onClick={() => setSelectedRole('motorista')}
+                    className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-5 transition-all ${
+                      selectedRole === 'motorista'
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
                   >
-                    <Truck className="h-5 w-5" />
-                    <span className="text-xs">Motorista</span>
-                    <span className="text-xs text-muted-foreground">Alugue carros</span>
-                  </Button>
+                    {selectedRole === 'motorista' && (
+                      <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <svg className="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                      selectedRole === 'motorista' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      <Truck className="h-6 w-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className={`font-semibold ${selectedRole === 'motorista' ? 'text-primary' : 'text-foreground'}`}>
+                        Motorista
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Quero alugar um veículo
+                      </p>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}
