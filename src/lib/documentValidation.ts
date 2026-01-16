@@ -151,3 +151,84 @@ export function formatDocument(document: string): string {
   }
   return formatCNPJ(clean);
 }
+
+/**
+ * Validates Brazilian CNH (Carteira Nacional de Habilitação)
+ * CNH has 11 digits with 2 check digits
+ * @param cnh - CNH string (with or without formatting)
+ * @returns boolean indicating if CNH is valid
+ */
+export function validateCNH(cnh: string): boolean {
+  // Remove non-numeric characters
+  const cleanCNH = cnh.replace(/\D/g, '');
+
+  // CNH must have 11 digits
+  if (cleanCNH.length !== 11) return false;
+
+  // Check for known invalid patterns (all same digits)
+  if (/^(\d)\1{10}$/.test(cleanCNH)) return false;
+
+  // CNH validation algorithm
+  let dsc = 0;
+  let v1 = 0;
+  let v2 = 0;
+
+  // Calculate first check digit
+  for (let i = 0, j = 9; i < 9; i++, j--) {
+    v1 += parseInt(cleanCNH.charAt(i)) * j;
+  }
+
+  let resto1 = v1 % 11;
+  if (resto1 >= 10) {
+    resto1 = 0;
+    dsc = 2;
+  }
+
+  // Calculate second check digit
+  for (let i = 0, j = 1; i < 9; i++, j++) {
+    v2 += parseInt(cleanCNH.charAt(i)) * j;
+  }
+
+  let resto2 = (v2 % 11) - dsc;
+  if (resto2 < 0) resto2 = 0;
+  if (resto2 >= 10) resto2 = 0;
+
+  // Compare calculated digits with the actual check digits
+  const digit1 = parseInt(cleanCNH.charAt(9));
+  const digit2 = parseInt(cleanCNH.charAt(10));
+
+  return resto1 === digit1 && resto2 === digit2;
+}
+
+/**
+ * Validates CNH and returns detailed result
+ * @param cnh - CNH string
+ * @returns object with validation result
+ */
+export function validateCNHDocument(cnh: string): { isValid: boolean; message: string } {
+  const cleanCNH = cnh.replace(/\D/g, '');
+
+  if (cleanCNH.length === 0) {
+    return { isValid: false, message: 'CNH é obrigatória' };
+  }
+
+  if (cleanCNH.length !== 11) {
+    return { isValid: false, message: 'CNH deve ter 11 dígitos' };
+  }
+
+  const isValid = validateCNH(cleanCNH);
+  return {
+    isValid,
+    message: isValid ? 'CNH válida' : 'CNH inválida'
+  };
+}
+
+/**
+ * Formats CNH with mask (XXX XXXX XXXX)
+ */
+export function formatCNH(cnh: string): string {
+  const clean = cnh.replace(/\D/g, '').slice(0, 11);
+  return clean
+    .replace(/(\d{3})(\d)/, '$1 $2')
+    .replace(/(\d{4})(\d)/, '$1 $2');
+}
