@@ -31,6 +31,13 @@ import AdminPlans from "./pages/admin/Plans";
 import AdminMetrics from "./pages/admin/Metrics";
 import AdminSettings from "./pages/admin/Settings";
 
+// Motorista Dashboard Pages
+import MotoristaDashboard from "./pages/motorista/Dashboard";
+import MotoristaVehicle from "./pages/motorista/Vehicle";
+import MotoristaPagamentos from "./pages/motorista/Payments";
+import MotoristaHistorico from "./pages/motorista/History";
+import MotoristaSettings from "./pages/motorista/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -121,6 +128,33 @@ const App = () => (
             <Route path="/admin/configuracoes" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminSettings />
+              </ProtectedRoute>
+            } />
+
+            {/* Motorista Dashboard Routes - Protected */}
+            <Route path="/motorista" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/motorista/veiculo" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaVehicle />
+              </ProtectedRoute>
+            } />
+            <Route path="/motorista/pagamentos" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaPagamentos />
+              </ProtectedRoute>
+            } />
+            <Route path="/motorista/historico" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaHistorico />
+              </ProtectedRoute>
+            } />
+            <Route path="/motorista/configuracoes" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaSettings />
               </ProtectedRoute>
             } />
             
