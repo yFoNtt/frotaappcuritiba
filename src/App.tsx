@@ -12,6 +12,15 @@ import HowItWorks from "./pages/HowItWorks";
 import ForRenters from "./pages/ForRenters";
 import NotFound from "./pages/NotFound";
 
+// Locador Dashboard Pages
+import LocadorDashboard from "./pages/locador/Dashboard";
+import LocadorVehicles from "./pages/locador/Vehicles";
+import LocadorDrivers from "./pages/locador/Drivers";
+import LocadorPayments from "./pages/locador/Payments";
+import LocadorMaintenance from "./pages/locador/Maintenance";
+import LocadorAlerts from "./pages/locador/Alerts";
+import LocadorSettings from "./pages/locador/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -28,6 +37,16 @@ const App = () => (
           <Route path="/cadastro" element={<Register />} />
           <Route path="/como-funciona" element={<HowItWorks />} />
           <Route path="/para-locadores" element={<ForRenters />} />
+          
+          {/* Locador Dashboard Routes */}
+          <Route path="/locador" element={<LocadorDashboard />} />
+          <Route path="/locador/veiculos" element={<LocadorVehicles />} />
+          <Route path="/locador/motoristas" element={<LocadorDrivers />} />
+          <Route path="/locador/pagamentos" element={<LocadorPayments />} />
+          <Route path="/locador/manutencao" element={<LocadorMaintenance />} />
+          <Route path="/locador/alertas" element={<LocadorAlerts />} />
+          <Route path="/locador/configuracoes" element={<LocadorSettings />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
