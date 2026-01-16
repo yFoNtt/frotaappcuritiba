@@ -131,6 +131,9 @@ export default function LocadorMaintenance() {
                       <SelectValue placeholder="Selecione o veículo" />
                     </SelectTrigger>
                     <SelectContent>
+                      {myVehicles.length === 0 && (
+                        <SelectItem value="no-vehicles" disabled>Nenhum veículo disponível</SelectItem>
+                      )}
                       {myVehicles.map(v => (
                         <SelectItem key={v.id} value={v.id}>
                           {v.brand} {v.model} - {v.plate}
