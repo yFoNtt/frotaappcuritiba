@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle } from 'lucide-react';
+import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { validateDocument, formatDocument } from '@/lib/documentValidation';
+import { validateDocument, formatDocument, validateCNHDocument, formatCNH } from '@/lib/documentValidation';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -27,6 +27,9 @@ export default function Auth() {
   const [document, setDocument] = useState('');
   const [documentError, setDocumentError] = useState('');
   const [documentValid, setDocumentValid] = useState(false);
+  const [cnh, setCnh] = useState('');
+  const [cnhError, setCnhError] = useState('');
+  const [cnhValid, setCnhValid] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +47,15 @@ export default function Auth() {
     }
   }, [user, role, authLoading, navigate]);
 
+  // Clear CNH when switching to locador
+  useEffect(() => {
+    if (selectedRole === 'locador') {
+      setCnh('');
+      setCnhError('');
+      setCnhValid(false);
+    }
+  }, [selectedRole]);
+
   const handleDocumentChange = (value: string) => {
     const formatted = formatDocument(value);
     setDocument(formatted);
@@ -56,6 +68,24 @@ export default function Auth() {
     } else {
       setDocumentValid(false);
       setDocumentError('');
+    }
+  };
+
+  const handleCnhChange = (value: string) => {
+    const formatted = formatCNH(value);
+    setCnh(formatted);
+    
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length === 11) {
+      const validation = validateCNHDocument(cleanValue);
+      setCnhValid(validation.isValid);
+      setCnhError(validation.isValid ? '' : validation.message);
+    } else if (cleanValue.length > 0 && cleanValue.length < 11) {
+      setCnhValid(false);
+      setCnhError('');
+    } else {
+      setCnhValid(false);
+      setCnhError('');
     }
   };
 
@@ -87,6 +117,17 @@ export default function Auth() {
       return;
     }
 
+    // Validate CNH for motorista
+    if (selectedRole === 'motorista') {
+      const cnhValidation = validateCNHDocument(cnh);
+      if (!cnhValidation.isValid) {
+        toast.error(cnhValidation.message);
+        setCnhError(cnhValidation.message);
+        setLoading(false);
+        return;
+      }
+    }
+
     if (password !== confirmPassword) {
       toast.error('As senhas não coincidem');
       setLoading(false);
@@ -112,6 +153,9 @@ export default function Auth() {
       setDocument('');
       setDocumentError('');
       setDocumentValid(false);
+      setCnh('');
+      setCnhError('');
+      setCnhValid(false);
       setMode('login');
     }
 
@@ -265,6 +309,45 @@ export default function Auth() {
                       ? 'Pessoa física: CPF | Pessoa jurídica: CNPJ'
                       : 'Digite seu CPF (apenas números)'
                     }
+                  </p>
+                </div>
+              )}
+
+              {/* CNH Field (only for motorista) */}
+              {mode === 'register' && selectedRole === 'motorista' && (
+                <div className="space-y-2">
+                  <Label htmlFor="cnh">CNH (Carteira de Habilitação)</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="cnh"
+                      type="text"
+                      placeholder="000 0000 0000"
+                      value={cnh}
+                      onChange={(e) => handleCnhChange(e.target.value)}
+                      className={`pl-10 pr-10 ${
+                        cnhError ? 'border-destructive focus-visible:ring-destructive' : 
+                        cnhValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                      }`}
+                      required
+                      disabled={loading}
+                      maxLength={13}
+                    />
+                    {cnh.replace(/\D/g, '').length === 11 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {cnhValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {cnhError && (
+                    <p className="text-xs text-destructive">{cnhError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Digite o número da sua CNH (11 dígitos)
                   </p>
                 </div>
               )}
