@@ -68,7 +68,12 @@ export default function Auth() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Conta criada com sucesso!');
+      toast.success('Conta criada com sucesso! Faça login para continuar.');
+      // Clear form and switch to login mode
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setMode('login');
     }
 
     setLoading(false);
