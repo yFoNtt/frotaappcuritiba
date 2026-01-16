@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle, CreditCard } from 'lucide-react';
+import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle, CreditCard, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { validateDocument, formatDocument, validateCNHDocument, formatCNH } from '@/lib/documentValidation';
+import { format, isAfter, startOfDay, addDays } from 'date-fns';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -30,6 +31,9 @@ export default function Auth() {
   const [cnh, setCnh] = useState('');
   const [cnhError, setCnhError] = useState('');
   const [cnhValid, setCnhValid] = useState(false);
+  const [cnhExpiry, setCnhExpiry] = useState('');
+  const [cnhExpiryError, setCnhExpiryError] = useState('');
+  const [cnhExpiryValid, setCnhExpiryValid] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,12 +51,15 @@ export default function Auth() {
     }
   }, [user, role, authLoading, navigate]);
 
-  // Clear CNH when switching to locador
+  // Clear CNH fields when switching to locador
   useEffect(() => {
     if (selectedRole === 'locador') {
       setCnh('');
       setCnhError('');
       setCnhValid(false);
+      setCnhExpiry('');
+      setCnhExpiryError('');
+      setCnhExpiryValid(false);
     }
   }, [selectedRole]);
 
@@ -87,6 +94,32 @@ export default function Auth() {
       setCnhValid(false);
       setCnhError('');
     }
+  };
+
+  const handleCnhExpiryChange = (value: string) => {
+    setCnhExpiry(value);
+    
+    if (!value) {
+      setCnhExpiryValid(false);
+      setCnhExpiryError('');
+      return;
+    }
+
+    const expiryDate = new Date(value);
+    const today = startOfDay(new Date());
+    
+    if (isAfter(expiryDate, today)) {
+      setCnhExpiryValid(true);
+      setCnhExpiryError('');
+    } else {
+      setCnhExpiryValid(false);
+      setCnhExpiryError('CNH vencida. Renove sua habilitação antes de continuar.');
+    }
+  };
+
+  // Get minimum date (today)
+  const getMinDate = () => {
+    return format(addDays(new Date(), 1), 'yyyy-MM-dd');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -126,6 +159,23 @@ export default function Auth() {
         setLoading(false);
         return;
       }
+
+      // Validate CNH expiry
+      if (!cnhExpiry) {
+        toast.error('Data de validade da CNH é obrigatória');
+        setCnhExpiryError('Data de validade é obrigatória');
+        setLoading(false);
+        return;
+      }
+
+      const expiryDate = new Date(cnhExpiry);
+      const today = startOfDay(new Date());
+      if (!isAfter(expiryDate, today)) {
+        toast.error('CNH vencida. Renove sua habilitação antes de continuar.');
+        setCnhExpiryError('CNH vencida. Renove sua habilitação antes de continuar.');
+        setLoading(false);
+        return;
+      }
     }
 
     if (password !== confirmPassword) {
@@ -156,6 +206,9 @@ export default function Auth() {
       setCnh('');
       setCnhError('');
       setCnhValid(false);
+      setCnhExpiry('');
+      setCnhExpiryError('');
+      setCnhExpiryValid(false);
       setMode('login');
     }
 
@@ -348,6 +401,44 @@ export default function Auth() {
                   )}
                   <p className="text-xs text-muted-foreground">
                     Digite o número da sua CNH (11 dígitos)
+                  </p>
+                </div>
+              )}
+
+              {/* CNH Expiry Date (only for motorista) */}
+              {mode === 'register' && selectedRole === 'motorista' && (
+                <div className="space-y-2">
+                  <Label htmlFor="cnhExpiry">Validade da CNH</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="cnhExpiry"
+                      type="date"
+                      value={cnhExpiry}
+                      onChange={(e) => handleCnhExpiryChange(e.target.value)}
+                      min={getMinDate()}
+                      className={`pl-10 pr-10 ${
+                        cnhExpiryError ? 'border-destructive focus-visible:ring-destructive' : 
+                        cnhExpiryValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                      }`}
+                      required
+                      disabled={loading}
+                    />
+                    {cnhExpiry && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {cnhExpiryValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {cnhExpiryError && (
+                    <p className="text-xs text-destructive">{cnhExpiryError}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    A CNH deve estar válida para cadastro
                   </p>
                 </div>
               )}
