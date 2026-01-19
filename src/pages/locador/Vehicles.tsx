@@ -12,6 +12,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Table,
   TableBody,
   TableCell,
@@ -20,11 +26,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Edit, Trash2, Eye, Car } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Car, ChevronDown, Loader2 } from 'lucide-react';
 import { useLocadorVehicles, Vehicle } from '@/hooks/useVehicles';
 import { VehicleForm } from '@/components/vehicles/VehicleForm';
 import { DeleteVehicleDialog } from '@/components/vehicles/DeleteVehicleDialog';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
@@ -33,13 +42,21 @@ const statusLabels: Record<string, string> = {
   inactive: 'Inativo',
 };
 
+const statusOptions = [
+  { value: 'available', label: 'Disponível', variant: 'available' as const },
+  { value: 'rented', label: 'Alugado', variant: 'rented' as const },
+  { value: 'maintenance', label: 'Manutenção', variant: 'maintenance' as const },
+];
+
 export default function LocadorVehicles() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
   const { data: vehicles = [], isLoading } = useLocadorVehicles();
 
   const filteredVehicles = useMemo(() => {
@@ -61,6 +78,27 @@ export default function LocadorVehicles() {
     rented: vehicles.filter((v) => v.status === 'rented').length,
     maintenance: vehicles.filter((v) => v.status === 'maintenance').length,
   }), [vehicles]);
+
+  const handleStatusChange = async (vehicleId: string, newStatus: string) => {
+    setUpdatingStatusId(vehicleId);
+    
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ status: newStatus })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      toast.success(`Status alterado para "${statusLabels[newStatus]}"`);
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Erro ao atualizar status. Tente novamente.');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
 
   const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
@@ -244,17 +282,51 @@ export default function LocadorVehicles() {
                       </TableCell>
                       <TableCell className="font-mono">{vehicle.plate}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            vehicle.status === 'available'
-                              ? 'available'
-                              : vehicle.status === 'rented'
-                              ? 'rented'
-                              : 'maintenance'
-                          }
-                        >
-                          {statusLabels[vehicle.status] || vehicle.status}
-                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-auto p-0 hover:bg-transparent"
+                              disabled={updatingStatusId === vehicle.id}
+                            >
+                              {updatingStatusId === vehicle.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Badge
+                                  variant={
+                                    vehicle.status === 'available'
+                                      ? 'available'
+                                      : vehicle.status === 'rented'
+                                      ? 'rented'
+                                      : 'maintenance'
+                                  }
+                                  className="cursor-pointer"
+                                >
+                                  {statusLabels[vehicle.status] || vehicle.status}
+                                  <ChevronDown className="ml-1 h-3 w-3" />
+                                </Badge>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {statusOptions.map((option) => (
+                              <DropdownMenuItem
+                                key={option.value}
+                                onClick={() => handleStatusChange(vehicle.id, option.value)}
+                                disabled={vehicle.status === option.value}
+                                className="cursor-pointer"
+                              >
+                                <Badge variant={option.variant} className="mr-2">
+                                  {option.label}
+                                </Badge>
+                                {vehicle.status === option.value && (
+                                  <span className="ml-auto text-xs text-muted-foreground">Atual</span>
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                       <TableCell>
                         {vehicle.city}, {vehicle.state}
