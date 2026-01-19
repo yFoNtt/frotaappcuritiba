@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,10 +33,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { Vehicle } from '@/hooks/useVehicles';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const vehicleSchema = z.object({
@@ -61,6 +62,7 @@ type VehicleFormData = z.infer<typeof vehicleSchema>;
 interface VehicleFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  vehicle?: Vehicle | null;
 }
 
 const appOptions = [
@@ -69,12 +71,15 @@ const appOptions = [
   { value: 'InDriver', label: 'InDriver' },
 ];
 
-export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
+export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditing = !!vehicle;
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
@@ -96,6 +101,53 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
     },
   });
 
+  // Populate form when editing
+  useEffect(() => {
+    if (vehicle && open) {
+      form.reset({
+        brand: vehicle.brand,
+        model: vehicle.model,
+        year: vehicle.year,
+        plate: vehicle.plate,
+        color: vehicle.color,
+        fuel_type: vehicle.fuel_type,
+        weekly_price: vehicle.weekly_price,
+        km_limit: vehicle.km_limit ?? 1500,
+        excess_km_fee: vehicle.excess_km_fee ?? 0.5,
+        deposit: vehicle.deposit ?? 500,
+        city: vehicle.city,
+        state: vehicle.state,
+        description: vehicle.description ?? '',
+        allowed_apps: vehicle.allowed_apps ?? ['Uber'],
+      });
+      setExistingImages(vehicle.images ?? []);
+      setNewImages([]);
+      setNewImagePreviews([]);
+    } else if (!vehicle && open) {
+      form.reset({
+        brand: '',
+        model: '',
+        year: new Date().getFullYear(),
+        plate: '',
+        color: '',
+        fuel_type: 'flex',
+        weekly_price: 650,
+        km_limit: 1500,
+        excess_km_fee: 0.5,
+        deposit: 500,
+        city: '',
+        state: '',
+        description: '',
+        allowed_apps: ['Uber'],
+      });
+      setExistingImages([]);
+      setNewImages([]);
+      setNewImagePreviews([]);
+    }
+  }, [vehicle, open, form]);
+
+  const totalImages = existingImages.length + newImages.length;
+
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
@@ -111,31 +163,36 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
       return true;
     });
 
-    if (images.length + validFiles.length > 5) {
+    const currentTotal = existingImages.length + newImages.length;
+    if (currentTotal + validFiles.length > 5) {
       toast.error('Máximo de 5 imagens permitido');
       return;
     }
 
-    setImages((prev) => [...prev, ...validFiles]);
+    setNewImages((prev) => [...prev, ...validFiles]);
     
     validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreviews((prev) => [...prev, reader.result as string]);
+        setNewImagePreviews((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
-  }, [images.length]);
+  }, [existingImages.length, newImages.length]);
 
-  const removeImage = useCallback((index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingImage = useCallback((index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const removeNewImage = useCallback((index: number) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const uploadImages = async (userId: string): Promise<string[]> => {
     const uploadedUrls: string[] = [];
 
-    for (const file of images) {
+    for (const file of newImages) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
@@ -160,11 +217,12 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
 
   const onSubmit = async (data: VehicleFormData) => {
     if (!user) {
-      toast.error('Você precisa estar logado para cadastrar um veículo');
+      toast.error('Você precisa estar logado');
       return;
     }
 
-    if (images.length === 0) {
+    const totalImagesCount = existingImages.length + newImages.length;
+    if (totalImagesCount === 0) {
       toast.error('Adicione pelo menos uma foto do veículo');
       return;
     }
@@ -172,43 +230,66 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Upload images first
-      const imageUrls = await uploadImages(user.id);
+      // Upload new images
+      const newImageUrls = newImages.length > 0 ? await uploadImages(user.id) : [];
+      const allImages = [...existingImages, ...newImageUrls];
 
-      // Insert vehicle
-      const { error: insertError } = await supabase.from('vehicles').insert({
-        locador_id: user.id,
-        brand: data.brand,
-        model: data.model,
-        year: data.year,
-        plate: data.plate,
-        color: data.color,
-        fuel_type: data.fuel_type,
-        weekly_price: data.weekly_price,
-        km_limit: data.km_limit,
-        excess_km_fee: data.excess_km_fee,
-        deposit: data.deposit,
-        city: data.city,
-        state: data.state,
-        description: data.description || null,
-        allowed_apps: data.allowed_apps,
-        images: imageUrls,
-        status: 'available',
-      });
+      if (isEditing && vehicle) {
+        // Update existing vehicle
+        const { error: updateError } = await supabase
+          .from('vehicles')
+          .update({
+            brand: data.brand,
+            model: data.model,
+            year: data.year,
+            plate: data.plate,
+            color: data.color,
+            fuel_type: data.fuel_type,
+            weekly_price: data.weekly_price,
+            km_limit: data.km_limit,
+            excess_km_fee: data.excess_km_fee,
+            deposit: data.deposit,
+            city: data.city,
+            state: data.state,
+            description: data.description || null,
+            allowed_apps: data.allowed_apps,
+            images: allImages,
+          })
+          .eq('id', vehicle.id);
 
-      if (insertError) {
-        throw insertError;
+        if (updateError) throw updateError;
+        toast.success('Veículo atualizado com sucesso!');
+      } else {
+        // Create new vehicle
+        const { error: insertError } = await supabase.from('vehicles').insert({
+          locador_id: user.id,
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          plate: data.plate,
+          color: data.color,
+          fuel_type: data.fuel_type,
+          weekly_price: data.weekly_price,
+          km_limit: data.km_limit,
+          excess_km_fee: data.excess_km_fee,
+          deposit: data.deposit,
+          city: data.city,
+          state: data.state,
+          description: data.description || null,
+          allowed_apps: data.allowed_apps,
+          images: allImages,
+          status: 'available',
+        });
+
+        if (insertError) throw insertError;
+        toast.success('Veículo cadastrado com sucesso!');
       }
 
-      toast.success('Veículo cadastrado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      form.reset();
-      setImages([]);
-      setImagePreviews([]);
-      onOpenChange(false);
+      handleClose();
     } catch (error) {
-      console.error('Error creating vehicle:', error);
-      toast.error('Erro ao cadastrar veículo. Tente novamente.');
+      console.error('Error saving vehicle:', error);
+      toast.error(isEditing ? 'Erro ao atualizar veículo.' : 'Erro ao cadastrar veículo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -217,8 +298,9 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
   const handleClose = () => {
     if (!isSubmitting) {
       form.reset();
-      setImages([]);
-      setImagePreviews([]);
+      setNewImages([]);
+      setNewImagePreviews([]);
+      setExistingImages([]);
       onOpenChange(false);
     }
   };
@@ -227,9 +309,11 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Veículo' : 'Cadastrar Novo Veículo'}</DialogTitle>
           <DialogDescription>
-            Preencha os dados do veículo para adicioná-lo à sua frota.
+            {isEditing
+              ? 'Atualize os dados do veículo.'
+              : 'Preencha os dados do veículo para adicioná-lo à sua frota.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -239,23 +323,34 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
             <div className="space-y-3">
               <Label>Fotos do Veículo *</Label>
               <div className="grid grid-cols-5 gap-2">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-border">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                {/* Existing images */}
+                {existingImages.map((url, index) => (
+                  <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                    <img src={url} alt={`Foto ${index + 1}`} className="h-full w-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => removeImage(index)}
+                      onClick={() => removeExistingImage(index)}
                       className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
-                {images.length < 5 && (
+                {/* New image previews */}
+                {newImagePreviews.map((preview, index) => (
+                  <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                    <img src={preview} alt={`Preview ${index + 1}`} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeNewImage(index)}
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {/* Add button */}
+                {totalImages < 5 && (
                   <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors">
                     <Upload className="h-6 w-6 text-muted-foreground" />
                     <span className="mt-1 text-xs text-muted-foreground">Adicionar</span>
@@ -347,7 +442,7 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Combustível *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -462,11 +557,7 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Descreva o veículo, características e diferenciais..."
-                      rows={3}
-                      {...field}
-                    />
+                    <Textarea placeholder="Descreva o veículo..." rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -520,8 +611,10 @@ export function VehicleForm({ open, onOpenChange }: VehicleFormProps) {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Cadastrando...
+                    {isEditing ? 'Salvando...' : 'Cadastrando...'}
                   </>
+                ) : isEditing ? (
+                  'Salvar Alterações'
                 ) : (
                   'Cadastrar Veículo'
                 )}
