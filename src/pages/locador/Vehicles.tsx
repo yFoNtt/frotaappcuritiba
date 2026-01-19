@@ -20,9 +20,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Edit, Trash2, Eye, Car, Loader2 } from 'lucide-react';
-import { useLocadorVehicles } from '@/hooks/useVehicles';
+import { Plus, Search, Edit, Trash2, Eye, Car } from 'lucide-react';
+import { useLocadorVehicles, Vehicle } from '@/hooks/useVehicles';
 import { VehicleForm } from '@/components/vehicles/VehicleForm';
+import { DeleteVehicleDialog } from '@/components/vehicles/DeleteVehicleDialog';
 import { Link } from 'react-router-dom';
 
 const statusLabels: Record<string, string> = {
@@ -35,7 +36,9 @@ const statusLabels: Record<string, string> = {
 export default function LocadorVehicles() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null);
 
   const { data: vehicles = [], isLoading } = useLocadorVehicles();
 
@@ -58,6 +61,27 @@ export default function LocadorVehicles() {
     rented: vehicles.filter((v) => v.status === 'rented').length,
     maintenance: vehicles.filter((v) => v.status === 'maintenance').length,
   }), [vehicles]);
+
+  const handleEdit = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (vehicle: Vehicle) => {
+    setDeletingVehicle(vehicle);
+  };
+
+  const handleFormClose = (open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setEditingVehicle(null);
+    }
+  };
+
+  const handleAddNew = () => {
+    setEditingVehicle(null);
+    setIsFormOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -87,7 +111,7 @@ export default function LocadorVehicles() {
             <h1 className="text-3xl font-bold tracking-tight">Veículos</h1>
             <p className="text-muted-foreground">Gerencie sua frota de veículos</p>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" />
             Adicionar Veículo
           </Button>
@@ -245,13 +269,18 @@ export default function LocadorVehicles() {
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleEdit(vehicle)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(vehicle)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -271,7 +300,7 @@ export default function LocadorVehicles() {
                     : 'Nenhum veículo corresponde aos filtros selecionados.'}
                 </p>
                 {vehicles.length === 0 && (
-                  <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Button onClick={handleAddNew}>
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar primeiro veículo
                   </Button>
@@ -282,7 +311,18 @@ export default function LocadorVehicles() {
         </Card>
 
         {/* Vehicle Form Dialog */}
-        <VehicleForm open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+        <VehicleForm 
+          open={isFormOpen} 
+          onOpenChange={handleFormClose} 
+          vehicle={editingVehicle}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteVehicleDialog
+          vehicle={deletingVehicle}
+          open={!!deletingVehicle}
+          onOpenChange={(open) => !open && setDeletingVehicle(null)}
+        />
       </div>
     </DashboardLayout>
   );
