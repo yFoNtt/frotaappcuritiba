@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { mockVehicles, mockLocadores } from '@/data/mockData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useVehicle } from '@/hooks/useVehicles';
 import {
   ArrowLeft,
   MapPin,
@@ -15,37 +16,69 @@ import {
   MessageCircle,
   Phone,
   Car,
-  DollarSign,
   FileText,
+  Palette,
 } from 'lucide-react';
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   available: 'Disponível',
   rented: 'Alugado',
   maintenance: 'Manutenção',
+  inactive: 'Inativo',
 };
 
-const fuelLabels = {
+const fuelLabels: Record<string, string> = {
   flex: 'Flex',
   gasoline: 'Gasolina',
+  ethanol: 'Etanol',
   diesel: 'Diesel',
   electric: 'Elétrico',
   hybrid: 'Híbrido',
 };
 
-const appLabels = {
-  uber: 'Uber',
+const appLabels: Record<string, string> = {
+  Uber: 'Uber',
   '99': '99',
-  indrive: 'InDrive',
+  InDriver: 'InDriver',
+  uber: 'Uber',
+  indrive: 'InDriver',
   other: 'Outro',
 };
 
+function VehicleDetailsSkeleton() {
+  return (
+    <PublicLayout>
+      <div className="container py-8">
+        <Skeleton className="mb-6 h-10 w-48" />
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="aspect-video rounded-xl" />
+            <Skeleton className="h-12 w-3/4" />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-24 rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="h-40 rounded-lg" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-80 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
-  const vehicle = mockVehicles.find((v) => v.id === id);
-  const locador = vehicle ? mockLocadores.find((l) => l.id === vehicle.locadorId) : null;
+  const { data: vehicle, isLoading, error } = useVehicle(id);
 
-  if (!vehicle) {
+  if (isLoading) {
+    return <VehicleDetailsSkeleton />;
+  }
+
+  if (error || !vehicle) {
     return (
       <PublicLayout>
         <div className="container py-16 text-center">
@@ -62,9 +95,16 @@ export default function VehicleDetails() {
     );
   }
 
-  const whatsappLink = locador
-    ? `https://wa.me/${locador.whatsapp}?text=Olá! Vi o anúncio do ${vehicle.brand} ${vehicle.model} no FrotaApp e gostaria de mais informações.`
-    : '#';
+  const whatsappMessage = encodeURIComponent(
+    `Olá! Vi o anúncio do ${vehicle.brand} ${vehicle.model} no FrotaApp e gostaria de mais informações.`
+  );
+  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
+
+  const primaryImage = vehicle.images?.[0] || '/placeholder.svg';
+  const kmLimit = vehicle.km_limit ?? 0;
+  const excessKmFee = vehicle.excess_km_fee ?? 0;
+  const deposit = vehicle.deposit ?? 0;
+  const allowedApps = vehicle.allowed_apps ?? [];
 
   return (
     <PublicLayout>
@@ -80,27 +120,47 @@ export default function VehicleDetails() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Image */}
-            <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
-              <img
-                src={vehicle.images[0] || '/placeholder.svg'}
-                alt={`${vehicle.brand} ${vehicle.model}`}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute left-4 top-4">
-                <Badge
-                  variant={
-                    vehicle.status === 'available'
-                      ? 'available'
-                      : vehicle.status === 'rented'
-                      ? 'rented'
-                      : 'maintenance'
-                  }
-                  className="text-sm"
-                >
-                  {statusLabels[vehicle.status]}
-                </Badge>
+            {/* Image Gallery */}
+            <div className="space-y-4">
+              <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
+                <img
+                  src={primaryImage}
+                  alt={`${vehicle.brand} ${vehicle.model}`}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute left-4 top-4">
+                  <Badge
+                    variant={
+                      vehicle.status === 'available'
+                        ? 'available'
+                        : vehicle.status === 'rented'
+                        ? 'rented'
+                        : 'maintenance'
+                    }
+                    className="text-sm"
+                  >
+                    {statusLabels[vehicle.status] || vehicle.status}
+                  </Badge>
+                </div>
               </div>
+
+              {/* Thumbnail gallery if multiple images */}
+              {vehicle.images && vehicle.images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {vehicle.images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+                    >
+                      <img
+                        src={img}
+                        alt={`${vehicle.brand} ${vehicle.model} - Foto ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Title & Location */}
@@ -123,51 +183,83 @@ export default function VehicleDetails() {
               </div>
               <div className="rounded-lg border border-border bg-card p-4 text-center">
                 <Fuel className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
-                <div className="font-semibold">{fuelLabels[vehicle.fuelType]}</div>
+                <div className="font-semibold">{fuelLabels[vehicle.fuel_type] || vehicle.fuel_type}</div>
                 <div className="text-xs text-muted-foreground">Combustível</div>
               </div>
               <div className="rounded-lg border border-border bg-card p-4 text-center">
                 <Gauge className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
-                <div className="font-semibold">{vehicle.kmLimit.toLocaleString('pt-BR')}</div>
+                <div className="font-semibold">{kmLimit.toLocaleString('pt-BR')}</div>
                 <div className="text-xs text-muted-foreground">KM/Mês</div>
               </div>
               <div className="rounded-lg border border-border bg-card p-4 text-center">
-                <div className="mx-auto mb-2 h-5 w-5 rounded bg-muted text-xs font-bold leading-5 text-muted-foreground">
-                  {vehicle.color.charAt(0)}
-                </div>
+                <Palette className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
                 <div className="font-semibold">{vehicle.color}</div>
                 <div className="text-xs text-muted-foreground">Cor</div>
               </div>
             </div>
 
             {/* Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Descrição
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">{vehicle.description}</p>
-              </CardContent>
-            </Card>
+            {vehicle.description && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Descrição
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground leading-relaxed">{vehicle.description}</p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Allowed Apps */}
+            {allowedApps.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Car className="h-5 w-5" />
+                    Aplicativos Permitidos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {allowedApps.map((app) => (
+                      <Badge key={app} variant="secondary" className="text-sm">
+                        {appLabels[app] || app}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Vehicle Details */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Car className="h-5 w-5" />
-                  Aplicativos Permitidos
+                  Especificações
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {vehicle.allowedApps.map((app) => (
-                    <Badge key={app} variant="secondary" className="text-sm">
-                      {appLabels[app]}
-                    </Badge>
-                  ))}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">Placa</span>
+                    <span className="font-medium">{vehicle.plate}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">Marca</span>
+                    <span className="font-medium">{vehicle.brand}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">Modelo</span>
+                    <span className="font-medium">{vehicle.model}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">Ano</span>
+                    <span className="font-medium">{vehicle.year}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -185,7 +277,7 @@ export default function VehicleDetails() {
               <CardContent className="space-y-6">
                 <div className="text-center">
                   <div className="text-4xl font-bold text-primary">
-                    R$ {vehicle.weeklyPrice.toLocaleString('pt-BR')}
+                    R$ {Number(vehicle.weekly_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
                   <div className="text-muted-foreground">por semana</div>
                 </div>
@@ -196,15 +288,15 @@ export default function VehicleDetails() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Limite de KM/mês</span>
-                    <span className="font-medium">{vehicle.kmLimit.toLocaleString('pt-BR')} km</span>
+                    <span className="font-medium">{kmLimit.toLocaleString('pt-BR')} km</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Excesso por KM</span>
-                    <span className="font-medium">R$ {vehicle.excessKmFee.toFixed(2)}</span>
+                    <span className="font-medium">R$ {excessKmFee.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Caução</span>
-                    <span className="font-medium">R$ {vehicle.deposit.toLocaleString('pt-BR')}</span>
+                    <span className="font-medium">R$ {deposit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 
@@ -233,28 +325,6 @@ export default function VehicleDetails() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Locador Info */}
-            {locador && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Anunciante</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                      {locador.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-medium">{locador.companyName || locador.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {locador.city}, {locador.state}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>
