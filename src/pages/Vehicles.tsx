@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
-import { mockVehicles } from '@/data/mockData';
-import { Car } from 'lucide-react';
+import { useAvailableVehicles } from '@/hooks/useVehicles';
+import { Car, Loader2 } from 'lucide-react';
 
 const initialFilters: VehicleFiltersState = {
   search: '',
@@ -18,9 +18,10 @@ const initialFilters: VehicleFiltersState = {
 
 export default function Vehicles() {
   const [filters, setFilters] = useState<VehicleFiltersState>(initialFilters);
+  const { data: vehicles = [], isLoading, error } = useAvailableVehicles();
 
   const filteredVehicles = useMemo(() => {
-    return mockVehicles.filter((vehicle) => {
+    return vehicles.filter((vehicle) => {
       // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
@@ -43,19 +44,27 @@ export default function Vehicles() {
       if (filters.minYear && vehicle.year < parseInt(filters.minYear)) return false;
 
       // Max price filter
-      if (filters.maxPrice && vehicle.weeklyPrice > parseInt(filters.maxPrice)) return false;
+      if (filters.maxPrice && vehicle.weekly_price > parseInt(filters.maxPrice)) return false;
 
       // Fuel type filter
-      if (filters.fuelType && vehicle.fuelType !== filters.fuelType) return false;
+      if (filters.fuelType && vehicle.fuel_type !== filters.fuelType) return false;
 
       // App filter
-      if (filters.app && !vehicle.allowedApps.includes(filters.app as any)) return false;
+      if (filters.app && !vehicle.allowed_apps.includes(filters.app)) return false;
 
       return true;
     });
-  }, [filters]);
+  }, [vehicles, filters]);
 
-  const availableCount = filteredVehicles.filter((v) => v.status === 'available').length;
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout>
@@ -82,12 +91,7 @@ export default function Vehicles() {
         {/* Results count */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''} encontrado{filteredVehicles.length !== 1 ? 's' : ''}
-            {availableCount > 0 && (
-              <span className="ml-1 text-success">
-                ({availableCount} disponíve{availableCount !== 1 ? 'is' : 'l'})
-              </span>
-            )}
+            {filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''} disponíve{filteredVehicles.length !== 1 ? 'is' : 'l'}
           </p>
         </div>
 
@@ -103,10 +107,12 @@ export default function Vehicles() {
               <Car className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-foreground">
-              Nenhum veículo encontrado
+              Nenhum veículo disponível
             </h3>
             <p className="max-w-md text-muted-foreground">
-              Tente ajustar os filtros para encontrar mais opções de veículos.
+              {vehicles.length === 0 
+                ? 'Ainda não há veículos cadastrados. Em breve teremos opções para você!'
+                : 'Tente ajustar os filtros para encontrar mais opções de veículos.'}
             </p>
           </div>
         )}

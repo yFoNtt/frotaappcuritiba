@@ -1,29 +1,46 @@
 import { Link } from 'react-router-dom';
-import { Vehicle } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { MapPin, Fuel, Calendar, Eye } from 'lucide-react';
 
+interface Vehicle {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  fuel_type: string;
+  status: 'available' | 'rented' | 'maintenance' | 'inactive';
+  weekly_price: number;
+  km_limit: number | null;
+  allowed_apps: string[];
+  images: string[];
+  city: string;
+  state: string;
+}
+
 interface VehicleCardProps {
   vehicle: Vehicle;
 }
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   available: 'Disponível',
   rented: 'Alugado',
   maintenance: 'Manutenção',
+  inactive: 'Inativo',
 };
 
-const fuelLabels = {
+const fuelLabels: Record<string, string> = {
   flex: 'Flex',
   gasoline: 'Gasolina',
+  ethanol: 'Etanol',
   diesel: 'Diesel',
   electric: 'Elétrico',
   hybrid: 'Híbrido',
 };
 
-const appLabels = {
+const appLabels: Record<string, string> = {
   uber: 'Uber',
   '99': '99',
   indrive: 'InDrive',
@@ -42,7 +59,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         />
         <div className="absolute left-3 top-3">
           <Badge variant={vehicle.status === 'available' ? 'available' : vehicle.status === 'rented' ? 'rented' : 'maintenance'}>
-            {statusLabels[vehicle.status]}
+            {statusLabels[vehicle.status] || vehicle.status}
           </Badge>
         </div>
       </div>
@@ -61,7 +78,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
           <div className="text-right">
             <div className="text-lg font-bold text-primary">
-              R$ {vehicle.weeklyPrice.toLocaleString('pt-BR')}
+              R$ {vehicle.weekly_price.toLocaleString('pt-BR')}
             </div>
             <div className="text-xs text-muted-foreground">/semana</div>
           </div>
@@ -75,21 +92,23 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
           <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-muted-foreground">
             <Fuel className="h-3 w-3" />
-            {fuelLabels[vehicle.fuelType]}
+            {fuelLabels[vehicle.fuel_type] || vehicle.fuel_type}
           </div>
-          <div className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
-            {vehicle.kmLimit.toLocaleString('pt-BR')} km/mês
-          </div>
+          {vehicle.km_limit && (
+            <div className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
+              {vehicle.km_limit.toLocaleString('pt-BR')} km/mês
+            </div>
+          )}
         </div>
 
         {/* Apps */}
         <div className="flex flex-wrap gap-1">
-          {vehicle.allowedApps.map((app) => (
+          {vehicle.allowed_apps.map((app) => (
             <span
               key={app}
               className="rounded bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground"
             >
-              {appLabels[app]}
+              {appLabels[app] || app}
             </span>
           ))}
         </div>

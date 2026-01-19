@@ -95,6 +95,78 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          allowed_apps: string[] | null
+          brand: string
+          city: string
+          color: string
+          created_at: string
+          current_driver_id: string | null
+          deposit: number | null
+          description: string | null
+          excess_km_fee: number | null
+          fuel_type: string
+          id: string
+          images: string[] | null
+          km_limit: number | null
+          locador_id: string
+          model: string
+          plate: string
+          state: string
+          status: string
+          updated_at: string
+          weekly_price: number
+          year: number
+        }
+        Insert: {
+          allowed_apps?: string[] | null
+          brand: string
+          city: string
+          color: string
+          created_at?: string
+          current_driver_id?: string | null
+          deposit?: number | null
+          description?: string | null
+          excess_km_fee?: number | null
+          fuel_type: string
+          id?: string
+          images?: string[] | null
+          km_limit?: number | null
+          locador_id: string
+          model: string
+          plate: string
+          state: string
+          status?: string
+          updated_at?: string
+          weekly_price: number
+          year: number
+        }
+        Update: {
+          allowed_apps?: string[] | null
+          brand?: string
+          city?: string
+          color?: string
+          created_at?: string
+          current_driver_id?: string | null
+          deposit?: number | null
+          description?: string | null
+          excess_km_fee?: number | null
+          fuel_type?: string
+          id?: string
+          images?: string[] | null
+          km_limit?: number | null
+          locador_id?: string
+          model?: string
+          plate?: string
+          state?: string
+          status?: string
+          updated_at?: string
+          weekly_price?: number
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
