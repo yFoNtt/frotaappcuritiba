@@ -190,7 +190,16 @@ export default function Auth() {
       return;
     }
 
-    const { error } = await signUp(email, password, selectedRole);
+    // Prepare profile data
+    const cleanDocument = document.replace(/\D/g, '');
+    const profileData = {
+      documentType: cleanDocument.length === 11 ? 'cpf' as const : 'cnpj' as const,
+      documentNumber: cleanDocument,
+      cnhNumber: selectedRole === 'motorista' ? cnh.replace(/\D/g, '') : undefined,
+      cnhExpiry: selectedRole === 'motorista' ? cnhExpiry : undefined
+    };
+
+    const { error } = await signUp(email, password, selectedRole, profileData);
 
     if (error) {
       toast.error(error.message);

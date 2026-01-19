@@ -6,12 +6,19 @@ import { toast } from 'sonner';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
+interface ProfileData {
+  documentType?: 'cpf' | 'cnpj';
+  documentNumber?: string;
+  cnhNumber?: string;
+  cnhExpiry?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
   loading: boolean;
-  signUp: (email: string, password: string, role: AppRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -78,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, selectedRole: AppRole) => {
+  const signUp = async (email: string, password: string, selectedRole: AppRole, profileData?: ProfileData) => {
     try {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -113,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // If signup successful and user exists, assign role
+      // If signup successful and user exists, assign role and create profile
       if (data.user) {
         const { error: roleError } = await supabase
           .from('user_roles')
@@ -121,6 +128,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (roleError) {
           console.error('Error assigning role:', roleError);
+        }
+
+        // Create profile with document data
+        if (profileData) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: data.user.id,
+              document_type: profileData.documentType,
+              document_number: profileData.documentNumber,
+              cnh_number: profileData.cnhNumber,
+              cnh_expiry: profileData.cnhExpiry
+            });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
         }
         
         // Sign out immediately after signup so user needs to login manually
