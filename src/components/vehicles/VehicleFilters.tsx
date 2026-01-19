@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { brazilianStates, popularCities, carBrands } from '@/data/mockData';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import type { Vehicle } from '@/hooks/useVehicles';
 
 export interface VehicleFiltersState {
   search: string;
@@ -27,18 +27,54 @@ interface VehicleFiltersProps {
   filters: VehicleFiltersState;
   onFiltersChange: (filters: VehicleFiltersState) => void;
   onClearFilters: () => void;
+  vehicles?: Vehicle[];
 }
 
-export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: VehicleFiltersProps) {
+const fuelLabels: Record<string, string> = {
+  flex: 'Flex',
+  gasoline: 'Gasolina',
+  ethanol: 'Etanol',
+  diesel: 'Diesel',
+  electric: 'Elétrico',
+  hybrid: 'Híbrido',
+};
+
+export function VehicleFilters({ 
+  filters, 
+  onFiltersChange, 
+  onClearFilters,
+  vehicles = []
+}: VehicleFiltersProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Extract unique values from vehicles for dynamic filters
+  const filterOptions = useMemo(() => {
+    const states = [...new Set(vehicles.map(v => v.state))].sort();
+    const cities = [...new Set(vehicles.map(v => v.city))].sort();
+    const brands = [...new Set(vehicles.map(v => v.brand))].sort();
+    const years = [...new Set(vehicles.map(v => v.year))].sort((a, b) => b - a);
+    const fuelTypes = [...new Set(vehicles.map(v => v.fuel_type))].sort();
+    const apps = [...new Set(vehicles.flatMap(v => v.allowed_apps || []))].sort();
+    
+    // Filter cities based on selected state
+    const filteredCities = filters.state 
+      ? [...new Set(vehicles.filter(v => v.state === filters.state).map(v => v.city))].sort()
+      : cities;
+
+    return { states, cities: filteredCities, brands, years, fuelTypes, apps };
+  }, [vehicles, filters.state]);
+
   const updateFilter = (key: keyof VehicleFiltersState, value: string) => {
-    // Convert "all" back to empty string for filtering logic
     const filterValue = value === 'all' ? '' : value;
-    onFiltersChange({ ...filters, [key]: filterValue });
+    
+    // Reset city if state changes
+    if (key === 'state') {
+      onFiltersChange({ ...filters, [key]: filterValue, city: '' });
+    } else {
+      onFiltersChange({ ...filters, [key]: filterValue });
+    }
   };
 
-  // Convert empty string to "all" for Select display
   const getSelectValue = (value: string) => value === '' ? 'all' : value;
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== '');
@@ -66,7 +102,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              {brazilianStates.map((state) => (
+              {filterOptions.states.map((state) => (
                 <SelectItem key={state} value={state}>
                   {state}
                 </SelectItem>
@@ -77,13 +113,17 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Cidade</Label>
-          <Select value={getSelectValue(filters.city)} onValueChange={(v) => updateFilter('city', v)}>
+          <Select 
+            value={getSelectValue(filters.city)} 
+            onValueChange={(v) => updateFilter('city', v)}
+            disabled={filterOptions.cities.length === 0}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
-              {popularCities.map((city) => (
+              {filterOptions.cities.map((city) => (
                 <SelectItem key={city} value={city}>
                   {city}
                 </SelectItem>
@@ -100,7 +140,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
-              {carBrands.map((brand) => (
+              {filterOptions.brands.map((brand) => (
                 <SelectItem key={brand} value={brand}>
                   {brand}
                 </SelectItem>
@@ -121,6 +161,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
               <SelectItem value="600">Até R$ 600</SelectItem>
               <SelectItem value="700">Até R$ 700</SelectItem>
               <SelectItem value="800">Até R$ 800</SelectItem>
+              <SelectItem value="900">Até R$ 900</SelectItem>
               <SelectItem value="1000">Até R$ 1.000</SelectItem>
             </SelectContent>
           </Select>
@@ -158,11 +199,11 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Qualquer</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
-                <SelectItem value="2021">2021</SelectItem>
-                <SelectItem value="2020">2020</SelectItem>
+                {filterOptions.years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -175,11 +216,11 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="flex">Flex</SelectItem>
-                <SelectItem value="gasoline">Gasolina</SelectItem>
-                <SelectItem value="diesel">Diesel</SelectItem>
-                <SelectItem value="electric">Elétrico</SelectItem>
-                <SelectItem value="hybrid">Híbrido</SelectItem>
+                {filterOptions.fuelTypes.map((fuel) => (
+                  <SelectItem key={fuel} value={fuel}>
+                    {fuelLabels[fuel] || fuel}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -192,9 +233,11 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="uber">Uber</SelectItem>
-                <SelectItem value="99">99</SelectItem>
-                <SelectItem value="indrive">InDrive</SelectItem>
+                {filterOptions.apps.map((app) => (
+                  <SelectItem key={app} value={app}>
+                    {app}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -83,6 +83,7 @@ export default function Vehicles() {
             filters={filters}
             onFiltersChange={setFilters}
             onClearFilters={() => setFilters(initialFilters)}
+            vehicles={vehicles}
           />
         </div>
       </div>
