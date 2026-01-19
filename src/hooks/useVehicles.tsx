@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -26,7 +26,40 @@ export interface Vehicle {
   updated_at: string;
 }
 
-// Fetch available vehicles for the public marketplace
+const PAGE_SIZE = 12;
+
+// Fetch available vehicles for the public marketplace with pagination
+export function useAvailableVehiclesInfinite() {
+  return useInfiniteQuery({
+    queryKey: ['vehicles', 'available', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, error, count } = await supabase
+        .from('vehicles')
+        .select('*', { count: 'exact' })
+        .eq('status', 'available')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Error fetching available vehicles:', error);
+        throw error;
+      }
+
+      return {
+        vehicles: data as Vehicle[],
+        nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
+        totalCount: count ?? 0,
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+  });
+}
+
+// Fetch all available vehicles (for filter options extraction)
 export function useAvailableVehicles() {
   return useQuery({
     queryKey: ['vehicles', 'available'],

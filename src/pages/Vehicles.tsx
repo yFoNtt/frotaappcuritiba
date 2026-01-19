@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
-import { useAvailableVehicles } from '@/hooks/useVehicles';
+import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
 import { Car, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const initialFilters: VehicleFiltersState = {
   search: '',
@@ -18,11 +19,29 @@ const initialFilters: VehicleFiltersState = {
 
 export default function Vehicles() {
   const [filters, setFilters] = useState<VehicleFiltersState>(initialFilters);
-  const { data: vehicles = [], isLoading, error } = useAvailableVehicles();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Infinite query for paginated vehicles
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useAvailableVehiclesInfinite();
 
+  // Regular query for filter options (gets all vehicles for extracting unique values)
+  const { data: allVehicles = [] } = useAvailableVehicles();
+
+  // Flatten all pages into a single array
+  const allLoadedVehicles = useMemo(() => {
+    return data?.pages.flatMap((page) => page.vehicles) ?? [];
+  }, [data]);
+
+  // Apply client-side filters
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((vehicle) => {
-      // Search filter
+    return allLoadedVehicles.filter((vehicle) => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesSearch =
@@ -30,31 +49,44 @@ export default function Vehicles() {
           vehicle.model.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
-
-      // State filter
       if (filters.state && vehicle.state !== filters.state) return false;
-
-      // City filter
       if (filters.city && vehicle.city !== filters.city) return false;
-
-      // Brand filter
       if (filters.brand && vehicle.brand !== filters.brand) return false;
-
-      // Min year filter
       if (filters.minYear && vehicle.year < parseInt(filters.minYear)) return false;
-
-      // Max price filter
       if (filters.maxPrice && vehicle.weekly_price > parseInt(filters.maxPrice)) return false;
-
-      // Fuel type filter
       if (filters.fuelType && vehicle.fuel_type !== filters.fuelType) return false;
-
-      // App filter
-      if (filters.app && !vehicle.allowed_apps.includes(filters.app)) return false;
-
+      if (filters.app && !vehicle.allowed_apps?.includes(filters.app)) return false;
       return true;
     });
-  }, [vehicles, filters]);
+  }, [allLoadedVehicles, filters]);
+
+  // Intersection Observer for infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0,
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  const totalCount = data?.pages[0]?.totalCount ?? 0;
+  const hasActiveFilters = Object.values(filters).some((v) => v !== '');
 
   if (isLoading) {
     return (
@@ -83,7 +115,7 @@ export default function Vehicles() {
             filters={filters}
             onFiltersChange={setFilters}
             onClearFilters={() => setFilters(initialFilters)}
-            vehicles={vehicles}
+            vehicles={allVehicles}
           />
         </div>
       </div>
@@ -92,29 +124,75 @@ export default function Vehicles() {
         {/* Results count */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''} disponíve{filteredVehicles.length !== 1 ? 'is' : 'l'}
+            {hasActiveFilters ? (
+              <>
+                {filteredVehicles.length} de {totalCount} veículo{totalCount !== 1 ? 's' : ''}
+              </>
+            ) : (
+              <>
+                {allLoadedVehicles.length} de {totalCount} veículo{totalCount !== 1 ? 's' : ''} carregado{allLoadedVehicles.length !== 1 ? 's' : ''}
+              </>
+            )}
           </p>
         </div>
 
         {filteredVehicles.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredVehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredVehicles.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+              ))}
+            </div>
+
+            {/* Load more trigger */}
+            {!hasActiveFilters && hasNextPage && (
+              <div ref={loadMoreRef} className="mt-8 flex justify-center">
+                {isFetchingNextPage ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Carregando mais veículos...</span>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                  >
+                    Carregar mais
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* End of list message */}
+            {!hasNextPage && allLoadedVehicles.length > 0 && !hasActiveFilters && (
+              <p className="mt-8 text-center text-sm text-muted-foreground">
+                Você viu todos os {totalCount} veículos disponíveis
+              </p>
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Car className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-foreground">
-              Nenhum veículo disponível
+              Nenhum veículo encontrado
             </h3>
             <p className="max-w-md text-muted-foreground">
-              {vehicles.length === 0 
-                ? 'Ainda não há veículos cadastrados. Em breve teremos opções para você!'
-                : 'Tente ajustar os filtros para encontrar mais opções de veículos.'}
+              {hasActiveFilters
+                ? 'Tente ajustar os filtros para encontrar mais opções de veículos.'
+                : 'Ainda não há veículos cadastrados. Em breve teremos opções para você!'}
             </p>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setFilters(initialFilters)}
+              >
+                Limpar filtros
+              </Button>
+            )}
           </div>
         )}
       </div>
