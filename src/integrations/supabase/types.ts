@@ -111,6 +111,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_cnh_alert: {
+        Args: { _alert_type: string; _cnh_expiry: string; _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "locador" | "motorista"
