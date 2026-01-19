@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      cnh_alerts: {
+        Row: {
+          alert_type: string
+          cnh_expiry: string
+          id: string
+          read_at: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          cnh_expiry: string
+          id?: string
+          read_at?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          cnh_expiry?: string
+          id?: string
+          read_at?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cnh_expiry: string | null
+          cnh_number: string | null
+          created_at: string
+          document_number: string | null
+          document_type: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cnh_expiry?: string | null
+          cnh_number?: string | null
+          created_at?: string
+          document_number?: string | null
+          document_type?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cnh_expiry?: string | null
+          cnh_number?: string | null
+          created_at?: string
+          document_number?: string | null
+          document_type?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
