@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ImageGallery } from '@/components/vehicles/ImageGallery';
 import { useVehicle } from '@/hooks/useVehicles';
 import {
   ArrowLeft,
@@ -100,7 +101,7 @@ export default function VehicleDetails() {
   );
   const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
 
-  const primaryImage = vehicle.images?.[0] || '/placeholder.svg';
+  const vehicleImages = vehicle.images ?? [];
   const kmLimit = vehicle.km_limit ?? 0;
   const excessKmFee = vehicle.excess_km_fee ?? 0;
   const deposit = vehicle.deposit ?? 0;
@@ -120,47 +121,26 @@ export default function VehicleDetails() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Image Gallery */}
-            <div className="space-y-4">
-              <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
-                <img
-                  src={primaryImage}
-                  alt={`${vehicle.brand} ${vehicle.model}`}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute left-4 top-4">
-                  <Badge
-                    variant={
-                      vehicle.status === 'available'
-                        ? 'available'
-                        : vehicle.status === 'rented'
-                        ? 'rented'
-                        : 'maintenance'
-                    }
-                    className="text-sm"
-                  >
-                    {statusLabels[vehicle.status] || vehicle.status}
-                  </Badge>
-                </div>
+            {/* Image Gallery with Fullscreen */}
+            <div className="relative">
+              <ImageGallery
+                images={vehicleImages}
+                alt={`${vehicle.brand} ${vehicle.model}`}
+              />
+              <div className="absolute left-4 top-4 z-10">
+                <Badge
+                  variant={
+                    vehicle.status === 'available'
+                      ? 'available'
+                      : vehicle.status === 'rented'
+                      ? 'rented'
+                      : 'maintenance'
+                  }
+                  className="text-sm"
+                >
+                  {statusLabels[vehicle.status] || vehicle.status}
+                </Badge>
               </div>
-
-              {/* Thumbnail gallery if multiple images */}
-              {vehicle.images && vehicle.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {vehicle.images.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
-                    >
-                      <img
-                        src={img}
-                        alt={`${vehicle.brand} ${vehicle.model} - Foto ${idx + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Title & Location */}
