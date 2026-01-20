@@ -169,6 +169,79 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          contract_id: string | null
+          created_at: string
+          driver_id: string
+          due_date: string
+          id: string
+          locador_id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          reference_week: string
+          status: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount: number
+          contract_id?: string | null
+          created_at?: string
+          driver_id: string
+          due_date: string
+          id?: string
+          locador_id: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          reference_week: string
+          status?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          contract_id?: string | null
+          created_at?: string
+          driver_id?: string
+          due_date?: string
+          id?: string
+          locador_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          reference_week?: string
+          status?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           cnh_expiry: string | null
