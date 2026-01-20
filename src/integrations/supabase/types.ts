@@ -169,6 +169,68 @@ export type Database = {
           },
         ]
       }
+      maintenances: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          km_at_maintenance: number | null
+          locador_id: string
+          next_maintenance_date: string | null
+          next_maintenance_km: number | null
+          notes: string | null
+          performed_at: string
+          service_provider: string | null
+          status: string
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          km_at_maintenance?: number | null
+          locador_id: string
+          next_maintenance_date?: string | null
+          next_maintenance_km?: number | null
+          notes?: string | null
+          performed_at: string
+          service_provider?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          km_at_maintenance?: number | null
+          locador_id?: string
+          next_maintenance_date?: string | null
+          next_maintenance_km?: number | null
+          notes?: string | null
+          performed_at?: string
+          service_provider?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenances_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
