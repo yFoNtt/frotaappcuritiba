@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Vehicles from "./pages/Vehicles";
 import VehicleDetails from "./pages/VehicleDetails";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import HowItWorks from "./pages/HowItWorks";
 import ForRenters from "./pages/ForRenters";
 import NotFound from "./pages/NotFound";
@@ -54,6 +56,8 @@ const App = () => (
             <Route path="/veiculos/:id" element={<VehicleDetails />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/cadastro" element={<Auth />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
             <Route path="/como-funciona" element={<HowItWorks />} />
             <Route path="/para-locadores" element={<ForRenters />} />
             
