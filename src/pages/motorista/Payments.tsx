@@ -1,43 +1,77 @@
+import { useMemo } from 'react';
 import { MotoristaLayout } from '@/components/motorista/MotoristaLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   CreditCard, 
   CheckCircle2, 
   Clock, 
   XCircle,
-  Download,
-  Eye
+  AlertTriangle,
+  DollarSign
 } from 'lucide-react';
-import { motoristaPagamentos, motoristaStats } from '@/data/mockMotoristaData';
+import { format, parseISO, isBefore } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useMotoristaPayments, Payment } from '@/hooks/usePayments';
+
+const STATUS_CONFIG = {
+  pending: { label: 'Pendente', variant: 'warning' as const, icon: Clock, color: 'text-warning' },
+  paid: { label: 'Pago', variant: 'success' as const, icon: CheckCircle2, color: 'text-success' },
+  overdue: { label: 'Atrasado', variant: 'destructive' as const, icon: AlertTriangle, color: 'text-destructive' },
+  cancelled: { label: 'Cancelado', variant: 'secondary' as const, icon: XCircle, color: 'text-muted-foreground' },
+};
 
 export default function MotoristaPagamentos() {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return <Badge className="bg-green-500/10 text-green-600">Pago</Badge>;
-      case 'pendente':
-        return <Badge variant="secondary">Pendente</Badge>;
-      case 'atrasado':
-        return <Badge variant="destructive">Atrasado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const { data: payments = [], isLoading } = useMotoristaPayments();
+
+  // Process payments to mark overdue
+  const processedPayments = useMemo(() => {
+    const today = new Date();
+    return payments.map(p => {
+      if (p.status === 'pending' && isBefore(parseISO(p.due_date), today)) {
+        return { ...p, status: 'overdue' as const };
+      }
+      return p;
+    });
+  }, [payments]);
+
+  const stats = useMemo(() => {
+    const paid = processedPayments
+      .filter(p => p.status === 'paid')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+    const pending = processedPayments
+      .filter(p => p.status === 'pending')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+    const overdue = processedPayments
+      .filter(p => p.status === 'overdue')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+    
+    return { paid, pending, overdue };
+  }, [processedPayments]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case 'pendente':
-        return <Clock className="h-5 w-5 text-yellow-500" />;
-      case 'atrasado':
-        return <XCircle className="h-5 w-5 text-destructive" />;
-      default:
-        return null;
-    }
-  };
+  if (isLoading) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-48" />
+          <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24" />
+            ))}
+          </div>
+          <Skeleton className="h-64" />
+        </div>
+      </MotoristaLayout>
+    );
+  }
 
   return (
     <MotoristaLayout>
@@ -45,7 +79,7 @@ export default function MotoristaPagamentos() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold">Pagamentos</h1>
-          <p className="text-muted-foreground">Gerencie seus pagamentos semanais</p>
+          <p className="text-muted-foreground">Acompanhe seus pagamentos semanais</p>
         </div>
 
         {/* Stats Cards */}
@@ -53,11 +87,11 @@ export default function MotoristaPagamentos() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Pago</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                R$ {motoristaStats.totalPago.toLocaleString('pt-BR')}
+              <div className="text-2xl font-bold text-success">
+                {formatCurrency(stats.paid)}
               </div>
             </CardContent>
           </Card>
@@ -65,11 +99,11 @@ export default function MotoristaPagamentos() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendente</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
+              <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                R$ {motoristaStats.pendente.toLocaleString('pt-BR')}
+              <div className="text-2xl font-bold text-warning">
+                {formatCurrency(stats.pending)}
               </div>
             </CardContent>
           </Card>
@@ -77,11 +111,11 @@ export default function MotoristaPagamentos() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Atrasado</CardTitle>
-              <XCircle className="h-4 w-4 text-destructive" />
+              <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                R$ {motoristaStats.atrasado.toLocaleString('pt-BR')}
+                {formatCurrency(stats.overdue)}
               </div>
             </CardContent>
           </Card>
@@ -97,80 +131,83 @@ export default function MotoristaPagamentos() {
             <CardDescription>Todos os seus pagamentos semanais</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {motoristaPagamentos.map((pagamento) => (
-                <div
-                  key={pagamento.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    {getStatusIcon(pagamento.status)}
-                    <div>
-                      <p className="font-medium">{pagamento.semana}</p>
-                      <p className="text-sm text-muted-foreground">{pagamento.periodo}</p>
-                    </div>
-                  </div>
+            {processedPayments.length > 0 ? (
+              <div className="space-y-4">
+                {processedPayments.map((payment) => {
+                  const statusConfig = STATUS_CONFIG[payment.status];
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between rounded-lg border p-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <StatusIcon className={`h-5 w-5 ${statusConfig.color}`} />
+                        <div>
+                          <p className="font-medium">
+                            Semana de {format(parseISO(payment.reference_week), "dd 'de' MMMM", { locale: ptBR })}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Vencimento: {format(parseISO(payment.due_date), "dd/MM/yyyy")}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold">
-                        R$ {pagamento.valor.toLocaleString('pt-BR')}
-                      </p>
-                      {pagamento.dataPagamento && (
-                        <p className="text-xs text-muted-foreground">
-                          Pago em {new Date(pagamento.dataPagamento).toLocaleDateString('pt-BR')}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold">
+                            {formatCurrency(Number(payment.amount))}
+                          </p>
+                          {payment.paid_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Pago em {format(parseISO(payment.paid_at), 'dd/MM/yyyy')}
+                            </p>
+                          )}
+                          {payment.payment_method && (
+                            <p className="text-xs text-muted-foreground capitalize">
+                              via {payment.payment_method}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Badge variant={statusConfig.variant}>
+                          {statusConfig.label}
+                        </Badge>
+                      </div>
                     </div>
-                    
-                    {getStatusBadge(pagamento.status)}
-
-                    <div className="flex gap-2">
-                      {pagamento.status === 'pago' && pagamento.comprovante && (
-                        <Button variant="ghost" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {(pagamento.status === 'pendente' || pagamento.status === 'atrasado') && (
-                        <Button size="sm">Pagar</Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <DollarSign className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="mb-2 text-lg font-semibold">Nenhum pagamento encontrado</h3>
+                <p className="text-muted-foreground">
+                  Você ainda não possui cobranças registradas.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Payment Methods Info */}
+        {/* Payment Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Formas de Pagamento</CardTitle>
-            <CardDescription>Opções disponíveis para realizar seu pagamento</CardDescription>
+            <CardTitle>Informações de Pagamento</CardTitle>
+            <CardDescription>Como funcionam os pagamentos semanais</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border p-4 text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-6 w-6 text-primary" />
-                </div>
-                <p className="font-medium">PIX</p>
-                <p className="text-sm text-muted-foreground">Pagamento instantâneo</p>
-              </div>
-              <div className="rounded-lg border p-4 text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-6 w-6 text-primary" />
-                </div>
-                <p className="font-medium">Cartão de Crédito</p>
-                <p className="text-sm text-muted-foreground">Até 3x sem juros</p>
-              </div>
-              <div className="rounded-lg border p-4 text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-6 w-6 text-primary" />
-                </div>
-                <p className="font-medium">Boleto</p>
-                <p className="text-sm text-muted-foreground">Vencimento em 3 dias</p>
-              </div>
+            <div className="space-y-4 text-sm text-muted-foreground">
+              <p>
+                • O pagamento semanal é referente ao aluguel do veículo e deve ser efetuado até a data de vencimento.
+              </p>
+              <p>
+                • Pagamentos em atraso podem gerar multas e suspensão do contrato.
+              </p>
+              <p>
+                • Entre em contato com seu locador para informações sobre formas de pagamento.
+              </p>
             </div>
           </CardContent>
         </Card>
