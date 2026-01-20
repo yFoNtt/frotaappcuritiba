@@ -41,6 +41,81 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          deposit: number | null
+          driver_id: string
+          end_date: string | null
+          excess_km_fee: number | null
+          id: string
+          km_limit: number | null
+          locador_id: string
+          payment_day: string
+          start_date: string
+          status: string
+          terms: string | null
+          updated_at: string
+          vehicle_id: string
+          weekly_price: number
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          deposit?: number | null
+          driver_id: string
+          end_date?: string | null
+          excess_km_fee?: number | null
+          id?: string
+          km_limit?: number | null
+          locador_id: string
+          payment_day?: string
+          start_date: string
+          status?: string
+          terms?: string | null
+          updated_at?: string
+          vehicle_id: string
+          weekly_price: number
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          deposit?: number | null
+          driver_id?: string
+          end_date?: string | null
+          excess_km_fee?: number | null
+          id?: string
+          km_limit?: number | null
+          locador_id?: string
+          payment_day?: string
+          start_date?: string
+          status?: string
+          terms?: string | null
+          updated_at?: string
+          vehicle_id?: string
+          weekly_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           cnh_expiry: string
