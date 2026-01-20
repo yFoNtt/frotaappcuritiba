@@ -565,14 +565,17 @@ export default function LocadorDrivers() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Veículo (opcional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === 'none' ? '' : value)} 
+                          value={field.value || 'none'}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione um veículo" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Nenhum</SelectItem>
+                            <SelectItem value="none">Nenhum</SelectItem>
                             {availableVehicles.map(v => (
                               <SelectItem key={v.id} value={v.id}>
                                 {v.brand} {v.model} - {v.plate}
