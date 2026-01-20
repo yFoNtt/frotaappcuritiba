@@ -41,6 +41,59 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          cnh_expiry: string
+          cnh_number: string
+          created_at: string
+          email: string
+          id: string
+          locador_id: string
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          cnh_expiry: string
+          cnh_number: string
+          created_at?: string
+          email: string
+          id?: string
+          locador_id: string
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          cnh_expiry?: string
+          cnh_number?: string
+          created_at?: string
+          email?: string
+          id?: string
+          locador_id?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           cnh_expiry: string | null
