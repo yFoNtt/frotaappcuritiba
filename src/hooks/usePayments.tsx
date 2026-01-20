@@ -89,6 +89,47 @@ export function useDriverPayments(driverId: string | undefined) {
   });
 }
 
+// Fetch payments for the current motorista (logged-in driver)
+export function useMotoristaPayments() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['payments', 'motorista', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      // First get the driver record for this user
+      const { data: driver, error: driverError } = await supabase
+        .from('drivers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (driverError) {
+        console.error('Error fetching driver:', driverError);
+        throw driverError;
+      }
+
+      if (!driver) return [];
+
+      // Then get payments for this driver
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('driver_id', driver.id)
+        .order('due_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching motorista payments:', error);
+        throw error;
+      }
+
+      return data as Payment[];
+    },
+    enabled: !!user,
+  });
+}
+
 // Create a new payment
 export function useCreatePayment() {
   const queryClient = useQueryClient();
