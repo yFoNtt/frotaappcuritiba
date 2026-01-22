@@ -13,7 +13,8 @@ import {
   Menu,
   Gauge,
   FolderOpen,
-  Inbox
+  Inbox,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: CreditCard, label: 'Pagamentos', path: '/locador/pagamentos' },
   { icon: Wrench, label: 'Manutenção', path: '/locador/manutencao' },
   { icon: Gauge, label: 'Quilometragem', path: '/locador/quilometragem' },
+  { icon: BarChart3, label: 'Relatórios', path: '/locador/relatorios' },
   { icon: FolderOpen, label: 'Documentos', path: '/locador/documentos' },
   { icon: Inbox, label: 'Solicitações', path: '/locador/solicitacoes' },
   { icon: Bell, label: 'Alertas', path: '/locador/alertas' },
