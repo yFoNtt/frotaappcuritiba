@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useLocadorVehicles } from '@/hooks/useVehicles';
 import { useLocadorPayments } from '@/hooks/usePayments';
 import { useLocadorMaintenances } from '@/hooks/useMaintenances';
+import { useReportExport } from '@/hooks/useReportExport';
 import {
   ChartContainer,
   ChartTooltip,
@@ -28,7 +30,7 @@ import {
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp, TrendingDown, Car, DollarSign, Wrench, PieChartIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Car, DollarSign, Wrench, FileDown, FileSpreadsheet } from 'lucide-react';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -55,6 +57,7 @@ export default function LocadorReports() {
   const { data: vehicles, isLoading: loadingVehicles } = useLocadorVehicles();
   const { data: payments, isLoading: loadingPayments } = useLocadorPayments();
   const { data: maintenances, isLoading: loadingMaintenances } = useLocadorMaintenances();
+  const { exportToPDF, exportToExcel } = useReportExport();
 
   const isLoading = loadingVehicles || loadingPayments || loadingMaintenances;
 
@@ -97,7 +100,7 @@ export default function LocadorReports() {
 
   // Taxa de ocupação da frota
   const occupancyData = useMemo(() => {
-    if (!vehicles) return { rate: 0, rented: 0, available: 0, maintenance: 0 };
+    if (!vehicles) return { rate: 0, rented: 0, available: 0, maintenance: 0, total: 0 };
 
     const rented = vehicles.filter(v => v.status === 'rented').length;
     const available = vehicles.filter(v => v.status === 'available').length;
@@ -222,11 +225,43 @@ export default function LocadorReports() {
     );
   }
 
+  const handleExportPDF = () => {
+    exportToPDF({
+      monthlyData,
+      vehicleComparison,
+      occupancyData,
+      maintenanceCostsByType,
+      totals,
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      monthlyData,
+      vehicleComparison,
+      occupancyData,
+      maintenanceCostsByType,
+      totals,
+    });
+  };
+
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
-        <p className="text-muted-foreground">Análise detalhada da sua frota</p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+          <p className="text-muted-foreground">Análise detalhada da sua frota</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportExcel} className="gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar Excel
+          </Button>
+          <Button onClick={handleExportPDF} className="gap-2">
+            <FileDown className="h-4 w-4" />
+            Exportar PDF
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
