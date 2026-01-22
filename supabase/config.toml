@@ -1,4 +1,4 @@
 project_id = "bohycsldnskyuwsdxrqt"
 
 [functions.check-cnh-expiry]
-verify_jwt = false
+verify_jwt = true
