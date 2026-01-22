@@ -659,6 +659,9 @@ export type Database = {
         Args: { _alert_type: string; _cnh_expiry: string; _user_id: string }
         Returns: string
       }
+      validate_cnh: { Args: { cnh: string }; Returns: boolean }
+      validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
+      validate_cpf: { Args: { cpf: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "locador" | "motorista"
