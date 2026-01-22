@@ -10,7 +10,8 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  Menu
+  Menu,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const menuItems = [
   { icon: FileText, label: 'Contratos', path: '/locador/contratos' },
   { icon: CreditCard, label: 'Pagamentos', path: '/locador/pagamentos' },
   { icon: Wrench, label: 'Manutenção', path: '/locador/manutencao' },
+  { icon: Gauge, label: 'Quilometragem', path: '/locador/quilometragem' },
   { icon: Bell, label: 'Alertas', path: '/locador/alertas' },
   { icon: Settings, label: 'Configurações', path: '/locador/configuracoes' },
 ];

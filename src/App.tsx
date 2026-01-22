@@ -21,6 +21,7 @@ import LocadorVehicles from "./pages/locador/Vehicles";
 import LocadorDrivers from "./pages/locador/Drivers";
 import LocadorPayments from "./pages/locador/Payments";
 import LocadorMaintenance from "./pages/locador/Maintenance";
+import LocadorMileage from "./pages/locador/Mileage";
 import LocadorAlerts from "./pages/locador/Alerts";
 import LocadorContracts from "./pages/locador/Contracts";
 import LocadorSettings from "./pages/locador/Settings";
@@ -86,6 +87,11 @@ const App = () => (
             <Route path="/locador/manutencao" element={
               <ProtectedRoute allowedRoles={['locador']}>
                 <LocadorMaintenance />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/quilometragem" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorMileage />
               </ProtectedRoute>
             } />
             <Route path="/locador/alertas" element={
