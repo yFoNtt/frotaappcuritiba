@@ -2,6 +2,7 @@ import { MotoristaLayout } from '@/components/motorista/MotoristaLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Car, 
   CreditCard, 
@@ -13,18 +14,84 @@ import {
   XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motoristaVehicle, motoristaPagamentos, motoristaStats } from '@/data/mockMotoristaData';
+import { useMotoristaFullData, useMotoristaStats } from '@/hooks/useMotoristaData';
+import { useMotoristaPayments } from '@/hooks/usePayments';
+import { useMemo } from 'react';
 
 export default function MotoristaDashboard() {
-  const proximoPagamento = motoristaPagamentos.find(p => p.status === 'pendente' || p.status === 'atrasado');
-  const pagamentosAtrasados = motoristaPagamentos.filter(p => p.status === 'atrasado').length;
+  const { driver, vehicle, contract, isLoading: dataLoading } = useMotoristaFullData();
+  const { data: stats, isLoading: statsLoading } = useMotoristaStats();
+  const { data: payments = [], isLoading: paymentsLoading } = useMotoristaPayments();
+
+  const isLoading = dataLoading || statsLoading || paymentsLoading;
+
+  // Find next pending payment
+  const proximoPagamento = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return payments
+      .filter(p => p.status === 'pending')
+      .sort((a, b) => a.due_date.localeCompare(b.due_date))
+      .find(p => p.due_date >= today || p.due_date < today);
+  }, [payments]);
+
+  const pagamentosAtrasados = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return payments.filter(p => p.status === 'pending' && p.due_date < today).length;
+  }, [payments]);
+
+  if (isLoading) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="mt-2 h-5 w-64" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map(i => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-64" />
+          </div>
+        </div>
+      </MotoristaLayout>
+    );
+  }
+
+  // Check if motorista has no data yet
+  if (!driver) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Olá, Motorista!</h1>
+            <p className="text-muted-foreground">Bem-vindo ao seu painel</p>
+          </div>
+          
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Car className="mb-4 h-16 w-16 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">Nenhum veículo vinculado</h3>
+              <p className="mt-2 text-muted-foreground">
+                Você ainda não está vinculado a nenhum veículo ou locador.
+                Entre em contato com seu locador para iniciar.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </MotoristaLayout>
+    );
+  }
 
   return (
     <MotoristaLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Olá, Motorista!</h1>
+          <h1 className="text-3xl font-bold">Olá, {driver.name.split(' ')[0]}!</h1>
           <p className="text-muted-foreground">Gerencie seu veículo e pagamentos</p>
         </div>
 
@@ -59,7 +126,7 @@ export default function MotoristaDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                R$ {motoristaStats.totalPago.toLocaleString('pt-BR')}
+                R$ {(stats?.totalPago || 0).toLocaleString('pt-BR')}
               </div>
               <p className="text-xs text-muted-foreground">Pagamentos em dia</p>
             </CardContent>
@@ -72,7 +139,7 @@ export default function MotoristaDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                R$ {motoristaStats.pendente.toLocaleString('pt-BR')}
+                R$ {(stats?.pendente || 0).toLocaleString('pt-BR')}
               </div>
               <p className="text-xs text-muted-foreground">Aguardando pagamento</p>
             </CardContent>
@@ -85,7 +152,7 @@ export default function MotoristaDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                R$ {motoristaStats.atrasado.toLocaleString('pt-BR')}
+                R$ {(stats?.atrasado || 0).toLocaleString('pt-BR')}
               </div>
               <p className="text-xs text-muted-foreground">Pagamentos em atraso</p>
             </CardContent>
@@ -97,7 +164,7 @@ export default function MotoristaDashboard() {
               <Calendar className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{motoristaStats.diasRestantesContrato}</div>
+              <div className="text-2xl font-bold">{stats?.diasRestantesContrato || 0}</div>
               <p className="text-xs text-muted-foreground">Até fim do contrato</p>
             </CardContent>
           </Card>
@@ -124,33 +191,45 @@ export default function MotoristaDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4">
-                <img
-                  src={motoristaVehicle.imagem}
-                  alt={`${motoristaVehicle.marca} ${motoristaVehicle.modelo}`}
-                  className="h-24 w-32 rounded-lg object-cover"
-                />
-                <div className="flex-1 space-y-2">
-                  <div>
-                    <h3 className="font-semibold">
-                      {motoristaVehicle.marca} {motoristaVehicle.modelo}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {motoristaVehicle.ano} • {motoristaVehicle.cor} • {motoristaVehicle.placa}
-                    </p>
+              {vehicle ? (
+                <div className="flex gap-4">
+                  <div className="h-24 w-32 rounded-lg bg-muted flex items-center justify-center">
+                    {vehicle.images?.[0] ? (
+                      <img
+                        src={vehicle.images[0]}
+                        alt={`${vehicle.brand} ${vehicle.model}`}
+                        className="h-24 w-32 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <Car className="h-10 w-10 text-muted-foreground" />
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{motoristaVehicle.combustivel}</Badge>
-                    <Badge className="bg-green-500/10 text-green-600">
-                      {motoristaVehicle.status}
-                    </Badge>
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <h3 className="font-semibold">
+                        {vehicle.brand} {vehicle.model}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {vehicle.year} • {vehicle.color} • {vehicle.plate}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{vehicle.fuel_type}</Badge>
+                      <Badge className="bg-green-500/10 text-green-600">
+                        Em uso
+                      </Badge>
+                    </div>
                   </div>
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Locador:</span>{' '}
-                    {motoristaVehicle.locador.nome}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Car className="mb-2 h-12 w-12 text-muted-foreground" />
+                  <p className="font-medium">Nenhum veículo vinculado</p>
+                  <p className="text-sm text-muted-foreground">
+                    Entre em contato com seu locador
                   </p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -178,17 +257,27 @@ export default function MotoristaDashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div>
-                      <p className="font-medium">{proximoPagamento.semana}</p>
-                      <p className="text-sm text-muted-foreground">{proximoPagamento.periodo}</p>
+                      <p className="font-medium">
+                        Semana de {new Date(proximoPagamento.reference_week).toLocaleDateString('pt-BR')}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Vencimento: {new Date(proximoPagamento.due_date).toLocaleDateString('pt-BR')}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold">
-                        R$ {proximoPagamento.valor.toLocaleString('pt-BR')}
+                        R$ {Number(proximoPagamento.amount).toLocaleString('pt-BR')}
                       </p>
                       <Badge 
-                        variant={proximoPagamento.status === 'atrasado' ? 'destructive' : 'secondary'}
+                        variant={
+                          proximoPagamento.due_date < new Date().toISOString().split('T')[0] 
+                            ? 'destructive' 
+                            : 'secondary'
+                        }
                       >
-                        {proximoPagamento.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
+                        {proximoPagamento.due_date < new Date().toISOString().split('T')[0] 
+                          ? 'Atrasado' 
+                          : 'Pendente'}
                       </Badge>
                     </div>
                   </div>
@@ -208,38 +297,42 @@ export default function MotoristaDashboard() {
         </div>
 
         {/* Contract Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações do Contrato</CardTitle>
-            <CardDescription>Detalhes do seu contrato de locação</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Início do Contrato</p>
-                <p className="text-lg font-semibold">
-                  {new Date(motoristaVehicle.contrato.inicio).toLocaleDateString('pt-BR')}
-                </p>
+        {contract && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Contrato</CardTitle>
+              <CardDescription>Detalhes do seu contrato de locação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Início do Contrato</p>
+                  <p className="text-lg font-semibold">
+                    {new Date(contract.start_date).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Fim do Contrato</p>
+                  <p className="text-lg font-semibold">
+                    {contract.end_date 
+                      ? new Date(contract.end_date).toLocaleDateString('pt-BR')
+                      : 'Indeterminado'}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Valor Semanal</p>
+                  <p className="text-lg font-semibold">
+                    R$ {Number(contract.weekly_price).toLocaleString('pt-BR')}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Dia de Vencimento</p>
+                  <p className="text-lg font-semibold capitalize">{contract.payment_day}</p>
+                </div>
               </div>
-              <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Fim do Contrato</p>
-                <p className="text-lg font-semibold">
-                  {new Date(motoristaVehicle.contrato.fim).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Valor Semanal</p>
-                <p className="text-lg font-semibold">
-                  R$ {motoristaVehicle.contrato.valorSemanal.toLocaleString('pt-BR')}
-                </p>
-              </div>
-              <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Dia de Vencimento</p>
-                <p className="text-lg font-semibold">{motoristaVehicle.contrato.diaVencimento}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </MotoristaLayout>
   );
