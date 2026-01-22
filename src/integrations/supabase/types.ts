@@ -116,6 +116,79 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          description: string | null
+          driver_id: string | null
+          expires_at: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          locador_id: string
+          mime_type: string | null
+          name: string
+          type: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          expires_at?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          locador_id: string
+          mime_type?: string | null
+          name: string
+          type: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          expires_at?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          locador_id?: string
+          mime_type?: string | null
+          name?: string
+          type?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           cnh_expiry: string

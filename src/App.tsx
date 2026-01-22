@@ -24,6 +24,7 @@ import LocadorMaintenance from "./pages/locador/Maintenance";
 import LocadorMileage from "./pages/locador/Mileage";
 import LocadorAlerts from "./pages/locador/Alerts";
 import LocadorContracts from "./pages/locador/Contracts";
+import LocadorDocuments from "./pages/locador/Documents";
 import LocadorSettings from "./pages/locador/Settings";
 
 // Admin Dashboard Pages
@@ -102,6 +103,11 @@ const App = () => (
             <Route path="/locador/contratos" element={
               <ProtectedRoute allowedRoles={['locador']}>
                 <LocadorContracts />
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/documentos" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <LocadorDocuments />
               </ProtectedRoute>
             } />
             <Route path="/locador/configuracoes" element={
