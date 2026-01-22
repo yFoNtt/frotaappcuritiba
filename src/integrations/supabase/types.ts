@@ -116,6 +116,78 @@ export type Database = {
           },
         ]
       }
+      document_requests: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_id: string | null
+          driver_id: string
+          expires_at: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          locador_id: string
+          mime_type: string | null
+          name: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          driver_id: string
+          expires_at?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          locador_id: string
+          mime_type?: string | null
+          name: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_id?: string | null
+          driver_id?: string
+          expires_at?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          locador_id?: string
+          mime_type?: string | null
+          name?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_requests_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           contract_id: string | null
