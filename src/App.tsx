@@ -40,6 +40,7 @@ import AdminSettings from "./pages/admin/Settings";
 import MotoristaDashboard from "./pages/motorista/Dashboard";
 import MotoristaVehicle from "./pages/motorista/Vehicle";
 import MotoristaPagamentos from "./pages/motorista/Payments";
+import MotoristaDocuments from "./pages/motorista/Documents";
 import MotoristaHistorico from "./pages/motorista/History";
 import MotoristaSettings from "./pages/motorista/Settings";
 
@@ -172,6 +173,11 @@ const App = () => (
             <Route path="/motorista/historico" element={
               <ProtectedRoute allowedRoles={['motorista']}>
                 <MotoristaHistorico />
+              </ProtectedRoute>
+            } />
+            <Route path="/motorista/documentos" element={
+              <ProtectedRoute allowedRoles={['motorista']}>
+                <MotoristaDocuments />
               </ProtectedRoute>
             } />
             <Route path="/motorista/configuracoes" element={

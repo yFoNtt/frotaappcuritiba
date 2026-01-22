@@ -8,7 +8,8 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  Truck
+  Truck,
+  FolderOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
   { icon: Car, label: 'Meu Veículo', path: '/motorista/veiculo' },
   { icon: CreditCard, label: 'Pagamentos', path: '/motorista/pagamentos' },
+  { icon: FolderOpen, label: 'Documentos', path: '/motorista/documentos' },
   { icon: History, label: 'Histórico', path: '/motorista/historico' },
   { icon: Settings, label: 'Configurações', path: '/motorista/configuracoes' },
 ];

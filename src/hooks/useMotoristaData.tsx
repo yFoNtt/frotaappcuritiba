@@ -303,3 +303,45 @@ export function useMotoristaHistory() {
     enabled: !!driver?.id,
   });
 }
+
+// Fetch documents linked to the motorista
+export function useMotoristaDocuments() {
+  const { data: driver } = useMotoristaDriver();
+
+  return useQuery({
+    queryKey: ['motorista', 'documents', driver?.id],
+    queryFn: async () => {
+      if (!driver?.id) return [];
+
+      // Using type assertion until Supabase types are refreshed
+      const { data, error } = await (supabase
+        .from('documents' as any)
+        .select('*')
+        .eq('driver_id', driver.id)
+        .order('created_at', { ascending: false }) as any);
+
+      if (error) {
+        console.error('Error fetching motorista documents:', error);
+        throw error;
+      }
+
+      return (data || []) as Array<{
+        id: string;
+        locador_id: string;
+        driver_id: string | null;
+        vehicle_id: string | null;
+        contract_id: string | null;
+        type: string;
+        name: string;
+        file_path: string;
+        file_size: number | null;
+        mime_type: string | null;
+        description: string | null;
+        expires_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
+    },
+    enabled: !!driver?.id,
+  });
+}
