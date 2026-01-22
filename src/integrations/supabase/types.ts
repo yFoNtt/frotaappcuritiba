@@ -231,6 +231,67 @@ export type Database = {
           },
         ]
       }
+      mileage_records: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          driver_id: string
+          id: string
+          km_reading: number
+          locador_id: string
+          notes: string | null
+          recorded_at: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          driver_id: string
+          id?: string
+          km_reading: number
+          locador_id: string
+          notes?: string | null
+          recorded_at?: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          driver_id?: string
+          id?: string
+          km_reading?: number
+          locador_id?: string
+          notes?: string | null
+          recorded_at?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mileage_records_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mileage_records_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mileage_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -366,6 +427,7 @@ export type Database = {
           color: string
           created_at: string
           current_driver_id: string | null
+          current_km: number | null
           deposit: number | null
           description: string | null
           excess_km_fee: number | null
@@ -389,6 +451,7 @@ export type Database = {
           color: string
           created_at?: string
           current_driver_id?: string | null
+          current_km?: number | null
           deposit?: number | null
           description?: string | null
           excess_km_fee?: number | null
@@ -412,6 +475,7 @@ export type Database = {
           color?: string
           created_at?: string
           current_driver_id?: string | null
+          current_km?: number | null
           deposit?: number | null
           description?: string | null
           excess_km_fee?: number | null
