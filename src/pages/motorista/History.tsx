@@ -1,6 +1,7 @@
 import { MotoristaLayout } from '@/components/motorista/MotoristaLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   History, 
   CreditCard, 
@@ -8,9 +9,18 @@ import {
   Wrench,
   Calendar
 } from 'lucide-react';
-import { motoristaHistorico } from '@/data/mockMotoristaData';
+import { useMotoristaHistory } from '@/hooks/useMotoristaData';
+import { useMemo } from 'react';
 
 export default function MotoristaHistorico() {
+  const { data: historico = [], isLoading } = useMotoristaHistory();
+
+  const stats = useMemo(() => ({
+    pagamentos: historico.filter(e => e.tipo === 'pagamento').length,
+    manutencoes: historico.filter(e => e.tipo === 'manutencao').length,
+    contratos: historico.filter(e => e.tipo === 'contrato').length,
+  }), [historico]);
+
   const getTypeIcon = (tipo: string) => {
     switch (tipo) {
       case 'pagamento':
@@ -50,6 +60,25 @@ export default function MotoristaHistorico() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="mt-2 h-5 w-64" />
+          </div>
+          <Skeleton className="h-96" />
+          <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-24" />
+            ))}
+          </div>
+        </div>
+      </MotoristaLayout>
+    );
+  }
+
   return (
     <MotoristaLayout>
       <div className="space-y-6">
@@ -69,46 +98,56 @@ export default function MotoristaHistorico() {
             <CardDescription>Histórico completo de atividades</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="relative space-y-0">
-              {motoristaHistorico.map((evento, index) => (
-                <div key={evento.id} className="relative flex gap-4 pb-8 last:pb-0">
-                  {/* Timeline line */}
-                  {index < motoristaHistorico.length - 1 && (
-                    <div className="absolute left-[19px] top-10 h-full w-0.5 bg-border" />
-                  )}
-                  
-                  {/* Timeline dot */}
-                  <div className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(evento.tipo)} text-white`}>
-                    {getTypeIcon(evento.tipo)}
-                  </div>
+            {historico.length > 0 ? (
+              <div className="relative space-y-0">
+                {historico.map((evento, index) => (
+                  <div key={evento.id} className="relative flex gap-4 pb-8 last:pb-0">
+                    {/* Timeline line */}
+                    {index < historico.length - 1 && (
+                      <div className="absolute left-[19px] top-10 h-full w-0.5 bg-border" />
+                    )}
+                    
+                    {/* Timeline dot */}
+                    <div className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(evento.tipo)} text-white`}>
+                      {getTypeIcon(evento.tipo)}
+                    </div>
 
-                  {/* Content */}
-                  <div className="flex-1 rounded-lg border p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <p className="font-medium">{evento.descricao}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {new Date(evento.data).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
+                    {/* Content */}
+                    <div className="flex-1 rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <p className="font-medium">{evento.descricao}</p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {new Date(evento.data).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {evento.valor !== null && evento.valor > 0 && (
-                          <span className="font-semibold text-green-600">
-                            R$ {evento.valor.toLocaleString('pt-BR')}
-                          </span>
-                        )}
-                        {getTypeBadge(evento.tipo)}
+                        <div className="flex items-center gap-3">
+                          {evento.valor !== null && evento.valor > 0 && (
+                            <span className="font-semibold text-green-600">
+                              R$ {evento.valor.toLocaleString('pt-BR')}
+                            </span>
+                          )}
+                          {getTypeBadge(evento.tipo)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <History className="mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="font-medium">Nenhum histórico encontrado</p>
+                <p className="text-sm text-muted-foreground">
+                  Suas atividades aparecerão aqui
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -121,9 +160,7 @@ export default function MotoristaHistorico() {
                   <CreditCard className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {motoristaHistorico.filter(e => e.tipo === 'pagamento').length}
-                  </p>
+                  <p className="text-2xl font-bold">{stats.pagamentos}</p>
                   <p className="text-sm text-muted-foreground">Pagamentos realizados</p>
                 </div>
               </div>
@@ -137,9 +174,7 @@ export default function MotoristaHistorico() {
                   <Wrench className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {motoristaHistorico.filter(e => e.tipo === 'manutencao').length}
-                  </p>
+                  <p className="text-2xl font-bold">{stats.manutencoes}</p>
                   <p className="text-sm text-muted-foreground">Manutenções</p>
                 </div>
               </div>
@@ -153,9 +188,7 @@ export default function MotoristaHistorico() {
                   <FileText className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {motoristaHistorico.filter(e => e.tipo === 'contrato').length}
-                  </p>
+                  <p className="text-2xl font-bold">{stats.contratos}</p>
                   <p className="text-sm text-muted-foreground">Eventos de contrato</p>
                 </div>
               </div>

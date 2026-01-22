@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Car, 
   Fuel, 
@@ -14,9 +15,53 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
-import { motoristaVehicle } from '@/data/mockMotoristaData';
+import { useMotoristaFullData } from '@/hooks/useMotoristaData';
 
 export default function MotoristaVehicle() {
+  const { driver, vehicle, contract, isLoading } = useMotoristaFullData();
+
+  if (isLoading) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="mt-2 h-5 w-72" />
+          </div>
+          <Skeleton className="h-96" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-64" />
+          </div>
+        </div>
+      </MotoristaLayout>
+    );
+  }
+
+  if (!vehicle) {
+    return (
+      <MotoristaLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Meu Veículo</h1>
+            <p className="text-muted-foreground">Informações do veículo alugado</p>
+          </div>
+          
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Car className="mb-4 h-16 w-16 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">Nenhum veículo vinculado</h3>
+              <p className="mt-2 text-muted-foreground">
+                Você ainda não está vinculado a nenhum veículo.
+                Entre em contato com seu locador para iniciar.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </MotoristaLayout>
+    );
+  }
+
   return (
     <MotoristaLayout>
       <div className="space-y-6">
@@ -31,22 +76,28 @@ export default function MotoristaVehicle() {
           <CardContent className="p-0">
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="aspect-video overflow-hidden lg:aspect-auto lg:h-full">
-                <img
-                  src={motoristaVehicle.imagem}
-                  alt={`${motoristaVehicle.marca} ${motoristaVehicle.modelo}`}
-                  className="h-full w-full object-cover"
-                />
+                {vehicle.images?.[0] ? (
+                  <img
+                    src={vehicle.images[0]}
+                    alt={`${vehicle.brand} ${vehicle.model}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full min-h-[300px] items-center justify-center bg-muted">
+                    <Car className="h-24 w-24 text-muted-foreground" />
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <div className="mb-4 flex items-start justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">
-                      {motoristaVehicle.marca} {motoristaVehicle.modelo}
+                      {vehicle.brand} {vehicle.model}
                     </h2>
-                    <p className="text-lg text-muted-foreground">{motoristaVehicle.ano}</p>
+                    <p className="text-lg text-muted-foreground">{vehicle.year}</p>
                   </div>
                   <Badge className="bg-green-500/10 text-green-600">
-                    {motoristaVehicle.status}
+                    Em uso
                   </Badge>
                 </div>
 
@@ -57,7 +108,7 @@ export default function MotoristaVehicle() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Placa</p>
-                      <p className="font-semibold">{motoristaVehicle.placa}</p>
+                      <p className="font-semibold">{vehicle.plate}</p>
                     </div>
                   </div>
 
@@ -67,7 +118,7 @@ export default function MotoristaVehicle() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Combustível</p>
-                      <p className="font-semibold">{motoristaVehicle.combustivel}</p>
+                      <p className="font-semibold capitalize">{vehicle.fuel_type}</p>
                     </div>
                   </div>
 
@@ -76,8 +127,8 @@ export default function MotoristaVehicle() {
                       <Gauge className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Quilometragem</p>
-                      <p className="font-semibold">{motoristaVehicle.km.toLocaleString('pt-BR')} km</p>
+                      <p className="text-sm text-muted-foreground">Preço Semanal</p>
+                      <p className="font-semibold">R$ {Number(vehicle.weekly_price).toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
 
@@ -87,7 +138,7 @@ export default function MotoristaVehicle() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Cor</p>
-                      <p className="font-semibold">{motoristaVehicle.cor}</p>
+                      <p className="font-semibold">{vehicle.color}</p>
                     </div>
                   </div>
                 </div>
@@ -108,17 +159,16 @@ export default function MotoristaVehicle() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-lg font-semibold">{motoristaVehicle.locador.nome}</p>
+                <p className="text-lg font-semibold">Seu Locador</p>
+                <p className="text-sm text-muted-foreground">
+                  Entre em contato pelo aplicativo
+                </p>
               </div>
               <Separator />
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{motoristaVehicle.locador.telefone}</span>
-                </div>
-                <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{motoristaVehicle.locador.email}</span>
+                  <span className="text-muted-foreground">Contato via sistema</span>
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
@@ -144,35 +194,49 @@ export default function MotoristaVehicle() {
               <CardDescription>Detalhes do contrato de locação</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Início</p>
-                  <p className="font-semibold">
-                    {new Date(motoristaVehicle.contrato.inicio).toLocaleDateString('pt-BR')}
+              {contract ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Início</p>
+                      <p className="font-semibold">
+                        {new Date(contract.start_date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Término</p>
+                      <p className="font-semibold">
+                        {contract.end_date 
+                          ? new Date(contract.end_date).toLocaleDateString('pt-BR')
+                          : 'Indeterminado'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor Semanal</p>
+                      <p className="text-lg font-bold text-primary">
+                        R$ {Number(contract.weekly_price).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Dia de Vencimento</p>
+                      <p className="font-semibold capitalize">{contract.payment_day}</p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <Button className="w-full">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Ver Contrato Completo
+                  </Button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <FileText className="mb-2 h-12 w-12 text-muted-foreground" />
+                  <p className="font-medium">Nenhum contrato ativo</p>
+                  <p className="text-sm text-muted-foreground">
+                    Entre em contato com seu locador
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Término</p>
-                  <p className="font-semibold">
-                    {new Date(motoristaVehicle.contrato.fim).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Valor Semanal</p>
-                  <p className="text-lg font-bold text-primary">
-                    R$ {motoristaVehicle.contrato.valorSemanal.toLocaleString('pt-BR')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Dia de Vencimento</p>
-                  <p className="font-semibold">{motoristaVehicle.contrato.diaVencimento}</p>
-                </div>
-              </div>
-              <Separator />
-              <Button className="w-full">
-                <FileText className="mr-2 h-4 w-4" />
-                Ver Contrato Completo
-              </Button>
+              )}
             </CardContent>
           </Card>
         </div>
