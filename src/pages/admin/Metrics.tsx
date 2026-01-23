@@ -1,21 +1,20 @@
+import { useMemo } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   TrendingUp, 
   Users, 
   Car, 
-  DollarSign,
-  Activity,
-  BarChart3
+  FileText,
+  Activity
 } from 'lucide-react';
-import { mockMonthlyData, mockPlatformStats } from '@/data/mockAdminData';
+import { useAdminStats, useAdminVehicles, useAdminMonthlyData } from '@/hooks/useAdminData';
 import {
   AreaChart,
   Area,
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -26,23 +25,49 @@ import {
   Cell,
 } from 'recharts';
 
-const vehicleStatusData = [
-  { name: 'Disponíveis', value: 45, color: 'hsl(142, 76%, 36%)' },
-  { name: 'Alugados', value: 35, color: 'hsl(217, 91%, 50%)' },
-  { name: 'Manutenção', value: 7, color: 'hsl(38, 92%, 50%)' },
-];
-
-const userGrowthData = [
-  { month: 'Jul', locadores: 8, motoristas: 25 },
-  { month: 'Ago', locadores: 12, motoristas: 45 },
-  { month: 'Set', locadores: 15, motoristas: 62 },
-  { month: 'Out', locadores: 18, motoristas: 85 },
-  { month: 'Nov', locadores: 21, motoristas: 110 },
-  { month: 'Dez', locadores: 22, motoristas: 128 },
-  { month: 'Jan', locadores: 24, motoristas: 132 },
-];
-
 export default function AdminMetrics() {
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useAdminVehicles();
+  const { data: monthlyData = [], isLoading: monthlyLoading } = useAdminMonthlyData();
+
+  const isLoading = statsLoading || vehiclesLoading || monthlyLoading;
+
+  const vehicleStatusData = useMemo(() => {
+    const available = vehicles.filter(v => v.status === 'available').length;
+    const rented = vehicles.filter(v => v.status === 'rented').length;
+    const maintenance = vehicles.filter(v => v.status === 'maintenance').length;
+
+    return [
+      { name: 'Disponíveis', value: available, color: 'hsl(142, 76%, 36%)' },
+      { name: 'Alugados', value: rented, color: 'hsl(217, 91%, 50%)' },
+      { name: 'Manutenção', value: maintenance, color: 'hsl(38, 92%, 50%)' },
+    ];
+  }, [vehicles]);
+
+  const occupancyRate = stats && stats.totalVehicles > 0 
+    ? Math.round((stats.rentedVehicles / stats.totalVehicles) * 100) 
+    : 0;
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-5 w-64 mt-2" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-[400px]" />
+            <Skeleton className="h-[400px]" />
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -60,10 +85,10 @@ export default function AdminMetrics() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Crescimento Mensal</p>
-                  <p className="text-2xl font-bold text-success">+{mockPlatformStats.growthRate}%</p>
+                  <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
+                  <p className="text-2xl font-bold text-primary">{occupancyRate}%</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-success" />
+                <TrendingUp className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -72,7 +97,7 @@ export default function AdminMetrics() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Usuários Ativos</p>
-                  <p className="text-2xl font-bold">{mockPlatformStats.totalUsers}</p>
+                  <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
                 </div>
                 <Users className="h-8 w-8 text-primary" />
               </div>
@@ -82,8 +107,8 @@ export default function AdminMetrics() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
-                  <p className="text-2xl font-bold">71%</p>
+                  <p className="text-sm text-muted-foreground">Total Veículos</p>
+                  <p className="text-2xl font-bold">{stats?.totalVehicles || 0}</p>
                 </div>
                 <Car className="h-8 w-8 text-primary" />
               </div>
@@ -93,10 +118,10 @@ export default function AdminMetrics() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Receita MRR</p>
-                  <p className="text-2xl font-bold">R$ 4.376</p>
+                  <p className="text-sm text-muted-foreground">Contratos Ativos</p>
+                  <p className="text-2xl font-bold text-success">{stats?.activeContracts || 0}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-success" />
+                <FileText className="h-8 w-8 text-success" />
               </div>
             </CardContent>
           </Card>
@@ -104,45 +129,63 @@ export default function AdminMetrics() {
 
         {/* Charts Row 1 */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Revenue Chart */}
+          {/* Growth Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-success" />
-                Evolução da Receita
+                <Activity className="h-5 w-5 text-primary" />
+                Evolução da Plataforma
               </CardTitle>
-              <CardDescription>Receita mensal da plataforma</CardDescription>
+              <CardDescription>Crescimento de usuários e veículos</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockMonthlyData}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-xs" />
-                    <YAxis className="text-xs" tickFormatter={(v) => `R$${v/1000}k`} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Receita']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="hsl(142, 76%, 36%)" 
-                      fillOpacity={1} 
-                      fill="url(#colorRevenue)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {monthlyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyData}>
+                      <defs>
+                        <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(217, 91%, 50%)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(217, 91%, 50%)" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorVehicles" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="totalUsers" 
+                        stroke="hsl(217, 91%, 50%)" 
+                        fillOpacity={1} 
+                        fill="url(#colorUsers)" 
+                        name="Usuários"
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="totalVehicles" 
+                        stroke="hsl(142, 76%, 36%)" 
+                        fillOpacity={1} 
+                        fill="url(#colorVehicles)" 
+                        name="Veículos"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    Nenhum dado disponível ainda
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -158,120 +201,123 @@ export default function AdminMetrics() {
             </CardHeader>
             <CardContent>
               <div className="h-[300px] flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={vehicleStatusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {vehicleStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                {vehicles.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={vehicleStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {vehicleStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-muted-foreground">Nenhum veículo cadastrado</div>
+                )}
               </div>
-              <div className="flex justify-center gap-6 mt-4">
-                {vehicleStatusData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2">
-                    <div 
-                      className="h-3 w-3 rounded-full" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm">{item.name}: {item.value}</span>
-                  </div>
-                ))}
-              </div>
+              {vehicles.length > 0 && (
+                <div className="flex justify-center gap-6 mt-4">
+                  {vehicleStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <div 
+                        className="h-3 w-3 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-sm">{item.name}: {item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Charts Row 2 */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* User Growth */}
+          {/* Monthly Registration */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                Crescimento de Usuários
+                Cadastros Mensais
               </CardTitle>
-              <CardDescription>Locadores vs Motoristas</CardDescription>
+              <CardDescription>Novos usuários e veículos por mês</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={userGrowthData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Bar dataKey="locadores" fill="hsl(217, 91%, 50%)" name="Locadores" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="motoristas" fill="hsl(142, 76%, 36%)" name="Motoristas" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {monthlyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="users" fill="hsl(217, 91%, 50%)" name="Novos usuários" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="vehicles" fill="hsl(142, 76%, 36%)" name="Novos veículos" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    Nenhum dado disponível ainda
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Activity */}
+          {/* Summary Stats */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Atividade Diária
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Resumo da Plataforma
               </CardTitle>
-              <CardDescription>Novos cadastros por dia</CardDescription>
+              <CardDescription>Métricas gerais do sistema</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { day: 'Seg', users: 5 },
-                    { day: 'Ter', users: 8 },
-                    { day: 'Qua', users: 12 },
-                    { day: 'Qui', users: 7 },
-                    { day: 'Sex', users: 15 },
-                    { day: 'Sáb', users: 10 },
-                    { day: 'Dom', users: 6 },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="day" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="users" 
-                      stroke="hsl(217, 91%, 50%)" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(217, 91%, 50%)' }}
-                      name="Novos usuários"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total de Locadores</span>
+                  <span className="text-2xl font-bold text-primary">{stats?.totalLocadores || 0}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">empresas cadastradas</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Motoristas Cadastrados</span>
+                  <span className="text-2xl font-bold">{stats?.totalDrivers || 0}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">motoristas na plataforma</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Contratos</span>
+                  <span className="text-2xl font-bold">{stats?.totalContracts || 0}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats?.activeContracts || 0} ativos
+                </p>
               </div>
             </CardContent>
           </Card>
