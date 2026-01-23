@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -17,66 +18,118 @@ import {
   Car,
   Shield,
   FileText,
-  Wrench
+  Wrench,
+  IdCard
 } from 'lucide-react';
-import { mockVehicles } from '@/data/mockData';
-import { mockAlerts } from '@/data/mockDriversPayments';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { toast } from 'sonner';
+import { useLocadorVehicles } from '@/hooks/useVehicles';
+import { useLocadorDrivers } from '@/hooks/useDrivers';
+import { useLocadorMaintenances } from '@/hooks/useMaintenances';
+
+interface Alert {
+  id: string;
+  type: 'cnh' | 'maintenance' | 'revision';
+  title: string;
+  description: string;
+  dueDate: Date;
+  entityId: string;
+  entityName: string;
+}
 
 export default function LocadorAlerts() {
-  const locadorId = '1';
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('pending');
 
-  const myVehicles = mockVehicles.filter(v => v.locadorId === locadorId);
-  const myAlerts = mockAlerts.filter(a => 
-    myVehicles.some(v => v.id === a.vehicleId)
-  );
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
+  const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
+  const { data: maintenances = [], isLoading: maintenancesLoading } = useLocadorMaintenances();
 
-  const filteredAlerts = myAlerts.filter(alert => {
-    const matchesType = typeFilter === 'all' || alert.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'pending' && !alert.resolved) ||
-      (statusFilter === 'resolved' && alert.resolved);
-    
-    return matchesType && matchesStatus;
-  });
+  const isLoading = vehiclesLoading || driversLoading || maintenancesLoading;
 
-  const pendingCount = myAlerts.filter(a => !a.resolved).length;
-  const resolvedCount = myAlerts.filter(a => a.resolved).length;
+  // Generate alerts from real data
+  const alerts = useMemo(() => {
+    const alertsList: Alert[] = [];
 
-  const handleResolve = (alertId: string) => {
-    toast.success('Alerta marcado como resolvido!');
-  };
+    // CNH expiry alerts for drivers
+    drivers.forEach(driver => {
+      if (driver.cnh_expiry) {
+        const expiryDate = parseISO(driver.cnh_expiry);
+        const daysUntilExpiry = differenceInDays(expiryDate, new Date());
+        
+        // Only show alerts for CNH expiring within 60 days or already expired
+        if (daysUntilExpiry <= 60) {
+          alertsList.push({
+            id: `cnh-${driver.id}`,
+            type: 'cnh',
+            title: 'CNH próxima do vencimento',
+            description: `A CNH do motorista ${driver.name} está ${daysUntilExpiry < 0 ? 'vencida' : 'próxima do vencimento'}`,
+            dueDate: expiryDate,
+            entityId: driver.id,
+            entityName: driver.name,
+          });
+        }
+      }
+    });
+
+    // Maintenance alerts (scheduled or upcoming)
+    maintenances.forEach(maintenance => {
+      if (maintenance.next_maintenance_date && maintenance.status !== 'completed') {
+        const nextDate = parseISO(maintenance.next_maintenance_date);
+        const daysUntil = differenceInDays(nextDate, new Date());
+        
+        if (daysUntil <= 30) {
+          const vehicle = vehicles.find(v => v.id === maintenance.vehicle_id);
+          alertsList.push({
+            id: `maintenance-${maintenance.id}`,
+            type: 'maintenance',
+            title: 'Manutenção agendada',
+            description: maintenance.description,
+            dueDate: nextDate,
+            entityId: maintenance.vehicle_id,
+            entityName: vehicle ? `${vehicle.brand} ${vehicle.model} - ${vehicle.plate}` : 'Veículo',
+          });
+        }
+      }
+    });
+
+    // Sort by urgency (closest due date first)
+    return alertsList.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  }, [drivers, maintenances, vehicles]);
+
+  const filteredAlerts = useMemo(() => {
+    if (typeFilter === 'all') return alerts;
+    return alerts.filter(alert => alert.type === typeFilter);
+  }, [alerts, typeFilter]);
 
   const getTypeIcon = (type: string) => {
     const icons: Record<string, React.ElementType> = {
+      cnh: IdCard,
+      maintenance: Wrench,
       revision: Wrench,
       ipva: FileText,
       insurance: Shield,
-      maintenance: Wrench,
     };
     return icons[type] || AlertTriangle;
   };
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
+      cnh: 'CNH',
+      maintenance: 'Manutenção',
       revision: 'Revisão',
       ipva: 'IPVA',
       insurance: 'Seguro',
-      maintenance: 'Manutenção',
     };
     return labels[type] || type;
   };
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
+      cnh: 'bg-warning/10 text-warning',
+      maintenance: 'bg-primary/10 text-primary',
       revision: 'bg-primary/10 text-primary',
       ipva: 'bg-warning/10 text-warning',
       insurance: 'bg-destructive/10 text-destructive',
-      maintenance: 'bg-muted text-muted-foreground',
     };
     return colors[type] || 'bg-muted text-muted-foreground';
   };
@@ -89,6 +142,32 @@ export default function LocadorAlerts() {
     return { label: 'Normal', variant: 'default' as const };
   };
 
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-5 w-64 mt-2" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </div>
+          <Skeleton className="h-16" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Skeleton className="h-40" />
+            <Skeleton className="h-40" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const pendingCount = alerts.length;
+  const cnhAlerts = alerts.filter(a => a.type === 'cnh').length;
+  const maintenanceAlerts = alerts.filter(a => a.type === 'maintenance').length;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -96,12 +175,12 @@ export default function LocadorAlerts() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Alertas</h1>
           <p className="text-muted-foreground">
-            Acompanhe revisões, IPVA, seguros e manutenções preventivas
+            Acompanhe vencimentos de CNH, manutenções e revisões
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -110,7 +189,7 @@ export default function LocadorAlerts() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{pendingCount}</p>
-                  <p className="text-sm text-muted-foreground">Alertas Pendentes</p>
+                  <p className="text-sm text-muted-foreground">Total de Alertas</p>
                 </div>
               </div>
             </CardContent>
@@ -118,12 +197,25 @@ export default function LocadorAlerts() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-success/10 p-2">
-                  <CheckCircle className="h-5 w-5 text-success" />
+                <div className="rounded-lg bg-warning/10 p-2">
+                  <IdCard className="h-5 w-5 text-warning" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{resolvedCount}</p>
-                  <p className="text-sm text-muted-foreground">Resolvidos</p>
+                  <p className="text-2xl font-bold">{cnhAlerts}</p>
+                  <p className="text-sm text-muted-foreground">CNH</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <Wrench className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{maintenanceAlerts}</p>
+                  <p className="text-sm text-muted-foreground">Manutenções</p>
                 </div>
               </div>
             </CardContent>
@@ -140,20 +232,8 @@ export default function LocadorAlerts() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="revision">Revisão</SelectItem>
-                  <SelectItem value="ipva">IPVA</SelectItem>
-                  <SelectItem value="insurance">Seguro</SelectItem>
+                  <SelectItem value="cnh">CNH</SelectItem>
                   <SelectItem value="maintenance">Manutenção</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendentes</SelectItem>
-                  <SelectItem value="resolved">Resolvidos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -161,54 +241,55 @@ export default function LocadorAlerts() {
         </Card>
 
         {/* Alerts List */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          {filteredAlerts.map((alert) => {
-            const vehicle = mockVehicles.find(v => v.id === alert.vehicleId);
-            const Icon = getTypeIcon(alert.type);
-            const urgency = getUrgencyLevel(alert.dueDate);
-            const daysRemaining = differenceInDays(alert.dueDate, new Date());
-            
-            return (
-              <Card 
-                key={alert.id} 
-                className={`transition-smooth ${alert.resolved ? 'opacity-60' : ''}`}
-              >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className={`rounded-xl p-3 ${getTypeColor(alert.type)}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold">{alert.title}</h3>
-                          <p className="text-sm text-muted-foreground">{alert.description}</p>
-                        </div>
-                        {!alert.resolved && (
+        {filteredAlerts.length > 0 ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {filteredAlerts.map((alert) => {
+              const Icon = getTypeIcon(alert.type);
+              const urgency = getUrgencyLevel(alert.dueDate);
+              const daysRemaining = differenceInDays(alert.dueDate, new Date());
+              
+              return (
+                <Card 
+                  key={alert.id} 
+                  className="transition-smooth"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className={`rounded-xl p-3 ${getTypeColor(alert.type)}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold">{alert.title}</h3>
+                              <Badge variant="outline" className="text-xs">
+                                {getTypeLabel(alert.type)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{alert.description}</p>
+                          </div>
                           <Badge variant={urgency.variant}>
                             {urgency.label}
                           </Badge>
-                        )}
-                        {alert.resolved && (
-                          <Badge variant="success">
-                            Resolvido
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Car className="h-4 w-4" />
-                          {vehicle?.brand} {vehicle?.model}
                         </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {format(alert.dueDate, "dd 'de' MMMM", { locale: ptBR })}
+                        
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            {alert.type === 'cnh' ? (
+                              <IdCard className="h-4 w-4" />
+                            ) : (
+                              <Car className="h-4 w-4" />
+                            )}
+                            {alert.entityName}
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {format(alert.dueDate, "dd 'de' MMMM", { locale: ptBR })}
+                          </div>
                         </div>
-                      </div>
 
-                      {!alert.resolved && (
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="pt-2">
                           <p className={`text-sm font-medium ${
                             daysRemaining < 0 ? 'text-destructive' :
                             daysRemaining <= 7 ? 'text-destructive' :
@@ -222,25 +303,15 @@ export default function LocadorAlerts() {
                                 : `${daysRemaining} dias restantes`
                             }
                           </p>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleResolve(alert.id)}
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Marcar resolvido
-                          </Button>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {filteredAlerts.length === 0 && (
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="rounded-full bg-success/10 p-4 mb-4">
