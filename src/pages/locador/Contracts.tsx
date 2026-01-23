@@ -263,13 +263,25 @@ export default function LocadorContracts() {
               Gerencie os contratos de locação da sua frota
             </p>
           </div>
-          <Button 
-            onClick={handleOpenAddDialog}
-            disabled={availableDrivers.length === 0 || availableVehicles.length === 0}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Contrato
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button 
+              onClick={handleOpenAddDialog}
+              disabled={drivers.length === 0 || availableVehicles.length === 0}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Contrato
+            </Button>
+            {(drivers.length === 0 || availableVehicles.length === 0) && (
+              <p className="text-xs text-muted-foreground">
+                {drivers.length === 0 
+                  ? 'Cadastre um motorista primeiro'
+                  : availableVehicles.length === 0 
+                    ? 'Nenhum veículo disponível'
+                    : 'Todos os motoristas já têm contrato ativo'
+                }
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
