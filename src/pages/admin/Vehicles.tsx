@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -25,27 +26,50 @@ import {
   Car,
   MapPin
 } from 'lucide-react';
-import { mockVehicles, mockLocadores } from '@/data/mockData';
-import { format } from 'date-fns';
+import { useAdminVehicles, useAdminStats } from '@/hooks/useAdminData';
+import { format, parseISO } from 'date-fns';
 
 export default function AdminVehicles() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const filteredVehicles = mockVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useAdminVehicles();
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
 
-  const availableCount = mockVehicles.filter(v => v.status === 'available').length;
-  const rentedCount = mockVehicles.filter(v => v.status === 'rented').length;
-  const maintenanceCount = mockVehicles.filter(v => v.status === 'maintenance').length;
+  const isLoading = vehiclesLoading || statsLoading;
+
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(vehicle => {
+      const matchesSearch = 
+        vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [vehicles, searchTerm, statusFilter]);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-5 w-64 mt-2" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20" />)}
+          </div>
+          <Skeleton className="h-16" />
+          <Skeleton className="h-96" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const maintenanceCount = vehicles.filter(v => v.status === 'maintenance').length;
 
   return (
     <AdminLayout>
@@ -67,7 +91,7 @@ export default function AdminVehicles() {
                   <Car className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{mockVehicles.length}</p>
+                  <p className="text-2xl font-bold">{stats?.totalVehicles || 0}</p>
                   <p className="text-sm text-muted-foreground">Total</p>
                 </div>
               </div>
@@ -80,7 +104,7 @@ export default function AdminVehicles() {
                   <Car className="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{availableCount}</p>
+                  <p className="text-2xl font-bold">{stats?.availableVehicles || 0}</p>
                   <p className="text-sm text-muted-foreground">Disponíveis</p>
                 </div>
               </div>
@@ -93,7 +117,7 @@ export default function AdminVehicles() {
                   <Car className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{rentedCount}</p>
+                  <p className="text-2xl font-bold">{stats?.rentedVehicles || 0}</p>
                   <p className="text-sm text-muted-foreground">Alugados</p>
                 </div>
               </div>
@@ -145,22 +169,20 @@ export default function AdminVehicles() {
         {/* Table */}
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Veículo</TableHead>
-                  <TableHead>Locador</TableHead>
-                  <TableHead>Localização</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Valor/Semana</TableHead>
-                  <TableHead>Cadastro</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVehicles.map((vehicle) => {
-                  const locador = mockLocadores.find(l => l.id === vehicle.locadorId);
-                  return (
+            {filteredVehicles.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Veículo</TableHead>
+                    <TableHead>Localização</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Valor/Semana</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredVehicles.map((vehicle) => (
                     <TableRow key={vehicle.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -174,26 +196,26 @@ export default function AdminVehicles() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <p className="font-medium">{locador?.companyName || locador?.name}</p>
-                      </TableCell>
-                      <TableCell>
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <MapPin className="h-4 w-4" />
                           {vehicle.city}/{vehicle.state}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={vehicle.status}>
+                        <Badge variant={
+                          vehicle.status === 'available' ? 'success' :
+                          vehicle.status === 'rented' ? 'default' : 'warning'
+                        }>
                           {vehicle.status === 'available' && 'Disponível'}
                           {vehicle.status === 'rented' && 'Alugado'}
                           {vehicle.status === 'maintenance' && 'Manutenção'}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        R$ {vehicle.weeklyPrice.toLocaleString('pt-BR')}
+                        R$ {Number(vehicle.weekly_price).toLocaleString('pt-BR')}
                       </TableCell>
                       <TableCell>
-                        {format(vehicle.createdAt, 'dd/MM/yyyy')}
+                        {format(parseISO(vehicle.created_at), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon">
@@ -201,10 +223,20 @@ export default function AdminVehicles() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Car className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="mb-2 text-lg font-semibold">Nenhum veículo encontrado</h3>
+                <p className="text-muted-foreground">
+                  {vehicles.length === 0
+                    ? 'Nenhum veículo cadastrado ainda.'
+                    : 'Nenhum veículo corresponde aos filtros.'}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

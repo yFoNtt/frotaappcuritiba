@@ -21,13 +21,48 @@ import {
   Check,
   CreditCard,
   Car,
-  Users
+  Users,
+  Info
 } from 'lucide-react';
-import { mockSubscriptionPlans } from '@/data/mockAdminData';
 import { toast } from 'sonner';
+import { useAdminStats } from '@/hooks/useAdminData';
+
+// Static plans data - in a real app, this would come from a database table
+const subscriptionPlans = [
+  {
+    id: 'basic',
+    name: 'Básico',
+    price: 99,
+    maxVehicles: 5,
+    maxDrivers: 10,
+    features: ['Gestão de frota básica', 'Até 5 anúncios', 'Suporte por email'],
+    isActive: true,
+  },
+  {
+    id: 'pro',
+    name: 'Profissional',
+    price: 199,
+    maxVehicles: 15,
+    maxDrivers: 30,
+    features: ['Gestão completa', 'Até 15 anúncios', 'Relatórios avançados', 'Suporte prioritário'],
+    isActive: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Empresarial',
+    price: 399,
+    maxVehicles: 999,
+    maxDrivers: 999,
+    features: ['Veículos ilimitados', 'Anúncios ilimitados', 'API de integração', 'Gerente de conta dedicado'],
+    isActive: true,
+  },
+];
 
 export default function AdminPlans() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [plans, setPlans] = useState(subscriptionPlans);
+
+  const { data: stats } = useAdminStats();
 
   const handleSavePlan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +71,9 @@ export default function AdminPlans() {
   };
 
   const handleTogglePlan = (planId: string) => {
+    setPlans(plans.map(p => 
+      p.id === planId ? { ...p, isActive: !p.isActive } : p
+    ));
     toast.success('Status do plano atualizado!');
   };
 
@@ -94,9 +132,25 @@ export default function AdminPlans() {
           </Dialog>
         </div>
 
+        {/* Info Card */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Sistema de Planos</p>
+                <p className="text-sm text-muted-foreground">
+                  Os planos são configurações estáticas. Para um sistema completo de assinaturas, 
+                  seria necessário integrar com um gateway de pagamento como Stripe ou PagSeguro.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Plans Grid */}
         <div className="grid gap-6 md:grid-cols-3">
-          {mockSubscriptionPlans.map((plan) => (
+          {plans.map((plan) => (
             <Card key={plan.id} className={`relative ${!plan.isActive ? 'opacity-60' : ''}`}>
               {plan.id === 'pro' && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -157,30 +211,30 @@ export default function AdminPlans() {
           ))}
         </div>
 
-        {/* Revenue Info */}
+        {/* Platform Stats */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" />
-              Informações de Receita
+              Estatísticas da Plataforma
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Assinantes Básico</p>
-                <p className="text-2xl font-bold">12</p>
-                <p className="text-sm text-success">R$ 1.188/mês</p>
+                <p className="text-sm text-muted-foreground">Total de Locadores</p>
+                <p className="text-2xl font-bold">{stats?.totalLocadores || 0}</p>
+                <p className="text-sm text-muted-foreground">cadastrados</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Assinantes Pro</p>
-                <p className="text-2xl font-bold">8</p>
-                <p className="text-sm text-success">R$ 1.592/mês</p>
+                <p className="text-sm text-muted-foreground">Total de Veículos</p>
+                <p className="text-2xl font-bold">{stats?.totalVehicles || 0}</p>
+                <p className="text-sm text-muted-foreground">na plataforma</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">Assinantes Enterprise</p>
-                <p className="text-2xl font-bold">4</p>
-                <p className="text-sm text-success">R$ 1.596/mês</p>
+                <p className="text-sm text-muted-foreground">Contratos Ativos</p>
+                <p className="text-2xl font-bold">{stats?.activeContracts || 0}</p>
+                <p className="text-sm text-muted-foreground">em andamento</p>
               </div>
             </div>
           </CardContent>
