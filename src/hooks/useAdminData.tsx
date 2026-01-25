@@ -30,7 +30,7 @@ export interface LocadorWithStats {
   driverCount: number;
 }
 
-// Fetch all users with roles (admin only)
+// Fetch all users with roles and emails (admin only)
 export function useAdminUsers() {
   const { user, role } = useAuth();
 
@@ -49,10 +49,28 @@ export function useAdminUsers() {
         throw rolesError;
       }
 
+      // Get user emails using the secure function
+      const { data: userEmails, error: emailsError } = await supabase
+        .rpc('get_user_emails_for_admin');
+
+      if (emailsError) {
+        console.error('Error fetching user emails:', emailsError);
+        // Continue without emails if there's an error
+      }
+
+      const emailMap = new Map<string, { email: string; last_sign_in_at: string | null }>();
+      if (userEmails) {
+        userEmails.forEach((u: { user_id: string; email: string; last_sign_in_at: string | null }) => {
+          emailMap.set(u.user_id, { email: u.email, last_sign_in_at: u.last_sign_in_at });
+        });
+      }
+
       return roles.map(r => ({
         id: r.user_id,
+        email: emailMap.get(r.user_id)?.email || '',
         role: r.role as 'admin' | 'locador' | 'motorista',
         created_at: r.created_at,
+        last_sign_in_at: emailMap.get(r.user_id)?.last_sign_in_at || null,
       }));
     },
     enabled: !!user && role === 'admin',
@@ -234,18 +252,26 @@ export function useAdminLocadores() {
         throw rolesError;
       }
 
-      // Get vehicles and drivers counts
-      const [vehiclesResult, driversResult] = await Promise.all([
+      // Get user emails, vehicles and drivers counts in parallel
+      const [emailsResult, vehiclesResult, driversResult] = await Promise.all([
+        supabase.rpc('get_user_emails_for_admin'),
         supabase.from('vehicles').select('locador_id'),
         supabase.from('drivers').select('locador_id'),
       ]);
+
+      const emailMap = new Map<string, string>();
+      if (emailsResult.data) {
+        emailsResult.data.forEach((u: { user_id: string; email: string }) => {
+          emailMap.set(u.user_id, u.email);
+        });
+      }
 
       const vehicles = vehiclesResult.data || [];
       const drivers = driversResult.data || [];
 
       return locadorRoles.map(l => ({
         id: l.user_id,
-        email: '', // We don't have access to auth.users email
+        email: emailMap.get(l.user_id) || '',
         created_at: l.created_at,
         vehicleCount: vehicles.filter(v => v.locador_id === l.user_id).length,
         driverCount: drivers.filter(d => d.locador_id === l.user_id).length,

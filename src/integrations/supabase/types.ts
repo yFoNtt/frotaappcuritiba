@@ -644,6 +644,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_emails_for_admin: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
