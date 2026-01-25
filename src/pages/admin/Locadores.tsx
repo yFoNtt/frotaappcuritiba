@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,15 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { 
   Search, 
-  MoreHorizontal, 
   Eye,
   Building2,
   Car,
@@ -31,6 +25,7 @@ import { useAdminLocadores, useAdminStats } from '@/hooks/useAdminData';
 import { format, parseISO } from 'date-fns';
 
 export default function AdminLocadores() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: locadores = [], isLoading: locadoresLoading } = useAdminLocadores();
@@ -177,27 +172,15 @@ export default function AdminLocadores() {
                         {format(parseISO(locador.created_at), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-popover">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver detalhes
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Car className="mr-2 h-4 w-4" />
-                              Ver veículos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Users className="mr-2 h-4 w-4" />
-                              Ver motoristas
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/admin/locadores/${locador.id}`)}
+                          className="gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Ver detalhes
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

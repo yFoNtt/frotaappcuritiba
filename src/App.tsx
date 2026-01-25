@@ -37,6 +37,7 @@ import AdminVehicles from "./pages/admin/Vehicles";
 import AdminPlans from "./pages/admin/Plans";
 import AdminMetrics from "./pages/admin/Metrics";
 import AdminSettings from "./pages/admin/Settings";
+import AdminLocadorDetails from "./pages/admin/LocadorDetails";
 
 // Motorista Dashboard Pages
 import MotoristaDashboard from "./pages/motorista/Dashboard";
@@ -143,6 +144,11 @@ const App = () => (
             <Route path="/admin/locadores" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminLocadores />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/locadores/:id" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLocadorDetails />
               </ProtectedRoute>
             } />
             <Route path="/admin/veiculos" element={
