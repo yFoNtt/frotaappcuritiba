@@ -39,8 +39,10 @@ export default function AdminLocadores() {
   const isLoading = locadoresLoading || statsLoading;
 
   const filteredLocadores = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
     return locadores.filter(locador =>
-      locador.id.toLowerCase().includes(searchTerm.toLowerCase())
+      locador.id.toLowerCase().includes(searchLower) ||
+      (locador.email && locador.email.toLowerCase().includes(searchLower))
     );
   }, [locadores, searchTerm]);
 
@@ -122,7 +124,7 @@ export default function AdminLocadores() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por ID..."
+                placeholder="Buscar por email ou ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -151,10 +153,11 @@ export default function AdminLocadores() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                            L
+                            {locador.email ? locador.email.charAt(0).toUpperCase() : 'L'}
                           </div>
                           <div>
-                            <p className="font-medium font-mono text-sm">{locador.id}</p>
+                            <p className="font-medium">{locador.email || 'Email não disponível'}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{locador.id.slice(0, 8)}...</p>
                           </div>
                         </div>
                       </TableCell>

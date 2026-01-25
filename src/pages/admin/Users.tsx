@@ -40,7 +40,10 @@ export default function AdminUsers() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = user.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = 
+        user.id.toLowerCase().includes(searchLower) ||
+        (user.email && user.email.toLowerCase().includes(searchLower));
       const matchesRole = roleFilter === 'all' || user.role === roleFilter;
       
       return matchesSearch && matchesRole;
@@ -139,7 +142,7 @@ export default function AdminUsers() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por ID..."
+                  placeholder="Buscar por email ou ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -167,9 +170,10 @@ export default function AdminUsers() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID do Usuário</TableHead>
+                    <TableHead>Usuário</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cadastro</TableHead>
+                    <TableHead>Último Acesso</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -185,7 +189,8 @@ export default function AdminUsers() {
                             {user.role === 'locador' ? 'L' : user.role === 'admin' ? 'A' : 'M'}
                           </div>
                           <div>
-                            <p className="font-medium font-mono text-sm">{user.id}</p>
+                            <p className="font-medium">{user.email || 'Email não disponível'}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{user.id.slice(0, 8)}...</p>
                           </div>
                         </div>
                       </TableCell>
@@ -202,6 +207,12 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell>
                         {format(parseISO(user.created_at), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {user.last_sign_in_at 
+                          ? format(parseISO(user.last_sign_in_at), 'dd/MM/yyyy HH:mm')
+                          : <span className="text-muted-foreground">Nunca</span>
+                        }
                       </TableCell>
                     </TableRow>
                   ))}
