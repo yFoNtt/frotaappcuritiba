@@ -12,6 +12,7 @@ const initialFilters: VehicleFiltersState = {
   city: '',
   brand: '',
   minYear: '',
+  minPrice: '',
   maxPrice: '',
   fuelType: '',
   app: '',
@@ -53,6 +54,7 @@ export default function Vehicles() {
       if (filters.city && vehicle.city !== filters.city) return false;
       if (filters.brand && vehicle.brand !== filters.brand) return false;
       if (filters.minYear && vehicle.year < parseInt(filters.minYear)) return false;
+      if (filters.minPrice && vehicle.weekly_price < parseInt(filters.minPrice)) return false;
       if (filters.maxPrice && vehicle.weekly_price > parseInt(filters.maxPrice)) return false;
       if (filters.fuelType && vehicle.fuel_type !== filters.fuelType) return false;
       if (filters.app && !vehicle.allowed_apps?.includes(filters.app)) return false;
