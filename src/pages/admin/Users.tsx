@@ -24,19 +24,29 @@ import {
   Search, 
   Users,
   Building2,
-  UserCog
+  UserCog,
+  Pencil
 } from 'lucide-react';
-import { useAdminUsers, useAdminStats } from '@/hooks/useAdminData';
+import { useAdminUsers, useAdminStats, useUpdateUserRole, AdminUser } from '@/hooks/useAdminData';
+import { EditRoleDialog } from '@/components/admin/EditRoleDialog';
 import { format, parseISO } from 'date-fns';
 
 export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
   const { data: users = [], isLoading: usersLoading } = useAdminUsers();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const updateRoleMutation = useUpdateUserRole();
 
   const isLoading = usersLoading || statsLoading;
+
+  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'locador' | 'motorista') => {
+    await updateRoleMutation.mutateAsync({ userId, newRole });
+    setEditingUser(null);
+  };
+
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
@@ -174,6 +184,7 @@ export default function AdminUsers() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead>Último Acesso</TableHead>
+                    <TableHead className="w-[80px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,6 +225,16 @@ export default function AdminUsers() {
                           : <span className="text-muted-foreground">Nunca</span>
                         }
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingUser(user)}
+                          title="Editar permissão"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -231,6 +252,14 @@ export default function AdminUsers() {
             )}
           </CardContent>
         </Card>
+
+        <EditRoleDialog
+          open={!!editingUser}
+          onOpenChange={(open) => !open && setEditingUser(null)}
+          user={editingUser}
+          onSave={handleUpdateRole}
+          isLoading={updateRoleMutation.isPending}
+        />
       </div>
     </AdminLayout>
   );

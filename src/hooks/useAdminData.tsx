@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 export interface AdminUser {
   id: string;
@@ -74,6 +75,46 @@ export function useAdminUsers() {
       }));
     },
     enabled: !!user && role === 'admin',
+  });
+}
+
+// Update user role (admin only)
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+  const { user, role } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      newRole,
+    }: {
+      userId: string;
+      newRole: 'admin' | 'locador' | 'motorista';
+    }) => {
+      if (!user || role !== 'admin') {
+        throw new Error('Não autorizado');
+      }
+
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error updating user role:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'locadores'] });
+      toast.success('Permissão atualizada com sucesso');
+    },
+    onError: (error) => {
+      console.error('Error in mutation:', error);
+      toast.error('Erro ao atualizar permissão');
+    },
   });
 }
 
