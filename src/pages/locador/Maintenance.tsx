@@ -12,8 +12,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Plus, Wrench } from 'lucide-react';
+import { Plus, Wrench, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { useMaintenanceExport } from '@/hooks/useMaintenanceExport';
 import { isBefore, addDays, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { 
   useLocadorMaintenances, 
@@ -51,8 +58,17 @@ export default function LocadorMaintenance() {
   const updateMaintenance = useUpdateMaintenance();
   const deleteMaintenance = useDeleteMaintenance();
   const completeMaintenance = useCompleteMaintenance();
+  const { exportToPDF, exportToExcel } = useMaintenanceExport();
 
   const isLoading = maintenancesLoading || vehiclesLoading;
+
+  const handleExportPDF = () => {
+    exportToPDF({ maintenances: filteredMaintenances, vehicles, filters });
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({ maintenances: filteredMaintenances, vehicles, filters });
+  };
 
   // Filter maintenances
   const filteredMaintenances = useMemo(() => {
@@ -181,10 +197,30 @@ export default function LocadorMaintenance() {
                 Registre e acompanhe as manutenções dos veículos
               </p>
             </div>
-            <Button onClick={handleOpenAddDialog} size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Registrar Manutenção
-            </Button>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="lg" disabled={filteredMaintenances.length === 0}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={handleOpenAddDialog} size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Registrar Manutenção
+              </Button>
+            </div>
           </div>
 
           {/* Stats */}
