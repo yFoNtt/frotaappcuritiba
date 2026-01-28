@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -165,51 +165,77 @@ export function useReportExport() {
     doc.save(`relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   }, []);
 
-  const exportToExcel = useCallback((data: ExportData) => {
-    const workbook = XLSX.utils.book_new();
+  const exportToExcel = useCallback(async (data: ExportData) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'FrotaApp';
+    workbook.created = new Date();
 
     // Summary sheet
-    const summaryData = [
-      ['Relatório de Frota'],
-      [`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`],
-      [],
-      ['RESUMO FINANCEIRO (ÚLTIMOS 6 MESES)'],
-      ['Métrica', 'Valor'],
-      ['Receita Total', data.totals.totalReceita],
-      ['Custos Total', data.totals.totalCustos],
-      ['Lucro Líquido', data.totals.totalLucro],
-      ['Crescimento vs Mês Anterior (%)', data.totals.receitaGrowth],
-      [],
-      ['STATUS DA FROTA'],
-      ['Status', 'Quantidade', 'Percentual (%)'],
-      ['Alugados', data.occupancyData.rented, data.occupancyData.total > 0 ? ((data.occupancyData.rented / data.occupancyData.total) * 100) : 0],
-      ['Disponíveis', data.occupancyData.available, data.occupancyData.total > 0 ? ((data.occupancyData.available / data.occupancyData.total) * 100) : 0],
-      ['Manutenção', data.occupancyData.maintenance, data.occupancyData.total > 0 ? ((data.occupancyData.maintenance / data.occupancyData.total) * 100) : 0],
-      ['Total', data.occupancyData.total, 100],
-    ];
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
+    const summarySheet = workbook.addWorksheet('Resumo');
+    summarySheet.addRow(['Relatório de Frota']);
+    summarySheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
+    summarySheet.addRow([]);
+    summarySheet.addRow(['RESUMO FINANCEIRO (ÚLTIMOS 6 MESES)']);
+    summarySheet.addRow(['Métrica', 'Valor']);
+    summarySheet.addRow(['Receita Total', data.totals.totalReceita]);
+    summarySheet.addRow(['Custos Total', data.totals.totalCustos]);
+    summarySheet.addRow(['Lucro Líquido', data.totals.totalLucro]);
+    summarySheet.addRow(['Crescimento vs Mês Anterior (%)', data.totals.receitaGrowth]);
+    summarySheet.addRow([]);
+    summarySheet.addRow(['STATUS DA FROTA']);
+    summarySheet.addRow(['Status', 'Quantidade', 'Percentual (%)']);
+    summarySheet.addRow(['Alugados', data.occupancyData.rented, data.occupancyData.total > 0 ? ((data.occupancyData.rented / data.occupancyData.total) * 100) : 0]);
+    summarySheet.addRow(['Disponíveis', data.occupancyData.available, data.occupancyData.total > 0 ? ((data.occupancyData.available / data.occupancyData.total) * 100) : 0]);
+    summarySheet.addRow(['Manutenção', data.occupancyData.maintenance, data.occupancyData.total > 0 ? ((data.occupancyData.maintenance / data.occupancyData.total) * 100) : 0]);
+    summarySheet.addRow(['Total', data.occupancyData.total, 100]);
+
+    // Style header
+    summarySheet.getRow(1).font = { bold: true, size: 14 };
+    summarySheet.getRow(4).font = { bold: true };
+    summarySheet.getRow(5).font = { bold: true };
+    summarySheet.getRow(11).font = { bold: true };
+    summarySheet.getRow(12).font = { bold: true };
 
     // Monthly data sheet
-    const monthlyHeaders = ['Mês', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)'];
-    const monthlyRows = data.monthlyData.map(m => [m.monthFull, m.receita, m.custos, m.lucro]);
-    const monthlySheet = XLSX.utils.aoa_to_sheet([monthlyHeaders, ...monthlyRows]);
-    XLSX.utils.book_append_sheet(workbook, monthlySheet, 'Evolução Mensal');
+    const monthlySheet = workbook.addWorksheet('Evolução Mensal');
+    monthlySheet.addRow(['Mês', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)']);
+    monthlySheet.getRow(1).font = { bold: true };
+    data.monthlyData.forEach(m => {
+      monthlySheet.addRow([m.monthFull, m.receita, m.custos, m.lucro]);
+    });
 
     // Vehicle comparison sheet
-    const vehicleHeaders = ['Veículo', 'Placa', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)'];
-    const vehicleRows = data.vehicleComparison.map(v => [v.name, v.plate, v.receita, v.custos, v.lucro]);
-    const vehicleSheet = XLSX.utils.aoa_to_sheet([vehicleHeaders, ...vehicleRows]);
-    XLSX.utils.book_append_sheet(workbook, vehicleSheet, 'Por Veículo');
+    const vehicleSheet = workbook.addWorksheet('Por Veículo');
+    vehicleSheet.addRow(['Veículo', 'Placa', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)']);
+    vehicleSheet.getRow(1).font = { bold: true };
+    data.vehicleComparison.forEach(v => {
+      vehicleSheet.addRow([v.name, v.plate, v.receita, v.custos, v.lucro]);
+    });
 
     // Maintenance costs sheet
-    const maintHeaders = ['Tipo de Manutenção', 'Custo Total (R$)'];
-    const maintRows = data.maintenanceCostsByType.map(m => [m.name, m.value]);
-    const maintSheet = XLSX.utils.aoa_to_sheet([maintHeaders, ...maintRows]);
-    XLSX.utils.book_append_sheet(workbook, maintSheet, 'Custos Manutenção');
+    const maintSheet = workbook.addWorksheet('Custos Manutenção');
+    maintSheet.addRow(['Tipo de Manutenção', 'Custo Total (R$)']);
+    maintSheet.getRow(1).font = { bold: true };
+    data.maintenanceCostsByType.forEach(m => {
+      maintSheet.addRow([m.name, m.value]);
+    });
+
+    // Auto-fit columns for all sheets
+    [summarySheet, monthlySheet, vehicleSheet, maintSheet].forEach(sheet => {
+      sheet.columns.forEach(column => {
+        column.width = 20;
+      });
+    });
 
     // Save Excel
-    XLSX.writeFile(workbook, `relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   }, []);
 
   return { exportToPDF, exportToExcel };
