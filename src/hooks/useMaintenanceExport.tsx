@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Maintenance, MAINTENANCE_TYPES, MAINTENANCE_STATUS } from './useMaintenances';
@@ -180,31 +180,36 @@ export function useMaintenanceExport() {
     doc.save(`manutencoes-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   }, []);
 
-  const exportToExcel = useCallback(({ maintenances, vehicles, filters }: ExportOptions) => {
-    const workbook = XLSX.utils.book_new();
+  const exportToExcel = useCallback(async ({ maintenances, vehicles, filters }: ExportOptions) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'FrotaApp';
+    workbook.created = new Date();
 
     // Summary sheet
     const completedMaintenances = maintenances.filter(m => m.status === 'completed');
     const totalCost = completedMaintenances.reduce((sum, m) => sum + Number(m.cost || 0), 0);
     const avgCost = completedMaintenances.length > 0 ? totalCost / completedMaintenances.length : 0;
 
-    const summaryData = [
-      ['Histórico de Manutenções'],
-      [`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`],
-      [`Filtros: ${getActiveFiltersDescription(filters, vehicles)}`],
-      [],
-      ['RESUMO'],
-      ['Métrica', 'Valor'],
-      ['Total de Registros', maintenances.length],
-      ['Manutenções Concluídas', completedMaintenances.length],
-      ['Custo Total (R$)', totalCost],
-      ['Custo Médio (R$)', avgCost],
-    ];
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
+    const summarySheet = workbook.addWorksheet('Resumo');
+    summarySheet.addRow(['Histórico de Manutenções']);
+    summarySheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
+    summarySheet.addRow([`Filtros: ${getActiveFiltersDescription(filters, vehicles)}`]);
+    summarySheet.addRow([]);
+    summarySheet.addRow(['RESUMO']);
+    summarySheet.addRow(['Métrica', 'Valor']);
+    summarySheet.addRow(['Total de Registros', maintenances.length]);
+    summarySheet.addRow(['Manutenções Concluídas', completedMaintenances.length]);
+    summarySheet.addRow(['Custo Total (R$)', totalCost]);
+    summarySheet.addRow(['Custo Médio (R$)', avgCost]);
+
+    // Style header
+    summarySheet.getRow(1).font = { bold: true, size: 14 };
+    summarySheet.getRow(5).font = { bold: true };
+    summarySheet.getRow(6).font = { bold: true };
 
     // Maintenances sheet
-    const maintenanceHeaders = [
+    const maintenanceSheet = workbook.addWorksheet('Manutenções');
+    maintenanceSheet.addRow([
       'Data',
       'Veículo',
       'Placa',
@@ -217,23 +222,25 @@ export function useMaintenanceExport() {
       'Próxima Manutenção',
       'Próximo KM',
       'Observações',
-    ];
-    const maintenanceRows = maintenances.map(m => [
-      formatDate(m.performed_at),
-      getVehicleName(m.vehicle_id, vehicles),
-      getVehiclePlate(m.vehicle_id, vehicles),
-      MAINTENANCE_TYPES[m.type as keyof typeof MAINTENANCE_TYPES] || m.type,
-      m.description,
-      MAINTENANCE_STATUS[m.status as keyof typeof MAINTENANCE_STATUS] || m.status,
-      Number(m.cost || 0),
-      m.km_at_maintenance || '',
-      m.service_provider || '',
-      m.next_maintenance_date ? formatDate(m.next_maintenance_date) : '',
-      m.next_maintenance_km || '',
-      m.notes || '',
     ]);
-    const maintenanceSheet = XLSX.utils.aoa_to_sheet([maintenanceHeaders, ...maintenanceRows]);
-    XLSX.utils.book_append_sheet(workbook, maintenanceSheet, 'Manutenções');
+    maintenanceSheet.getRow(1).font = { bold: true };
+    
+    maintenances.forEach(m => {
+      maintenanceSheet.addRow([
+        formatDate(m.performed_at),
+        getVehicleName(m.vehicle_id, vehicles),
+        getVehiclePlate(m.vehicle_id, vehicles),
+        MAINTENANCE_TYPES[m.type as keyof typeof MAINTENANCE_TYPES] || m.type,
+        m.description,
+        MAINTENANCE_STATUS[m.status as keyof typeof MAINTENANCE_STATUS] || m.status,
+        Number(m.cost || 0),
+        m.km_at_maintenance || '',
+        m.service_provider || '',
+        m.next_maintenance_date ? formatDate(m.next_maintenance_date) : '',
+        m.next_maintenance_km || '',
+        m.notes || '',
+      ]);
+    });
 
     // Cost by type sheet
     const costByType: Record<string, { count: number; cost: number }> = {};
@@ -246,17 +253,20 @@ export function useMaintenanceExport() {
       costByType[typeName].cost += Number(m.cost || 0);
     });
 
-    const costHeaders = ['Tipo de Manutenção', 'Quantidade', 'Custo Total (R$)', 'Custo Médio (R$)'];
-    const costRows = Object.entries(costByType)
+    const costSheet = workbook.addWorksheet('Custos por Tipo');
+    costSheet.addRow(['Tipo de Manutenção', 'Quantidade', 'Custo Total (R$)', 'Custo Médio (R$)']);
+    costSheet.getRow(1).font = { bold: true };
+    
+    Object.entries(costByType)
       .sort((a, b) => b[1].cost - a[1].cost)
-      .map(([type, data]) => [
-        type,
-        data.count,
-        data.cost,
-        data.count > 0 ? data.cost / data.count : 0,
-      ]);
-    const costSheet = XLSX.utils.aoa_to_sheet([costHeaders, ...costRows]);
-    XLSX.utils.book_append_sheet(workbook, costSheet, 'Custos por Tipo');
+      .forEach(([type, data]) => {
+        costSheet.addRow([
+          type,
+          data.count,
+          data.cost,
+          data.count > 0 ? data.cost / data.count : 0,
+        ]);
+      });
 
     // Cost by vehicle sheet
     const costByVehicle: Record<string, { count: number; cost: number; plate: string }> = {};
@@ -270,21 +280,38 @@ export function useMaintenanceExport() {
       costByVehicle[m.vehicle_id].cost += Number(m.cost || 0);
     });
 
-    const vehicleHeaders = ['Veículo', 'Placa', 'Quantidade', 'Custo Total (R$)', 'Custo Médio (R$)'];
-    const vehicleRows = Object.entries(costByVehicle)
+    const vehicleSheet = workbook.addWorksheet('Custos por Veículo');
+    vehicleSheet.addRow(['Veículo', 'Placa', 'Quantidade', 'Custo Total (R$)', 'Custo Médio (R$)']);
+    vehicleSheet.getRow(1).font = { bold: true };
+    
+    Object.entries(costByVehicle)
       .sort((a, b) => b[1].cost - a[1].cost)
-      .map(([vehicleId, data]) => [
-        getVehicleName(vehicleId, vehicles),
-        data.plate,
-        data.count,
-        data.cost,
-        data.count > 0 ? data.cost / data.count : 0,
-      ]);
-    const vehicleSheet = XLSX.utils.aoa_to_sheet([vehicleHeaders, ...vehicleRows]);
-    XLSX.utils.book_append_sheet(workbook, vehicleSheet, 'Custos por Veículo');
+      .forEach(([vehicleId, data]) => {
+        vehicleSheet.addRow([
+          getVehicleName(vehicleId, vehicles),
+          data.plate,
+          data.count,
+          data.cost,
+          data.count > 0 ? data.cost / data.count : 0,
+        ]);
+      });
+
+    // Auto-fit columns for all sheets
+    [summarySheet, maintenanceSheet, costSheet, vehicleSheet].forEach(sheet => {
+      sheet.columns.forEach(column => {
+        column.width = 18;
+      });
+    });
 
     // Save Excel
-    XLSX.writeFile(workbook, `manutencoes-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `manutencoes-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   }, []);
 
   return { exportToPDF, exportToExcel };
