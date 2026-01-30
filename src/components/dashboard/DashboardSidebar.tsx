@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Car, 
@@ -22,7 +22,9 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
   { icon: Car, label: 'Veículos', path: '/locador/veiculos' },
@@ -38,10 +40,11 @@ const menuItems = [
   { icon: Settings, label: 'Configurações', path: '/locador/configuracoes' },
 ];
 
-function SidebarContent({ collapsed, onCollapse, onClose }: { 
+function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: { 
   collapsed: boolean; 
   onCollapse?: () => void;
   onClose?: () => void;
+  onLogout: () => void;
 }) {
   const location = useLocation();
 
@@ -117,17 +120,17 @@ function SidebarContent({ collapsed, onCollapse, onClose }: {
             </div>
           )}
         </div>
-        <Link
-          to="/"
-          onClick={onClose}
-          className={cn(
-            "mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-            collapsed && "justify-center"
-          )}
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span>Sair</span>}
-        </Link>
+        <LogoutConfirmDialog onConfirm={onLogout}>
+          <button
+            className={cn(
+              "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              collapsed && "justify-center"
+            )}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </button>
+        </LogoutConfirmDialog>
       </div>
     </div>
   );
@@ -136,12 +139,20 @@ function SidebarContent({ collapsed, onCollapse, onClose }: {
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   // Close mobile menu on route change
   const location = useLocation();
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('Logout realizado com sucesso!');
+    navigate('/');
+  };
 
   return (
     <>
@@ -156,7 +167,8 @@ export function DashboardSidebar() {
           <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
             <SidebarContent 
               collapsed={false} 
-              onClose={() => setMobileOpen(false)} 
+              onClose={() => setMobileOpen(false)}
+              onLogout={handleLogout}
             />
           </SheetContent>
         </Sheet>
@@ -171,7 +183,8 @@ export function DashboardSidebar() {
       >
         <SidebarContent 
           collapsed={collapsed} 
-          onCollapse={() => setCollapsed(!collapsed)} 
+          onCollapse={() => setCollapsed(!collapsed)}
+          onLogout={handleLogout}
         />
       </aside>
     </>
