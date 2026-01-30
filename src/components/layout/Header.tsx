@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -100,10 +101,12 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
+                <LogoutConfirmDialog onConfirm={handleLogout}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </LogoutConfirmDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -162,17 +165,18 @@ export function Header() {
                       Meu Painel
                     </Link>
                   </Button>
-                  <Button 
-                    variant="destructive" 
-                    className="w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </Button>
+                  <LogoutConfirmDialog onConfirm={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </Button>
+                  </LogoutConfirmDialog>
                 </>
               ) : (
                 <>

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
@@ -101,16 +102,17 @@ export function MotoristaSidebar() {
               </div>
             )}
           </div>
-          <button
-            onClick={handleLogout}
-            className={cn(
-              "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              collapsed && "justify-center"
-            )}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>Sair</span>}
-          </button>
+          <LogoutConfirmDialog onConfirm={handleLogout}>
+            <button
+              className={cn(
+                "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                collapsed && "justify-center"
+              )}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Sair</span>}
+            </button>
+          </LogoutConfirmDialog>
         </div>
       </div>
     </aside>
