@@ -564,6 +564,94 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_inspections: {
+        Row: {
+          ac_working: boolean | null
+          contract_id: string | null
+          created_at: string
+          damages: string | null
+          driver_id: string
+          exterior_condition: string
+          fuel_level: string
+          id: string
+          interior_condition: string
+          km_reading: number
+          lights_working: boolean | null
+          locador_id: string
+          notes: string | null
+          performed_at: string
+          photos: string[] | null
+          tires_condition: string | null
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          ac_working?: boolean | null
+          contract_id?: string | null
+          created_at?: string
+          damages?: string | null
+          driver_id: string
+          exterior_condition: string
+          fuel_level: string
+          id?: string
+          interior_condition: string
+          km_reading: number
+          lights_working?: boolean | null
+          locador_id: string
+          notes?: string | null
+          performed_at?: string
+          photos?: string[] | null
+          tires_condition?: string | null
+          type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          ac_working?: boolean | null
+          contract_id?: string | null
+          created_at?: string
+          damages?: string | null
+          driver_id?: string
+          exterior_condition?: string
+          fuel_level?: string
+          id?: string
+          interior_condition?: string
+          km_reading?: number
+          lights_working?: boolean | null
+          locador_id?: string
+          notes?: string | null
+          performed_at?: string
+          photos?: string[] | null
+          tires_condition?: string | null
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           allowed_apps: string[] | null
