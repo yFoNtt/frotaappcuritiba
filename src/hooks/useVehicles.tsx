@@ -22,6 +22,7 @@ export interface Vehicle {
   city: string;
   state: string;
   current_driver_id: string | null;
+  current_km: number | null;
   created_at: string;
   updated_at: string;
 }

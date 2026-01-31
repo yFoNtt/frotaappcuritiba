@@ -15,7 +15,8 @@ import {
   FolderOpen,
   Inbox,
   BarChart3,
-  X
+  X,
+  ClipboardCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: Car, label: 'Veículos', path: '/locador/veiculos' },
   { icon: Users, label: 'Motoristas', path: '/locador/motoristas' },
   { icon: FileText, label: 'Contratos', path: '/locador/contratos' },
+  { icon: ClipboardCheck, label: 'Vistorias', path: '/locador/vistorias' },
   { icon: CreditCard, label: 'Pagamentos', path: '/locador/pagamentos' },
   { icon: Wrench, label: 'Manutenção', path: '/locador/manutencao' },
   { icon: Gauge, label: 'Quilometragem', path: '/locador/quilometragem' },
