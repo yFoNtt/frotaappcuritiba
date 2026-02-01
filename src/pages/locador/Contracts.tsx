@@ -68,6 +68,9 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { ContractInspectionsSection } from '@/components/contracts/ContractInspectionsSection';
+import { InspectionDetailsDialog } from '@/components/inspections/InspectionDetailsDialog';
+import { VehicleInspection } from '@/hooks/useInspections';
 
 const contractSchema = z.object({
   driver_id: z.string().min(1, 'Selecione um motorista'),
@@ -109,6 +112,7 @@ export default function LocadorContracts() {
   const [endingContract, setEndingContract] = useState<Contract | null>(null);
   const [cancellingContract, setCancellingContract] = useState<Contract | null>(null);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [viewingInspection, setViewingInspection] = useState<VehicleInspection | null>(null);
 
   const { data: contracts = [], isLoading: contractsLoading } = useLocadorContracts();
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
@@ -720,7 +724,7 @@ export default function LocadorContracts() {
 
         {/* View Contract Dialog */}
         <Dialog open={!!viewingContract} onOpenChange={(open) => !open && setViewingContract(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalhes do Contrato</DialogTitle>
             </DialogHeader>
@@ -786,10 +790,26 @@ export default function LocadorContracts() {
                     </div>
                   )}
                 </div>
+
+                {/* Inspections Section */}
+                <ContractInspectionsSection
+                  contractId={viewingContract.id}
+                  vehicleId={viewingContract.vehicle_id}
+                  onViewInspection={setViewingInspection}
+                />
               </div>
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Inspection Details Dialog */}
+        <InspectionDetailsDialog
+          open={!!viewingInspection}
+          onOpenChange={(open) => !open && setViewingInspection(null)}
+          inspection={viewingInspection}
+          vehicle={viewingInspection ? getVehicleInfo(viewingContract?.vehicle_id || '') : undefined}
+          driver={viewingInspection ? getDriverInfo(viewingContract?.driver_id || '') : undefined}
+        />
 
         {/* End Contract Dialog */}
         <AlertDialog open={!!endingContract} onOpenChange={(open) => !open && setEndingContract(null)}>
