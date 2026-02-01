@@ -795,6 +795,7 @@ export default function LocadorContracts() {
                 <ContractInspectionsSection
                   contractId={viewingContract.id}
                   vehicleId={viewingContract.vehicle_id}
+                  vehicleName={`${getVehicleInfo(viewingContract.vehicle_id)?.brand} ${getVehicleInfo(viewingContract.vehicle_id)?.model}`}
                   onViewInspection={setViewingInspection}
                 />
               </div>

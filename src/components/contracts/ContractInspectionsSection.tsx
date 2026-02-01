@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ClipboardCheck, Fuel, Car, Calendar, Eye, ChevronRight } from 'lucide-react';
+import { ClipboardCheck, Fuel, Car, Calendar, Eye, GitCompare } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -12,19 +12,23 @@ import {
   CONDITION_LABELS 
 } from '@/hooks/useInspections';
 import { useVehicleInspections } from '@/hooks/useInspections';
+import { InspectionComparison } from './InspectionComparison';
 
 interface ContractInspectionsSectionProps {
   contractId: string;
   vehicleId: string;
+  vehicleName?: string;
   onViewInspection?: (inspection: VehicleInspection) => void;
 }
 
 export function ContractInspectionsSection({ 
   contractId, 
-  vehicleId, 
+  vehicleId,
+  vehicleName,
   onViewInspection 
 }: ContractInspectionsSectionProps) {
   const { data: allInspections = [], isLoading } = useVehicleInspections(vehicleId);
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   
   // Filter inspections for this contract
   const contractInspections = useMemo(() => {
@@ -33,6 +37,7 @@ export function ContractInspectionsSection({
 
   const checkInInspection = contractInspections.find(i => i.type === 'check_in');
   const checkOutInspection = contractInspections.find(i => i.type === 'check_out');
+  const canCompare = !!checkInInspection && !!checkOutInspection;
 
   if (isLoading) {
     return (
@@ -67,37 +72,63 @@ export function ContractInspectionsSection({
   }
 
   return (
-    <div className="space-y-2">
-      <Separator />
-      <div className="pt-2">
-        <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-          <ClipboardCheck className="h-4 w-4" />
-          Vistorias ({contractInspections.length})
-        </h4>
-        
-        <div className="space-y-3">
-          {contractInspections.map((inspection) => (
-            <InspectionSummaryCard 
-              key={inspection.id} 
-              inspection={inspection}
-              onView={onViewInspection ? () => onViewInspection(inspection) : undefined}
-            />
-          ))}
-        </div>
-
-        {/* KM Difference if both check-in and check-out exist */}
-        {checkInInspection && checkOutInspection && (
-          <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">KM Rodados no Contrato</span>
-              <span className="font-semibold text-primary">
-                {(checkOutInspection.km_reading - checkInInspection.km_reading).toLocaleString('pt-BR')} km
-              </span>
-            </div>
+    <>
+      <div className="space-y-2">
+        <Separator />
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Vistorias ({contractInspections.length})
+            </h4>
+            {canCompare && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsComparisonOpen(true)}
+                className="text-xs"
+              >
+                <GitCompare className="h-3.5 w-3.5 mr-1.5" />
+                Comparar
+              </Button>
+            )}
           </div>
-        )}
+          
+          <div className="space-y-3">
+            {contractInspections.map((inspection) => (
+              <InspectionSummaryCard 
+                key={inspection.id} 
+                inspection={inspection}
+                onView={onViewInspection ? () => onViewInspection(inspection) : undefined}
+              />
+            ))}
+          </div>
+
+          {/* KM Difference if both check-in and check-out exist */}
+          {checkInInspection && checkOutInspection && (
+            <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">KM Rodados no Contrato</span>
+                <span className="font-semibold text-primary">
+                  {(checkOutInspection.km_reading - checkInInspection.km_reading).toLocaleString('pt-BR')} km
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Comparison Dialog */}
+      {canCompare && (
+        <InspectionComparison
+          open={isComparisonOpen}
+          onOpenChange={setIsComparisonOpen}
+          checkIn={checkInInspection}
+          checkOut={checkOutInspection}
+          vehicleName={vehicleName}
+        />
+      )}
+    </>
   );
 }
 
