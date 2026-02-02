@@ -255,6 +255,7 @@ export default function VehicleDetails() {
               <VehicleInspectionHistory
                 vehicleId={id}
                 vehicleName={`${vehicle.brand} ${vehicle.model}`}
+                vehiclePlate={vehicle.plate}
               />
             )}
           </div>

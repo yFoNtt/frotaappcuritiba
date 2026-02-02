@@ -15,6 +15,7 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  FileDown,
 } from 'lucide-react';
 import {
   useVehicleInspections,
@@ -22,11 +23,13 @@ import {
   FUEL_LEVELS,
   CONDITION_LABELS,
 } from '@/hooks/useInspections';
+import { useInspectionExport } from '@/hooks/useInspectionExport';
 import { InspectionDetailsDialog } from '@/components/inspections/InspectionDetailsDialog';
 
 interface VehicleInspectionHistoryProps {
   vehicleId: string;
   vehicleName?: string;
+  vehiclePlate?: string;
 }
 
 const conditionColors = {
@@ -36,10 +39,20 @@ const conditionColors = {
   poor: 'text-destructive',
 };
 
-export function VehicleInspectionHistory({ vehicleId, vehicleName }: VehicleInspectionHistoryProps) {
+export function VehicleInspectionHistory({ vehicleId, vehicleName, vehiclePlate }: VehicleInspectionHistoryProps) {
   const { data: inspections, isLoading } = useVehicleInspections(vehicleId);
+  const { exportToPDF } = useInspectionExport();
   const [viewingInspection, setViewingInspection] = useState<VehicleInspection | null>(null);
   const [showAll, setShowAll] = useState(false);
+
+  const handleExportPDF = () => {
+    if (!inspections || inspections.length === 0) return;
+    exportToPDF({
+      vehicleName,
+      vehiclePlate,
+      inspections,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -90,7 +103,18 @@ export function VehicleInspectionHistory({ vehicleId, vehicleName }: VehicleInsp
               <ClipboardCheck className="h-5 w-5" />
               Histórico de Vistorias
             </span>
-            <Badge variant="secondary">{inspections.length} registro(s)</Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportPDF}
+                className="gap-2"
+              >
+                <FileDown className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar PDF</span>
+              </Button>
+              <Badge variant="secondary">{inspections.length} registro(s)</Badge>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
