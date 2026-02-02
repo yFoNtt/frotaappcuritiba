@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageGallery } from '@/components/vehicles/ImageGallery';
+import { VehicleInspectionHistory } from '@/components/vehicles/VehicleInspectionHistory';
 import { useVehicle } from '@/hooks/useVehicles';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
   MapPin,
@@ -74,6 +76,10 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
   const { data: vehicle, isLoading, error } = useVehicle(id);
+  const { user } = useAuth();
+
+  // Check if the current user is the owner of the vehicle
+  const isOwner = user && vehicle && vehicle.locador_id === user.id;
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
@@ -243,6 +249,14 @@ export default function VehicleDetails() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Inspection History - Only visible to the owner */}
+            {isOwner && id && (
+              <VehicleInspectionHistory
+                vehicleId={id}
+                vehicleName={`${vehicle.brand} ${vehicle.model}`}
+              />
+            )}
           </div>
 
           {/* Sidebar */}
