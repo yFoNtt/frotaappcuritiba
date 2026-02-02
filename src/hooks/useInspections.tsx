@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+export type ChecklistStatus = 'ok' | 'not_ok' | 'not_applicable';
+
 export interface VehicleInspection {
   id: string;
   vehicle_id: string;
@@ -20,12 +22,15 @@ export interface VehicleInspection {
   damages: string | null;
   notes: string | null;
   photos: string[];
+  checklist: Record<string, ChecklistStatus> | null;
   performed_at: string;
   created_at: string;
   updated_at: string;
 }
 
-export type InspectionFormData = Omit<VehicleInspection, 'id' | 'locador_id' | 'created_at' | 'updated_at'>;
+export type InspectionFormData = Omit<VehicleInspection, 'id' | 'locador_id' | 'created_at' | 'updated_at'> & {
+  checklist?: Record<string, ChecklistStatus> | null;
+};
 
 export const FUEL_LEVELS = {
   empty: 'Vazio',
