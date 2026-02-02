@@ -567,6 +567,7 @@ export type Database = {
       vehicle_inspections: {
         Row: {
           ac_working: boolean | null
+          checklist: Json | null
           contract_id: string | null
           created_at: string
           damages: string | null
@@ -588,6 +589,7 @@ export type Database = {
         }
         Insert: {
           ac_working?: boolean | null
+          checklist?: Json | null
           contract_id?: string | null
           created_at?: string
           damages?: string | null
@@ -609,6 +611,7 @@ export type Database = {
         }
         Update: {
           ac_working?: boolean | null
+          checklist?: Json | null
           contract_id?: string | null
           created_at?: string
           damages?: string | null

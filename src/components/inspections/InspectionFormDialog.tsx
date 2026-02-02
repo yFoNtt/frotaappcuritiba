@@ -28,10 +28,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Camera, Loader2, X, Upload } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Camera, Loader2, X, Upload, ClipboardList, FileText } from 'lucide-react';
 import {
   useCreateInspection,
   uploadInspectionPhotos,
@@ -42,6 +42,12 @@ import {
 } from '@/hooks/useInspections';
 import { useAuth } from '@/hooks/useAuth';
 import { Vehicle } from '@/hooks/useVehicles';
+import {
+  InspectionChecklist,
+  INSPECTION_CHECKLIST_TEMPLATE,
+  ChecklistCategory,
+  checklistToJson,
+} from './InspectionChecklist';
 
 const formSchema = z.object({
   vehicle_id: z.string().min(1, 'Selecione um veículo'),
@@ -97,6 +103,10 @@ export function InspectionFormDialog({
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [checklist, setChecklist] = useState<ChecklistCategory[]>(
+    JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE))
+  );
+  const [activeTab, setActiveTab] = useState('info');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -121,10 +131,13 @@ export function InspectionFormDialog({
   const selectedVehicleId = form.watch('vehicle_id');
   const selectedDriverId = form.watch('driver_id');
 
-  // Filter drivers who have the selected vehicle or are available
-  const availableDrivers = drivers.filter(
-    (d) => d.vehicle_id === selectedVehicleId || !d.vehicle_id
-  );
+  // Reset checklist when dialog opens
+  useEffect(() => {
+    if (open) {
+      setChecklist(JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE)));
+      setActiveTab('info');
+    }
+  }, [open]);
 
   // Find active contract for selected vehicle/driver
   useEffect(() => {
@@ -200,6 +213,9 @@ export function InspectionFormDialog({
         photoUrls = await uploadInspectionPhotos(user.id, tempId, photos);
       }
 
+      // Convert checklist to JSON
+      const checklistJson = checklistToJson(checklist);
+
       await createInspection.mutateAsync({
         vehicle_id: data.vehicle_id,
         driver_id: data.driver_id,
@@ -216,11 +232,13 @@ export function InspectionFormDialog({
         notes: data.notes || null,
         performed_at: data.performed_at,
         photos: photoUrls,
+        checklist: checklistJson,
       });
 
       form.reset();
       setPhotos([]);
       setPreviews([]);
+      setChecklist(JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE)));
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting inspection:', error);
@@ -231,9 +249,14 @@ export function InspectionFormDialog({
 
   const isSubmitting = createInspection.isPending || isUploading;
 
+  // Count checklist issues
+  const checklistIssues = checklist.reduce((count, category) => {
+    return count + category.items.filter((item) => item.status === 'not_ok').length;
+  }, 0);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             {inspection ? 'Editar Vistoria' : 'Nova Vistoria'}
@@ -243,378 +266,381 @@ export function InspectionFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Vehicle and Driver Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="vehicle_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Veículo *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="info" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Informações
+                </TabsTrigger>
+                <TabsTrigger value="checklist" className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Checklist
+                  {checklistIssues > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs bg-destructive text-destructive-foreground rounded-full">
+                      {checklistIssues}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="photos" className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  Fotos
+                  {photos.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                      {photos.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+
+              <ScrollArea className="max-h-[calc(90vh-220px)] pr-4">
+                <TabsContent value="info" className="mt-0 space-y-6">
+                  {/* Vehicle and Driver Selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="vehicle_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Veículo *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o veículo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {vehicles.map((vehicle) => (
+                                <SelectItem key={vehicle.id} value={vehicle.id}>
+                                  {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="driver_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Motorista *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={!selectedVehicleId}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o motorista" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {drivers.map((driver) => (
+                                <SelectItem key={driver.id} value={driver.id}>
+                                  {driver.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Type and Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Vistoria *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(INSPECTION_TYPES).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="performed_at"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data/Hora *</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* KM and Fuel */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="km_reading"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quilometragem *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Ex: 45000"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fuel_level"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nível de Combustível *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(FUEL_LEVELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Conditions */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="exterior_condition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado Externo *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(CONDITION_LABELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="interior_condition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado Interno *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(CONDITION_LABELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="tires_condition"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado dos Pneus</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || 'good'}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(CONDITION_LABELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Damages and Notes */}
+                  <FormField
+                    control={form.control}
+                    name="damages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Avarias / Danos</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o veículo" />
-                          </SelectTrigger>
+                          <Textarea
+                            placeholder="Descreva quaisquer danos ou avarias encontrados..."
+                            rows={3}
+                            {...field}
+                            value={field.value || ''}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {vehicles.map((vehicle) => (
-                            <SelectItem key={vehicle.id} value={vehicle.id}>
-                              {vehicle.brand} {vehicle.model} - {vehicle.plate}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="driver_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Motorista *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={!selectedVehicleId}
-                      >
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o motorista" />
-                          </SelectTrigger>
+                          <Textarea
+                            placeholder="Outras observações sobre a vistoria..."
+                            rows={2}
+                            {...field}
+                            value={field.value || ''}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {drivers.map((driver) => (
-                            <SelectItem key={driver.id} value={driver.id}>
-                              {driver.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
 
-              {/* Type and Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Vistoria *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(INSPECTION_TYPES).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <TabsContent value="checklist" className="mt-0">
+                  <InspectionChecklist
+                    checklist={checklist}
+                    onChange={setChecklist}
+                  />
+                </TabsContent>
 
-                <FormField
-                  control={form.control}
-                  name="performed_at"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data/Hora *</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                <TabsContent value="photos" className="mt-0 space-y-4">
+                  <div className="space-y-3">
+                    <Label>Fotos da Vistoria (máx. 10)</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {previews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="h-24 w-24 rounded-lg object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(index)}
+                            className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
 
-              {/* KM and Fuel */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="km_reading"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quilometragem *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Ex: 45000"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="fuel_level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nível de Combustível *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(FUEL_LEVELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Conditions */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="exterior_condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado Externo *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(CONDITION_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="interior_condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado Interno *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(CONDITION_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tires_condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado dos Pneus</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || 'good'}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(CONDITION_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Switches */}
-              <div className="flex flex-wrap gap-6">
-                <FormField
-                  control={form.control}
-                  name="lights_working"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <Label>Faróis funcionando</Label>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="ac_working"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <Label>Ar-condicionado funcionando</Label>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Damages and Notes */}
-              <FormField
-                control={form.control}
-                name="damages"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Avarias / Danos</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descreva quaisquer danos ou avarias encontrados..."
-                        rows={3}
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Outras observações sobre a vistoria..."
-                        rows={2}
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Photo Upload */}
-              <div className="space-y-3">
-                <Label>Fotos da Vistoria (máx. 10)</Label>
-                <div className="flex flex-wrap gap-3">
-                  {previews.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="h-20 w-20 rounded-lg object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(index)}
-                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      {photos.length < 10 && (
+                        <label className="flex h-24 w-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            multiple
+                            onChange={handlePhotoChange}
+                            className="hidden"
+                          />
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                            <Camera className="h-6 w-6" />
+                            <span className="text-xs">Adicionar</span>
+                          </div>
+                        </label>
+                      )}
                     </div>
-                  ))}
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG ou WebP. Máximo 5MB por foto. Tire fotos de todos os ângulos
+                      importantes do veículo.
+                    </p>
+                  </div>
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
 
-                  {photos.length < 10 && (
-                    <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        multiple
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                        <Camera className="h-5 w-5" />
-                        <span className="text-xs">Adicionar</span>
-                      </div>
-                    </label>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG ou WebP. Máximo 5MB por foto.
-                </p>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isUploading ? 'Enviando fotos...' : 'Salvando...'}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Registrar Vistoria
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </ScrollArea>
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3 pt-4 mt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isUploading ? 'Enviando fotos...' : 'Salvando...'}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Registrar Vistoria
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
