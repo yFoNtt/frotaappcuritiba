@@ -41,6 +41,7 @@ interface InspectionDetailsDialogProps {
   inspection: VehicleInspection | null;
   vehicle?: Vehicle | null;
   driver?: Driver | null;
+  vehicleName?: string;
 }
 
 const conditionColors = {
@@ -56,6 +57,7 @@ export function InspectionDetailsDialog({
   inspection,
   vehicle,
   driver,
+  vehicleName,
 }: InspectionDetailsDialogProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -104,6 +106,8 @@ export function InspectionDetailsDialog({
                       </p>
                       <p className="text-sm text-muted-foreground">{vehicle.plate}</p>
                     </div>
+                  ) : vehicleName ? (
+                    <p className="font-semibold">{vehicleName}</p>
                   ) : (
                     <p className="text-muted-foreground">-</p>
                   )}
