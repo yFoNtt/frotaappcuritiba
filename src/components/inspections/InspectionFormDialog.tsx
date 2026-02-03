@@ -42,6 +42,7 @@ import {
 } from '@/hooks/useInspections';
 import { useAuth } from '@/hooks/useAuth';
 import { Vehicle } from '@/hooks/useVehicles';
+import { useEffectiveChecklist } from '@/hooks/useChecklistTemplates';
 import {
   InspectionChecklist,
   INSPECTION_CHECKLIST_TEMPLATE,
@@ -100,12 +101,11 @@ export function InspectionFormDialog({
 }: InspectionFormDialogProps) {
   const { user } = useAuth();
   const createInspection = useCreateInspection();
+  const { getChecklist, isLoading: isLoadingChecklist } = useEffectiveChecklist();
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [checklist, setChecklist] = useState<ChecklistCategory[]>(
-    JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE))
-  );
+  const [checklist, setChecklist] = useState<ChecklistCategory[]>([]);
   const [activeTab, setActiveTab] = useState('info');
 
   const form = useForm<FormData>({
@@ -131,13 +131,14 @@ export function InspectionFormDialog({
   const selectedVehicleId = form.watch('vehicle_id');
   const selectedDriverId = form.watch('driver_id');
 
-  // Reset checklist when dialog opens
+  // Reset checklist when dialog opens - use custom template if available
   useEffect(() => {
-    if (open) {
-      setChecklist(JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE)));
+    if (open && !isLoadingChecklist) {
+      const effectiveChecklist = getChecklist();
+      setChecklist(effectiveChecklist);
       setActiveTab('info');
     }
-  }, [open]);
+  }, [open, isLoadingChecklist, getChecklist]);
 
   // Find active contract for selected vehicle/driver
   useEffect(() => {
@@ -238,7 +239,7 @@ export function InspectionFormDialog({
       form.reset();
       setPhotos([]);
       setPreviews([]);
-      setChecklist(JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE)));
+      setChecklist(getChecklist());
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting inspection:', error);
