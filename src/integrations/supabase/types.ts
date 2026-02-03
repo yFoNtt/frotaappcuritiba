@@ -314,6 +314,45 @@ export type Database = {
           },
         ]
       }
+      inspection_checklist_templates: {
+        Row: {
+          category_id: string
+          category_title: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          item_id: string
+          item_label: string
+          locador_id: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          category_title: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          item_id: string
+          item_label: string
+          locador_id: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          category_title?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          item_id?: string
+          item_label?: string
+          locador_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenances: {
         Row: {
           cost: number | null
