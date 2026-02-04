@@ -296,7 +296,7 @@ export function InspectionFormDialog({
               </TabsList>
 
               <div className="flex-1 min-h-0 overflow-y-auto pr-2">
-                <TabsContent value="info" className="mt-0 space-y-6">
+                <TabsContent value="info" forceMount className="mt-0 space-y-6 data-[state=inactive]:hidden">
                   {/* Vehicle and Driver Selection */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
@@ -563,14 +563,14 @@ export function InspectionFormDialog({
                   />
                 </TabsContent>
 
-                <TabsContent value="checklist" className="mt-0">
+                <TabsContent value="checklist" forceMount className="mt-0 data-[state=inactive]:hidden">
                   <InspectionChecklist
                     checklist={checklist}
                     onChange={setChecklist}
                   />
                 </TabsContent>
 
-                <TabsContent value="photos" className="mt-0 space-y-4">
+                <TabsContent value="photos" forceMount className="mt-0 space-y-4 data-[state=inactive]:hidden">
                   <div className="space-y-3">
                     <Label>Fotos da Vistoria (máx. 10)</Label>
                     <div className="flex flex-wrap gap-3">
