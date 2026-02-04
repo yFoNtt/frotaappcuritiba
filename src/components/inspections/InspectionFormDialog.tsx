@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Camera, Loader2, X, Upload, ClipboardList, FileText } from 'lucide-react';
 import {
@@ -257,8 +257,8 @@ export function InspectionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {inspection ? 'Editar Vistoria' : 'Nova Vistoria'}
           </DialogTitle>
@@ -268,9 +268,9 @@ export function InspectionFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 mb-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+              <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
                 <TabsTrigger value="info" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Informações
@@ -295,7 +295,7 @@ export function InspectionFormDialog({
                 </TabsTrigger>
               </TabsList>
 
-              <ScrollArea className="max-h-[calc(90vh-220px)] pr-4">
+              <div className="flex-1 min-h-0 overflow-y-auto pr-2">
                 <TabsContent value="info" className="mt-0 space-y-6">
                   {/* Vehicle and Driver Selection */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -613,7 +613,7 @@ export function InspectionFormDialog({
                     </p>
                   </div>
                 </TabsContent>
-              </ScrollArea>
+              </div>
             </Tabs>
 
             {/* Submit Button */}
