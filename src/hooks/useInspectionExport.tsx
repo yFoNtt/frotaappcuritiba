@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -335,5 +336,259 @@ export function useInspectionExport() {
     doc.save(fileName);
   };
 
-  return { exportToPDF };
+  const exportToExcel = async ({ 
+    vehicleName, 
+    vehiclePlate, 
+    inspections, 
+    drivers = [],
+    vehicles = [],
+  }: ExportOptions & { 
+    drivers?: Array<{ id: string; name: string }>; 
+    vehicles?: Array<{ id: string; brand: string; model: string; plate: string }>;
+  }) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'FrotaApp';
+    workbook.created = new Date();
+
+    // Main inspections sheet
+    const mainSheet = workbook.addWorksheet('Vistorias');
+    
+    // Header
+    mainSheet.mergeCells('A1:J1');
+    mainSheet.getCell('A1').value = 'Histórico de Vistorias';
+    mainSheet.getCell('A1').font = { bold: true, size: 16 };
+    mainSheet.getCell('A1').alignment = { horizontal: 'center' };
+
+    if (vehicleName || vehiclePlate) {
+      mainSheet.mergeCells('A2:J2');
+      mainSheet.getCell('A2').value = [vehicleName, vehiclePlate].filter(Boolean).join(' - ');
+      mainSheet.getCell('A2').alignment = { horizontal: 'center' };
+    }
+
+    mainSheet.mergeCells('A3:J3');
+    mainSheet.getCell('A3').value = `Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`;
+    mainSheet.getCell('A3').font = { color: { argb: '666666' }, size: 10 };
+    mainSheet.getCell('A3').alignment = { horizontal: 'center' };
+
+    // Summary
+    const checkIns = inspections.filter((i) => i.type === 'check_in').length;
+    const checkOuts = inspections.filter((i) => i.type === 'check_out').length;
+    mainSheet.getCell('A5').value = `Total: ${inspections.length} vistorias (${checkIns} check-ins, ${checkOuts} check-outs)`;
+    mainSheet.getCell('A5').font = { bold: true };
+
+    // Table headers
+    const headerRow = mainSheet.addRow([
+      'Tipo',
+      'Data/Hora',
+      'Veículo',
+      'Placa',
+      'Motorista',
+      'KM',
+      'Combustível',
+      'Externo',
+      'Interno',
+      'Pneus',
+      'Faróis',
+      'A/C',
+      'Avarias',
+      'Observações',
+    ]);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '3B82F6' },
+    };
+    headerRow.alignment = { horizontal: 'center' };
+
+    // Data rows
+    inspections.forEach((inspection) => {
+      const vehicle = vehicles.find((v) => v.id === inspection.vehicle_id);
+      const driver = drivers.find((d) => d.id === inspection.driver_id);
+
+      const row = mainSheet.addRow([
+        INSPECTION_TYPES[inspection.type],
+        format(new Date(inspection.performed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }),
+        vehicle ? `${vehicle.brand} ${vehicle.model}` : '-',
+        vehicle?.plate || '-',
+        driver?.name || '-',
+        inspection.km_reading,
+        FUEL_LEVELS[inspection.fuel_level],
+        CONDITION_LABELS[inspection.exterior_condition as keyof typeof CONDITION_LABELS],
+        CONDITION_LABELS[inspection.interior_condition as keyof typeof CONDITION_LABELS],
+        inspection.tires_condition
+          ? CONDITION_LABELS[inspection.tires_condition as keyof typeof CONDITION_LABELS]
+          : '-',
+        inspection.lights_working ? 'OK' : 'Problema',
+        inspection.ac_working ? 'OK' : 'Problema',
+        inspection.damages || '-',
+        inspection.notes || '-',
+      ]);
+
+      // Color code conditions
+      const exteriorCell = row.getCell(8);
+      const interiorCell = row.getCell(9);
+      const tiresCell = row.getCell(10);
+      const lightsCell = row.getCell(11);
+      const acCell = row.getCell(12);
+
+      const getConditionColor = (condition: string) => {
+        switch (condition) {
+          case 'Excelente': return '22C55E';
+          case 'Bom': return '3B82F6';
+          case 'Regular': return 'F59E0B';
+          case 'Ruim': return 'EF4444';
+          default: return '000000';
+        }
+      };
+
+      [exteriorCell, interiorCell, tiresCell].forEach((cell) => {
+        const value = cell.value as string;
+        if (value && value !== '-') {
+          cell.font = { color: { argb: getConditionColor(value) } };
+        }
+      });
+
+      lightsCell.font = { color: { argb: inspection.lights_working ? '22C55E' : 'EF4444' } };
+      acCell.font = { color: { argb: inspection.ac_working ? '22C55E' : 'EF4444' } };
+    });
+
+    // Auto-fit columns
+    mainSheet.columns.forEach((column, index) => {
+      const widths = [18, 18, 20, 12, 25, 12, 14, 12, 12, 12, 12, 12, 30, 30];
+      column.width = widths[index] || 15;
+    });
+
+    // Checklist sheet (if any inspection has checklist data)
+    const inspectionsWithChecklist = inspections.filter(
+      (i) => i.checklist && Object.keys(i.checklist).length > 0
+    );
+
+    if (inspectionsWithChecklist.length > 0) {
+      const checklistSheet = workbook.addWorksheet('Checklists');
+      
+      checklistSheet.mergeCells('A1:F1');
+      checklistSheet.getCell('A1').value = 'Detalhes dos Checklists';
+      checklistSheet.getCell('A1').font = { bold: true, size: 14 };
+
+      let currentRow = 3;
+
+      inspectionsWithChecklist.forEach((inspection) => {
+        const vehicle = vehicles.find((v) => v.id === inspection.vehicle_id);
+        const checklist = jsonToChecklist(inspection.checklist as Record<string, ChecklistStatus>);
+
+        // Inspection header
+        checklistSheet.getCell(`A${currentRow}`).value = 
+          `${INSPECTION_TYPES[inspection.type]} - ${format(new Date(inspection.performed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`;
+        checklistSheet.getCell(`A${currentRow}`).font = { bold: true, color: { argb: '3B82F6' } };
+        
+        if (vehicle) {
+          checklistSheet.getCell(`C${currentRow}`).value = `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`;
+        }
+        currentRow++;
+
+        // Checklist items
+        checklist.forEach((category) => {
+          checklistSheet.getCell(`A${currentRow}`).value = category.title;
+          checklistSheet.getCell(`A${currentRow}`).font = { bold: true };
+          currentRow++;
+
+          category.items.forEach((item) => {
+            checklistSheet.getCell(`B${currentRow}`).value = item.label;
+            checklistSheet.getCell(`C${currentRow}`).value = getStatusLabel(item.status);
+            
+            const statusColor = item.status === 'ok' ? '22C55E' : 
+                               item.status === 'not_ok' ? 'EF4444' : '9CA3AF';
+            checklistSheet.getCell(`C${currentRow}`).font = { 
+              color: { argb: statusColor },
+              bold: item.status === 'not_ok',
+            };
+            currentRow++;
+          });
+        });
+
+        currentRow += 2; // Space between inspections
+      });
+
+      checklistSheet.columns = [
+        { width: 30 },
+        { width: 40 },
+        { width: 15 },
+        { width: 25 },
+      ];
+    }
+
+    // Statistics sheet
+    const statsSheet = workbook.addWorksheet('Estatísticas');
+    
+    statsSheet.getCell('A1').value = 'Estatísticas do Histórico';
+    statsSheet.getCell('A1').font = { bold: true, size: 14 };
+
+    statsSheet.addRow([]);
+    statsSheet.addRow(['Métrica', 'Valor']);
+    statsSheet.getRow(3).font = { bold: true };
+
+    statsSheet.addRow(['Total de Vistorias', inspections.length]);
+    statsSheet.addRow(['Check-ins', checkIns]);
+    statsSheet.addRow(['Check-outs', checkOuts]);
+
+    if (inspections.length > 0) {
+      const kmReadings = inspections.map((i) => i.km_reading).sort((a, b) => a - b);
+      const avgKm = kmReadings.reduce((a, b) => a + b, 0) / kmReadings.length;
+      const minKm = kmReadings[0];
+      const maxKm = kmReadings[kmReadings.length - 1];
+
+      statsSheet.addRow([]);
+      statsSheet.addRow(['Quilometragem']);
+      statsSheet.getRow(statsSheet.rowCount).font = { bold: true };
+      statsSheet.addRow(['Mínima', `${minKm.toLocaleString('pt-BR')} km`]);
+      statsSheet.addRow(['Máxima', `${maxKm.toLocaleString('pt-BR')} km`]);
+      statsSheet.addRow(['Média', `${Math.round(avgKm).toLocaleString('pt-BR')} km`]);
+
+      // Condition distribution
+      const conditionCounts = {
+        exterior: { excellent: 0, good: 0, fair: 0, poor: 0 },
+        interior: { excellent: 0, good: 0, fair: 0, poor: 0 },
+      };
+
+      inspections.forEach((i) => {
+        conditionCounts.exterior[i.exterior_condition as keyof typeof conditionCounts.exterior]++;
+        conditionCounts.interior[i.interior_condition as keyof typeof conditionCounts.interior]++;
+      });
+
+      statsSheet.addRow([]);
+      statsSheet.addRow(['Condição Externa']);
+      statsSheet.getRow(statsSheet.rowCount).font = { bold: true };
+      statsSheet.addRow(['Excelente', conditionCounts.exterior.excellent]);
+      statsSheet.addRow(['Bom', conditionCounts.exterior.good]);
+      statsSheet.addRow(['Regular', conditionCounts.exterior.fair]);
+      statsSheet.addRow(['Ruim', conditionCounts.exterior.poor]);
+
+      statsSheet.addRow([]);
+      statsSheet.addRow(['Condição Interna']);
+      statsSheet.getRow(statsSheet.rowCount).font = { bold: true };
+      statsSheet.addRow(['Excelente', conditionCounts.interior.excellent]);
+      statsSheet.addRow(['Bom', conditionCounts.interior.good]);
+      statsSheet.addRow(['Regular', conditionCounts.interior.fair]);
+      statsSheet.addRow(['Ruim', conditionCounts.interior.poor]);
+    }
+
+    statsSheet.columns = [{ width: 25 }, { width: 20 }];
+
+    // Save Excel
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = vehiclePlate
+      ? `vistorias_${vehiclePlate.replace(/[^a-zA-Z0-9]/g, '')}_${format(new Date(), 'yyyyMMdd')}.xlsx`
+      : `vistorias_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return { exportToPDF, exportToExcel };
 }
