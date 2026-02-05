@@ -20,14 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, ClipboardCheck, Filter } from 'lucide-react';
+import { Plus, Search, ClipboardCheck, Filter, FileSpreadsheet } from 'lucide-react';
 import { useLocadorInspections, useDeleteInspection, VehicleInspection } from '@/hooks/useInspections';
 import { useLocadorVehicles } from '@/hooks/useVehicles';
 import { useLocadorDrivers } from '@/hooks/useDrivers';
 import { useLocadorContracts } from '@/hooks/useContracts';
+import { useInspectionExport } from '@/hooks/useInspectionExport';
 import { InspectionFormDialog } from '@/components/inspections/InspectionFormDialog';
 import { InspectionDetailsDialog } from '@/components/inspections/InspectionDetailsDialog';
 import { InspectionCard } from '@/components/inspections/InspectionCard';
+import { toast } from 'sonner';
 
 export default function LocadorInspections() {
   const { data: inspections = [], isLoading: inspectionsLoading } = useLocadorInspections();
@@ -35,6 +37,7 @@ export default function LocadorInspections() {
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
   const { data: contracts = [] } = useLocadorContracts();
   const deleteInspection = useDeleteInspection();
+  const { exportToExcel } = useInspectionExport();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedInspection, setSelectedInspection] = useState<VehicleInspection | null>(null);
@@ -80,6 +83,25 @@ export default function LocadorInspections() {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (filteredInspections.length === 0) {
+      toast.error('Nenhuma vistoria para exportar');
+      return;
+    }
+
+    try {
+      await exportToExcel({
+        inspections: filteredInspections,
+        drivers,
+        vehicles,
+      });
+      toast.success('Exportação concluída com sucesso!');
+    } catch (error) {
+      console.error('Error exporting inspections:', error);
+      toast.error('Erro ao exportar vistorias');
+    }
+  };
+
   const selectedVehicle = selectedInspection
     ? vehicles.find((v) => v.id === selectedInspection.vehicle_id)
     : null;
@@ -117,10 +139,20 @@ export default function LocadorInspections() {
               Check-in e check-out de veículos com registro fotográfico
             </p>
           </div>
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Vistoria
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportExcel}
+              disabled={inspections.length === 0}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Exportar Excel
+            </Button>
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Vistoria
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
