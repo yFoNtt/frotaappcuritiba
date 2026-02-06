@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   TrendingUp, 
   Users, 
@@ -17,8 +18,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Target,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
+import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import {
   AreaChart,
@@ -93,6 +96,7 @@ export default function AdminMetrics() {
   const { data: vehicles = [], isLoading: vehiclesLoading } = useAdminVehicles();
   const { data: monthlyData = [], isLoading: monthlyLoading } = useAdminMonthlyData();
   const { data: contracts = [], isLoading: contractsLoading } = useAdminContracts();
+  const { exportToPDF } = useMetricsExport();
 
   const isLoading = statsLoading || vehiclesLoading || monthlyLoading || contractsLoading;
 
@@ -166,10 +170,29 @@ export default function AdminMetrics() {
               Análise detalhada do desempenho da plataforma
             </p>
           </div>
-          <Badge variant="outline" className="w-fit gap-2 px-3 py-1.5">
-            <Activity className="h-4 w-4 text-success animate-pulse" />
-            Atualizado em tempo real
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="gap-2 px-3 py-1.5">
+              <Activity className="h-4 w-4 text-success animate-pulse" />
+              Atualizado em tempo real
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToPDF({
+                stats: stats!,
+                vehicleStatusData,
+                monthlyData,
+                contractStatusData,
+                occupancyRate,
+                contractConversionRate,
+                vehicleUtilization,
+              })}
+              disabled={!stats}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
         </div>
 
         {/* Primary KPIs */}
