@@ -23,22 +23,22 @@ export function StatsCard({ title, value, icon: Icon, trend, variant = 'default'
 
   return (
     <Card className="transition-smooth hover:shadow-md">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
+      <CardContent className="p-3 sm:p-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{title}</p>
+            <p className="text-xl sm:text-3xl font-bold tracking-tight truncate">{value}</p>
             {trend && (
               <p className={cn(
-                "text-sm font-medium",
+                "text-xs sm:text-sm font-medium",
                 trend.positive ? "text-success" : "text-destructive"
               )}>
                 {trend.positive ? '+' : ''}{trend.value}% vs. mês anterior
               </p>
             )}
           </div>
-          <div className={cn("rounded-xl p-3", variantStyles[variant])}>
-            <Icon className="h-6 w-6" />
+          <div className={cn("rounded-lg sm:rounded-xl p-2 sm:p-3 shrink-0", variantStyles[variant])}>
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
           </div>
         </div>
       </CardContent>

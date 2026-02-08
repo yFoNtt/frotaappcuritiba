@@ -115,17 +115,17 @@ export default function LocadorDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Bem-vindo de volta! Aqui está um resumo da sua frota.
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total de Veículos"
             value={stats.totalVehicles}
@@ -153,58 +153,58 @@ export default function LocadorDashboard() {
         </div>
 
         {/* Fleet Status */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Status da Frota</CardTitle>
-                <CardDescription>Visão geral dos seus veículos</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Status da Frota</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Visão geral dos seus veículos</CardDescription>
               </div>
               <Link to="/locador/veiculos">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Ver todos <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-lg border bg-success/5 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-success/10 p-2">
-                      <Car className="h-5 w-5 text-success" />
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+              <div className="grid gap-3 sm:gap-4 grid-cols-3">
+                <div className="rounded-lg border bg-success/5 p-2 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
+                    <div className="rounded-full bg-success/10 p-1.5 sm:p-2 mb-1 sm:mb-0">
+                      <Car className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-success">{stats.availableVehicles}</p>
-                      <p className="text-sm text-muted-foreground">Disponíveis</p>
+                      <p className="text-lg sm:text-2xl font-bold text-success">{stats.availableVehicles}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Disponíveis</p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-lg border bg-primary/5 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Car className="h-5 w-5 text-primary" />
+                <div className="rounded-lg border bg-primary/5 p-2 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
+                    <div className="rounded-full bg-primary/10 p-1.5 sm:p-2 mb-1 sm:mb-0">
+                      <Car className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-primary">{stats.rentedVehicles}</p>
-                      <p className="text-sm text-muted-foreground">Alugados</p>
+                      <p className="text-lg sm:text-2xl font-bold text-primary">{stats.rentedVehicles}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Alugados</p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-lg border bg-warning/5 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-warning/10 p-2">
-                      <Wrench className="h-5 w-5 text-warning" />
+                <div className="rounded-lg border bg-warning/5 p-2 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center sm:text-left">
+                    <div className="rounded-full bg-warning/10 p-1.5 sm:p-2 mb-1 sm:mb-0">
+                      <Wrench className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-warning">{stats.maintenanceVehicles}</p>
-                      <p className="text-sm text-muted-foreground">Manutenção</p>
+                      <p className="text-lg sm:text-2xl font-bold text-warning">{stats.maintenanceVehicles}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Manutenção</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Recent Vehicles */}
-              <div className="mt-6 space-y-3">
+              <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
                 <h4 className="font-medium">Veículos Recentes</h4>
                 {recentVehicles.length > 0 ? (
                   recentVehicles.map((vehicle) => (
@@ -240,18 +240,18 @@ export default function LocadorDashboard() {
 
           {/* Alerts */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Alertas</CardTitle>
-                <CardDescription>Pendências importantes</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Alertas</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Pendências importantes</CardDescription>
               </div>
               <Link to="/locador/alertas">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="w-full sm:w-auto">
                   Ver todos
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0 sm:pt-0">
               {/* Overdue payments alerts */}
               {stats.overduePayments.slice(0, 2).map((payment) => {
                 const driver = drivers.find(d => d.id === payment.driver_id);
@@ -314,21 +314,21 @@ export default function LocadorDashboard() {
         </div>
 
         {/* Payments and Maintenance */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           {/* Pending Payments */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Pagamentos Pendentes</CardTitle>
-                <CardDescription>Cobranças a receber</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Pagamentos Pendentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Cobranças a receber</CardDescription>
               </div>
               <Link to="/locador/pagamentos">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Ver todos <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0 sm:pt-0">
               {stats.pendingPayments.slice(0, 3).map((payment) => {
                 const driver = drivers.find(d => d.id === payment.driver_id);
                 const vehicle = vehicles.find(v => v.id === payment.vehicle_id);
@@ -337,17 +337,17 @@ export default function LocadorDashboard() {
                 return (
                   <div
                     key={payment.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-2.5 sm:p-3 gap-2 sm:gap-0"
                   >
-                    <div>
-                      <p className="font-medium">{driver?.name || 'Motorista'}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{driver?.name || 'Motorista'}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {vehicle ? `${vehicle.brand} ${vehicle.model}` : 'Veículo'} • {format(new Date(payment.reference_week), 'dd/MM')}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">R$ {Number(payment.amount).toLocaleString('pt-BR')}</p>
-                      <Badge variant={isOverdue ? 'destructive' : 'warning'}>
+                    <div className="flex items-center justify-between sm:justify-end sm:text-right gap-2 sm:gap-3">
+                      <p className="font-semibold text-sm sm:text-base">R$ {Number(payment.amount).toLocaleString('pt-BR')}</p>
+                      <Badge variant={isOverdue ? 'destructive' : 'warning'} className="text-xs">
                         {isOverdue ? 'Atrasado' : 'Pendente'}
                       </Badge>
                     </div>
@@ -364,18 +364,18 @@ export default function LocadorDashboard() {
 
           {/* Recent Maintenance */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Manutenções Recentes</CardTitle>
-                <CardDescription>Histórico de serviços</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Manutenções Recentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Histórico de serviços</CardDescription>
               </div>
               <Link to="/locador/manutencao">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Ver todos <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0 sm:pt-0">
               {recentMaintenances.length > 0 ? (
                 recentMaintenances.map((record) => {
                   const vehicle = vehicles.find(v => v.id === record.vehicle_id);
