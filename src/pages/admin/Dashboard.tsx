@@ -64,17 +64,17 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Painel Administrativo</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Painel Administrativo</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Visão geral da plataforma FrotaApp
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total de Usuários"
             value={stats?.totalUsers || 0}
@@ -102,18 +102,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Charts and Activity */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Growth Chart */}
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Crescimento da Plataforma
               </CardTitle>
-              <CardDescription>Evolução de usuários e veículos nos últimos 6 meses</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Evolução de usuários e veículos nos últimos 6 meses</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+              <div className="h-[200px] sm:h-[300px]">
                 {monthlyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={monthlyData}>
@@ -128,13 +128,14 @@ export default function AdminDashboard() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="month" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <XAxis dataKey="month" className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} />
+                      <YAxis className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} width={30} />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          fontSize: '12px'
                         }}
                       />
                       <Area 
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
                     Nenhum dado disponível ainda
                   </div>
                 )}
@@ -166,119 +167,125 @@ export default function AdminDashboard() {
 
           {/* Quick Stats */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Resumo Atual
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border p-3">
+            <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+              <div className="rounded-lg border p-2.5 sm:p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Veículos Disponíveis</span>
-                  <span className="text-2xl font-bold text-success">{stats?.availableVehicles || 0}</span>
+                  <span className="text-xs sm:text-sm font-medium">Veículos Disponíveis</span>
+                  <span className="text-xl sm:text-2xl font-bold text-success">{stats?.availableVehicles || 0}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">de {stats?.totalVehicles || 0} veículos</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">de {stats?.totalVehicles || 0} veículos</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border p-2.5 sm:p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Motoristas</span>
-                  <span className="text-2xl font-bold text-primary">{stats?.totalDrivers || 0}</span>
+                  <span className="text-xs sm:text-sm font-medium">Motoristas</span>
+                  <span className="text-xl sm:text-2xl font-bold text-primary">{stats?.totalDrivers || 0}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">cadastrados na plataforma</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">cadastrados na plataforma</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border p-2.5 sm:p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Taxa de Ocupação</span>
-                  <span className="text-2xl font-bold text-primary">{occupancyRate}%</span>
+                  <span className="text-xs sm:text-sm font-medium">Taxa de Ocupação</span>
+                  <span className="text-xl sm:text-2xl font-bold text-primary">{occupancyRate}%</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">veículos alugados</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">veículos alugados</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Recent Users and Vehicles */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           {/* Recent Users */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Usuários Recentes</CardTitle>
-                <CardDescription>Últimos cadastros na plataforma</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Usuários Recentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Últimos cadastros na plataforma</CardDescription>
               </div>
               <Link to="/admin/usuarios">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Ver todos <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0 sm:pt-0">
               {recentUsers.length > 0 ? (
                 recentUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border p-2.5 sm:p-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className={`flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full text-xs sm:text-sm font-semibold shrink-0 ${
                         user.role === 'locador' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                       }`}>
                         {user.role === 'locador' ? 'L' : user.role === 'admin' ? 'A' : 'M'}
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{user.id.slice(0, 8)}...</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="font-medium text-xs sm:text-sm truncate">{user.id.slice(0, 8)}...</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           {format(parseISO(user.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                         </p>
                       </div>
                     </div>
-                    <Badge variant={user.role === 'locador' ? 'default' : user.role === 'admin' ? 'destructive' : 'secondary'}>
+                    <Badge 
+                      variant={user.role === 'locador' ? 'default' : user.role === 'admin' ? 'destructive' : 'secondary'}
+                      className="text-[10px] sm:text-xs shrink-0"
+                    >
                       {user.role === 'locador' ? 'Locador' : user.role === 'admin' ? 'Admin' : 'Motorista'}
                     </Badge>
                   </div>
                 ))
               ) : (
-                <p className="text-center text-muted-foreground py-4">Nenhum usuário cadastrado ainda</p>
+                <p className="text-center text-muted-foreground py-4 text-sm">Nenhum usuário cadastrado ainda</p>
               )}
             </CardContent>
           </Card>
 
           {/* Recent Vehicles */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 sm:p-6">
               <div>
-                <CardTitle>Veículos Recentes</CardTitle>
-                <CardDescription>Últimos veículos cadastrados</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Veículos Recentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Últimos veículos cadastrados</CardDescription>
               </div>
               <Link to="/admin/veiculos">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Ver todos <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0 sm:pt-0">
               {recentVehicles.length > 0 ? (
                 recentVehicles.map((vehicle) => (
                   <div
                     key={vehicle.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border p-2.5 sm:p-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                        <Car className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                        <Car className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{vehicle.brand} {vehicle.model}</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="font-medium text-xs sm:text-sm truncate">{vehicle.brand} {vehicle.model}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                           {vehicle.city}/{vehicle.state}
                         </p>
                       </div>
                     </div>
-                    <Badge variant={
-                      vehicle.status === 'available' ? 'success' :
-                      vehicle.status === 'rented' ? 'default' : 'warning'
-                    }>
+                    <Badge 
+                      variant={
+                        vehicle.status === 'available' ? 'success' :
+                        vehicle.status === 'rented' ? 'default' : 'warning'
+                      }
+                      className="text-[10px] sm:text-xs shrink-0"
+                    >
                       {vehicle.status === 'available' && 'Disponível'}
                       {vehicle.status === 'rented' && 'Alugado'}
                       {vehicle.status === 'maintenance' && 'Manutenção'}
@@ -286,7 +293,7 @@ export default function AdminDashboard() {
                   </div>
                 ))
               ) : (
-                <p className="text-center text-muted-foreground py-4">Nenhum veículo cadastrado ainda</p>
+                <p className="text-center text-muted-foreground py-4 text-sm">Nenhum veículo cadastrado ainda</p>
               )}
             </CardContent>
           </Card>
