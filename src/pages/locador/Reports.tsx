@@ -265,7 +265,7 @@ export default function LocadorReports() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Receita Total (6 meses)</CardTitle>
@@ -334,7 +334,7 @@ export default function LocadorReports() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:gap-6 md:grid-cols-2">
         {/* Receita vs Custos */}
         <Card>
           <CardHeader>
@@ -342,7 +342,7 @@ export default function LocadorReports() {
             <CardDescription>Evolução nos últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[220px] sm:h-[300px]">
               <AreaChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" className="text-xs" />
@@ -381,7 +381,7 @@ export default function LocadorReports() {
             <CardDescription>Receita menos custos por mês</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[220px] sm:h-[300px]">
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" className="text-xs" />
@@ -405,7 +405,7 @@ export default function LocadorReports() {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:gap-6 md:grid-cols-2">
         {/* Status da Frota */}
         <Card>
           <CardHeader>
@@ -413,7 +413,7 @@ export default function LocadorReports() {
             <CardDescription>Distribuição atual dos veículos</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[220px] sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={statusPieData}
@@ -442,7 +442,7 @@ export default function LocadorReports() {
             <CardDescription>Distribuição dos gastos</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[220px] sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={maintenanceCostsByType}
@@ -475,7 +475,7 @@ export default function LocadorReports() {
           <CardDescription>Receita, custos e lucro dos principais veículos</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[350px]">
+          <ChartContainer config={chartConfig} className="h-[250px] sm:h-[350px]">
             <BarChart data={vehicleComparison} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis type="number" className="text-xs" tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />

@@ -354,14 +354,15 @@ export default function LocadorPayments() {
         <Card>
           <CardContent className="p-0">
             {filteredPayments.length > 0 ? (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Motorista</TableHead>
-                    <TableHead>Veículo</TableHead>
+                    <TableHead className="hidden lg:table-cell">Veículo</TableHead>
                     <TableHead>Valor</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Semana Ref.</TableHead>
+                    <TableHead className="hidden sm:table-cell">Vencimento</TableHead>
+                    <TableHead className="hidden md:table-cell">Semana Ref.</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -383,7 +384,7 @@ export default function LocadorPayments() {
                             <span className="font-medium">{driver?.name || 'Motorista não encontrado'}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {vehicle ? (
                             <span className="text-sm">{vehicle.brand} {vehicle.model}</span>
                           ) : (
@@ -393,10 +394,10 @@ export default function LocadorPayments() {
                         <TableCell className="font-medium">
                           {formatCurrency(Number(payment.amount))}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {format(parseISO(payment.due_date), 'dd/MM/yyyy')}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {format(parseISO(payment.reference_week), "dd/MM", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
@@ -441,6 +442,7 @@ export default function LocadorPayments() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <DollarSign className="mb-4 h-12 w-12 text-muted-foreground" />

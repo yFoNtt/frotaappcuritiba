@@ -124,16 +124,17 @@ export function MaintenanceTable({
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[220px]">Veículo</TableHead>
-              <TableHead>Serviço</TableHead>
-              <TableHead className="w-[120px]">Tipo</TableHead>
-              <TableHead className="w-[140px]">Data</TableHead>
-              <TableHead className="w-[130px]">Status</TableHead>
-              <TableHead className="w-[120px] text-right">Custo</TableHead>
-              <TableHead className="w-[140px] text-right">Ações</TableHead>
+              <TableHead>Veículo</TableHead>
+              <TableHead className="hidden md:table-cell">Serviço</TableHead>
+              <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+              <TableHead className="hidden lg:table-cell">Data</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Custo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -162,7 +163,7 @@ export function MaintenanceTable({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="max-w-[250px]">
                       <p className="font-medium truncate">{maintenance.description}</p>
                       {maintenance.service_provider && (
@@ -173,12 +174,12 @@ export function MaintenanceTable({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge variant={TYPE_VARIANTS[maintenance.type]} className="font-medium">
                       {MAINTENANCE_TYPES[maintenance.type]}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-sm">
                         <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -273,6 +274,7 @@ export function MaintenanceTable({
             })}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );

@@ -260,7 +260,7 @@ export default function LocadorDrivers() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -321,13 +321,14 @@ export default function LocadorDrivers() {
         <Card>
           <CardContent className="p-0">
             {filteredDrivers.length > 0 ? (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Motorista</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>CNH</TableHead>
-                    <TableHead>Veículo</TableHead>
+                    <TableHead className="hidden md:table-cell">Contato</TableHead>
+                    <TableHead className="hidden sm:table-cell">CNH</TableHead>
+                    <TableHead className="hidden lg:table-cell">Veículo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -353,7 +354,7 @@ export default function LocadorDrivers() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="space-y-1">
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3 text-muted-foreground" />
@@ -367,7 +368,7 @@ export default function LocadorDrivers() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <div className="space-y-1">
                             <p className="font-mono text-sm">{driver.cnh_number}</p>
                             <p className={`text-xs ${
@@ -383,7 +384,7 @@ export default function LocadorDrivers() {
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {vehicle ? (
                             <div className="flex items-center gap-2">
                               <Car className="h-4 w-4 text-muted-foreground" />
@@ -447,6 +448,7 @@ export default function LocadorDrivers() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Users className="mb-4 h-12 w-12 text-muted-foreground" />

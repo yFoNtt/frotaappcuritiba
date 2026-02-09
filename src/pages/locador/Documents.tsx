@@ -349,10 +349,10 @@ export default function DocumentsPage() {
                     <TableRow>
                       <TableHead>Documento</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>Motorista/Veículo</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Tamanho</TableHead>
-                      <TableHead>Data Upload</TableHead>
+                      <TableHead className="hidden md:table-cell">Motorista/Veículo</TableHead>
+                      <TableHead className="hidden sm:table-cell">Vencimento</TableHead>
+                      <TableHead className="hidden lg:table-cell">Tamanho</TableHead>
+                      <TableHead className="hidden lg:table-cell">Data Upload</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -386,7 +386,7 @@ export default function DocumentsPage() {
                               {documentTypes.find(t => t.value === doc.type)?.label || doc.type}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <div className="space-y-1">
                               {driverName && (
                                 <div className="flex items-center gap-1 text-sm">
@@ -405,7 +405,7 @@ export default function DocumentsPage() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {doc.expires_at ? (
                               <div className="flex items-center gap-2">
                                 <span className={expired ? 'text-destructive' : expiring ? 'text-warning' : ''}>
@@ -422,8 +422,8 @@ export default function DocumentsPage() {
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell>{formatFileSize(doc.file_size)}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">{formatFileSize(doc.file_size)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             {format(parseISO(doc.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                           </TableCell>
                           <TableCell className="text-right">
