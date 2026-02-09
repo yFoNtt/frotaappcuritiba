@@ -289,7 +289,7 @@ export default function LocadorContracts() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -376,12 +376,13 @@ export default function LocadorContracts() {
         <Card>
           <CardContent className="p-0">
             {filteredContracts.length > 0 ? (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Motorista</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Período</TableHead>
+                    <TableHead className="hidden sm:table-cell">Veículo</TableHead>
+                    <TableHead className="hidden md:table-cell">Período</TableHead>
                     <TableHead>Valor/Semana</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -406,7 +407,7 @@ export default function LocadorContracts() {
                             <span className="font-medium">{driver?.name || 'Motorista removido'}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-2">
                             <Car className="h-4 w-4 text-muted-foreground" />
                             <div>
@@ -415,7 +416,7 @@ export default function LocadorContracts() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="text-sm">
                             <p>{format(parseISO(contract.start_date), 'dd/MM/yyyy')}</p>
                             <p className="text-xs text-muted-foreground">
@@ -470,6 +471,7 @@ export default function LocadorContracts() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <FileText className="mb-4 h-12 w-12 text-muted-foreground" />

@@ -156,7 +156,7 @@ export default function LocadorVehicles() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -243,14 +243,15 @@ export default function LocadorVehicles() {
         <Card>
           <CardContent className="p-0">
             {filteredVehicles.length > 0 ? (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Veículo</TableHead>
-                    <TableHead>Placa</TableHead>
+                    <TableHead className="hidden sm:table-cell">Placa</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Localização</TableHead>
-                    <TableHead>Valor/Semana</TableHead>
+                    <TableHead className="hidden md:table-cell">Localização</TableHead>
+                    <TableHead className="hidden sm:table-cell">Valor/Semana</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -280,7 +281,7 @@ export default function LocadorVehicles() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono">{vehicle.plate}</TableCell>
+                      <TableCell className="font-mono hidden sm:table-cell">{vehicle.plate}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -328,10 +329,10 @@ export default function LocadorVehicles() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {vehicle.city}, {vehicle.state}
                       </TableCell>
-                      <TableCell className="font-semibold">
+                      <TableCell className="font-semibold hidden sm:table-cell">
                         R$ {Number(vehicle.weekly_price).toLocaleString('pt-BR')}
                       </TableCell>
                       <TableCell className="text-right">
@@ -362,6 +363,7 @@ export default function LocadorVehicles() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Car className="mb-4 h-12 w-12 text-muted-foreground" />
