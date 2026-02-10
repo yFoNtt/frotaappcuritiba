@@ -551,34 +551,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
           cnh_expiry: string | null
           cnh_number: string | null
+          company_name: string | null
           created_at: string
           document_number: string | null
           document_type: string | null
+          full_name: string | null
           id: string
+          phone: string | null
+          state: string | null
           updated_at: string
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
+          city?: string | null
           cnh_expiry?: string | null
           cnh_number?: string | null
+          company_name?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string | null
+          full_name?: string | null
           id?: string
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
+          city?: string | null
           cnh_expiry?: string | null
           cnh_number?: string | null
+          company_name?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string | null
+          full_name?: string | null
           id?: string
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }

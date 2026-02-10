@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,25 +8,94 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChecklistTemplateEditor } from '@/components/inspections/ChecklistTemplateEditor';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
 import { 
   User, 
   Building, 
   Bell, 
   Shield,
   Save,
-  ClipboardCheck
+  ClipboardCheck,
+  Loader2
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function LocadorSettings() {
+  const { user } = useAuth();
+  const { data: profile, isLoading } = useProfile();
+  const updateProfile = useUpdateProfile();
+  const updatePassword = useUpdatePassword();
+
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Populate form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name ?? '');
+      setPhone(profile.phone ?? '');
+      setWhatsapp(profile.whatsapp ?? '');
+      setCompanyName(profile.company_name ?? '');
+      setCity(profile.city ?? '');
+      setState(profile.state ?? '');
+    }
+  }, [profile]);
+
   const handleSave = () => {
-    toast.success('Configurações salvas com sucesso!');
+    updateProfile.mutate({
+      full_name: fullName || null,
+      phone: phone || null,
+      whatsapp: whatsapp || null,
+      company_name: companyName || null,
+      city: city || null,
+      state: state || null,
+    });
   };
+
+  const handleChangePassword = () => {
+    if (!newPassword) return;
+    if (newPassword.length < 6) {
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      return;
+    }
+    updatePassword.mutate({ newPassword }, {
+      onSuccess: () => {
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="mt-2 h-5 w-72" />
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
           <p className="text-muted-foreground">
@@ -58,19 +128,43 @@ export default function LocadorSettings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" defaultValue="João Silva" />
+                    <Input
+                      id="name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Seu nome completo"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
-                    <Input id="email" type="email" defaultValue="joao@frotaapp.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={user?.email ?? ''}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      O e-mail não pode ser alterado
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Telefone</Label>
-                    <Input id="phone" defaultValue="(11) 99999-9999" />
+                    <Input
+                      id="phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(00) 00000-0000"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="whatsapp">WhatsApp (contato público)</Label>
-                    <Input id="whatsapp" defaultValue="5511999999999" />
+                    <Input
+                      id="whatsapp"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value)}
+                      placeholder="5500000000000"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -89,19 +183,43 @@ export default function LocadorSettings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input id="companyName" defaultValue="JS Locações" />
+                    <Input
+                      id="companyName"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Nome da sua empresa"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ (opcional)</Label>
-                    <Input id="cnpj" placeholder="00.000.000/0000-00" />
+                    <Label htmlFor="docNumber">CPF/CNPJ</Label>
+                    <Input
+                      id="docNumber"
+                      value={profile?.document_number ?? ''}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Documento informado no cadastro
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" defaultValue="São Paulo" />
+                    <Input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Sua cidade"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
-                    <Input id="state" defaultValue="SP" maxLength={2} />
+                    <Input
+                      id="state"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      placeholder="UF"
+                      maxLength={2}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -173,18 +291,37 @@ export default function LocadorSettings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Senha Atual</Label>
-                    <Input id="currentPassword" type="password" />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="newPassword">Nova Senha</Label>
-                    <Input id="newPassword" type="password" />
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                    <Input id="confirmPassword" type="password" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repita a nova senha"
+                    />
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <p className="text-xs text-destructive">As senhas não coincidem</p>
+                    )}
                   </div>
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleChangePassword}
+                    disabled={!newPassword || newPassword.length < 6 || newPassword !== confirmPassword || updatePassword.isPending}
+                  >
+                    {updatePassword.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
                     Alterar Senha
                   </Button>
                 </CardContent>
@@ -193,8 +330,12 @@ export default function LocadorSettings() {
 
             {/* Save Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSave} size="lg">
-                <Save className="mr-2 h-4 w-4" />
+              <Button onClick={handleSave} size="lg" disabled={updateProfile.isPending}>
+                {updateProfile.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
                 Salvar Alterações
               </Button>
             </div>
