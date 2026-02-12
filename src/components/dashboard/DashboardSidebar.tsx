@@ -16,7 +16,8 @@ import {
   Inbox,
   BarChart3,
   X,
-  ClipboardCheck
+  ClipboardCheck,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ const menuItems = [
   { icon: FolderOpen, label: 'Documentos', path: '/locador/documentos' },
   { icon: Inbox, label: 'Solicitações', path: '/locador/solicitacoes' },
   { icon: Bell, label: 'Alertas', path: '/locador/alertas' },
+  { icon: History, label: 'Auditoria', path: '/locador/auditoria' },
   { icon: Settings, label: 'Configurações', path: '/locador/configuracoes' },
 ];
 
