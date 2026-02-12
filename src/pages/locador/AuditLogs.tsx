@@ -26,10 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, History, Filter, X, Eye } from 'lucide-react';
+import { Search, History, Filter, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuditLogs, TABLE_LABELS, ACTION_LABELS, AuditLog } from '@/hooks/useAuditLogs';
+
+const ITEMS_PER_PAGE = 20;
 
 export default function AuditLogs() {
   const { data: logs = [], isLoading } = useAuditLogs();
@@ -39,6 +41,7 @@ export default function AuditLogs() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -65,6 +68,11 @@ export default function AuditLogs() {
     });
   }, [logs, search, tableFilter, actionFilter, dateFrom, dateTo]);
 
+  // Reset page when filters change
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedLogs = filteredLogs.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
+
   const hasActiveFilters = tableFilter !== 'all' || actionFilter !== 'all' || dateFrom || dateTo;
 
   const clearFilters = () => {
@@ -72,6 +80,7 @@ export default function AuditLogs() {
     setActionFilter('all');
     setDateFrom('');
     setDateTo('');
+    setCurrentPage(1);
   };
 
   const actionVariant = (action: string) => {
@@ -118,7 +127,7 @@ export default function AuditLogs() {
                 <Input
                   placeholder="Buscar por tabela, ação ou campos..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   className="pl-9"
                 />
               </div>
@@ -127,7 +136,7 @@ export default function AuditLogs() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tabela</label>
-                <Select value={tableFilter} onValueChange={setTableFilter}>
+                <Select value={tableFilter} onValueChange={(v) => { setTableFilter(v); setCurrentPage(1); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as tabelas" />
                   </SelectTrigger>
@@ -141,7 +150,7 @@ export default function AuditLogs() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ação</label>
-                <Select value={actionFilter} onValueChange={setActionFilter}>
+                <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setCurrentPage(1); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as ações" />
                   </SelectTrigger>
@@ -155,11 +164,11 @@ export default function AuditLogs() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Data início</label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Data fim</label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }} />
               </div>
             </div>
 
@@ -197,7 +206,7 @@ export default function AuditLogs() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLogs.map((log) => (
+                  {paginatedLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="whitespace-nowrap text-sm">
                         {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -228,6 +237,36 @@ export default function AuditLogs() {
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <History className="h-12 w-12 mb-3 opacity-50" />
                 <p className="text-sm">Nenhum log de auditoria encontrado</p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {filteredLogs.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredLogs.length)} de {filteredLogs.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage(safeCurrentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {safeCurrentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage(safeCurrentPage + 1)}
+                  >
+                    Próximo <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
