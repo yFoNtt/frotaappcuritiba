@@ -43,11 +43,14 @@ export default function Auth() {
     setMode(location.pathname === '/cadastro' ? 'register' : 'login');
   }, [location.pathname]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (delayed to avoid DOM conflict with toast)
   useEffect(() => {
     if (user && role && !authLoading) {
       const redirectPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : '/motorista';
-      navigate(redirectPath, { replace: true });
+      const timer = setTimeout(() => {
+        navigate(redirectPath, { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [user, role, authLoading, navigate]);
 
