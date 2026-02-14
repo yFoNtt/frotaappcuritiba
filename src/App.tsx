@@ -40,6 +40,7 @@ import AdminPlans from "./pages/admin/Plans";
 import AdminMetrics from "./pages/admin/Metrics";
 import AdminSettings from "./pages/admin/Settings";
 import AdminLocadorDetails from "./pages/admin/LocadorDetails";
+import AdminAuditLogs from "./pages/admin/AuditLogs";
 
 // Motorista Dashboard Pages
 import MotoristaDashboard from "./pages/motorista/Dashboard";
@@ -181,6 +182,11 @@ const App = () => (
             <Route path="/admin/configuracoes" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/auditoria" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAuditLogs />
               </ProtectedRoute>
             } />
 
