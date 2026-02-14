@@ -10,7 +10,8 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  Shield
+  Shield,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ const menuItems = [
   { icon: Car, label: 'Veículos', path: '/admin/veiculos' },
   { icon: CreditCard, label: 'Planos', path: '/admin/planos' },
   { icon: BarChart3, label: 'Métricas', path: '/admin/metricas' },
+  { icon: History, label: 'Auditoria', path: '/admin/auditoria' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes' },
 ];
 
