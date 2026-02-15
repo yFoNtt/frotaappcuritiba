@@ -29,24 +29,51 @@ import {
 import { Search, History, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuditLogs, TABLE_LABELS, ACTION_LABELS, AuditLog } from '@/hooks/useAuditLogs';
+import { useAuditLogs, useAuditUsers, TABLE_LABELS, ACTION_LABELS, AuditLog } from '@/hooks/useAuditLogs';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function AdminAuditLogs() {
   const { data: logs = [], isLoading } = useAuditLogs();
+  const { data: usersMap } = useAuditUsers();
   const [search, setSearch] = useState('');
   const [tableFilter, setTableFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const getUserLabel = (userId: string) => {
+    if (!usersMap) return userId.substring(0, 8) + '...';
+    const info = usersMap.get(userId);
+    if (!info) return userId.substring(0, 8) + '...';
+    return info.full_name || info.email;
+  };
+
+  const getUserEmail = (userId: string) => {
+    return usersMap?.get(userId)?.email || null;
+  };
+
+  // Unique users from logs
+  const uniqueUsers = useMemo(() => {
+    const ids = [...new Set(logs.map((l) => l.changed_by))];
+    return ids
+      .filter((id) => id !== '00000000-0000-0000-0000-000000000000')
+      .map((id) => ({
+        id,
+        label: getUserLabel(id),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs, usersMap]);
+
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       if (tableFilter !== 'all' && log.table_name !== tableFilter) return false;
       if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+      if (userFilter !== 'all' && log.changed_by !== userFilter) return false;
       if (dateFrom) {
         const logDate = log.created_at.split('T')[0];
         if (logDate < dateFrom) return false;
@@ -60,23 +87,34 @@ export default function AdminAuditLogs() {
         const tableName = (TABLE_LABELS[log.table_name] || log.table_name).toLowerCase();
         const actionName = (ACTION_LABELS[log.action] || log.action).toLowerCase();
         const fields = log.changed_fields?.join(', ').toLowerCase() || '';
-        if (!tableName.includes(s) && !actionName.includes(s) && !fields.includes(s) && !log.record_id.includes(s)) {
+        const userLabel = getUserLabel(log.changed_by).toLowerCase();
+        const userEmail = (getUserEmail(log.changed_by) || '').toLowerCase();
+        if (
+          !tableName.includes(s) &&
+          !actionName.includes(s) &&
+          !fields.includes(s) &&
+          !log.record_id.includes(s) &&
+          !userLabel.includes(s) &&
+          !userEmail.includes(s)
+        ) {
           return false;
         }
       }
       return true;
     });
-  }, [logs, search, tableFilter, actionFilter, dateFrom, dateTo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs, search, tableFilter, actionFilter, userFilter, dateFrom, dateTo, usersMap]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedLogs = filteredLogs.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
 
-  const hasActiveFilters = tableFilter !== 'all' || actionFilter !== 'all' || dateFrom || dateTo;
+  const hasActiveFilters = tableFilter !== 'all' || actionFilter !== 'all' || userFilter !== 'all' || dateFrom || dateTo;
 
   const clearFilters = () => {
     setTableFilter('all');
     setActionFilter('all');
+    setUserFilter('all');
     setDateFrom('');
     setDateTo('');
     setCurrentPage(1);
@@ -123,7 +161,7 @@ export default function AdminAuditLogs() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por tabela, ação ou campos..."
+                  placeholder="Buscar por tabela, ação, campos ou usuário..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   className="pl-9"
@@ -131,7 +169,7 @@ export default function AdminAuditLogs() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tabela</label>
                 <Select value={tableFilter} onValueChange={(v) => { setTableFilter(v); setCurrentPage(1); }}>
@@ -156,6 +194,20 @@ export default function AdminAuditLogs() {
                     <SelectItem value="all">Todas as ações</SelectItem>
                     {Object.entries(ACTION_LABELS).map(([key, label]) => (
                       <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Usuário</label>
+                <Select value={userFilter} onValueChange={(v) => { setUserFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os usuários" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os usuários</SelectItem>
+                    {uniqueUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -197,6 +249,7 @@ export default function AdminAuditLogs() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data/Hora</TableHead>
+                    <TableHead>Usuário</TableHead>
                     <TableHead>Tabela</TableHead>
                     <TableHead>Ação</TableHead>
                     <TableHead className="hidden md:table-cell">Campos Alterados</TableHead>
@@ -208,6 +261,9 @@ export default function AdminAuditLogs() {
                     <TableRow key={log.id}>
                       <TableCell className="whitespace-nowrap text-sm">
                         {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-sm max-w-[180px] truncate" title={getUserEmail(log.changed_by) || ''}>
+                        {getUserLabel(log.changed_by)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
@@ -278,10 +334,17 @@ export default function AdminAuditLogs() {
                   </Badge>
                 </div>
                 <div>
+                  <p className="text-sm font-medium text-muted-foreground">Alterado por</p>
+                  <p className="font-medium">{getUserLabel(selectedLog.changed_by)}</p>
+                  {getUserEmail(selectedLog.changed_by) && (
+                    <p className="text-xs text-muted-foreground">{getUserEmail(selectedLog.changed_by)}</p>
+                  )}
+                </div>
+                <div>
                   <p className="text-sm font-medium text-muted-foreground">Data/Hora</p>
                   <p>{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">ID do Registro</p>
                   <p className="text-sm font-mono break-all">{selectedLog.record_id}</p>
                 </div>

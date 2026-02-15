@@ -12,6 +12,8 @@ export interface AuditLog {
   new_data: Record<string, unknown> | null;
   changed_fields: string[] | null;
   created_at: string;
+  changed_by_email?: string;
+  changed_by_name?: string;
 }
 
 export const TABLE_LABELS: Record<string, string> = {
@@ -45,6 +47,50 @@ export function useAuditLogs() {
 
       if (error) throw error;
       return data as AuditLog[];
+    },
+    enabled: !!user,
+  });
+}
+
+export interface UserInfo {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+}
+
+export function useAuditUsers() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['audit-users', user?.id],
+    queryFn: async () => {
+      // Fetch emails via admin RPC
+      const { data: emails, error: emailsError } = await supabase
+        .rpc('get_user_emails_for_admin');
+
+      if (emailsError) throw emailsError;
+
+      // Fetch profiles for names
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name');
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(
+        (profiles || []).map((p) => [p.user_id, p.full_name])
+      );
+
+      const usersMap = new Map<string, UserInfo>();
+      for (const e of emails || []) {
+        usersMap.set(e.user_id, {
+          user_id: e.user_id,
+          email: e.email,
+          full_name: profileMap.get(e.user_id) || null,
+        });
+      }
+
+      return usersMap;
     },
     enabled: !!user,
   });
