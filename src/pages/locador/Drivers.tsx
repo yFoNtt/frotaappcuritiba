@@ -321,134 +321,144 @@ export default function LocadorDrivers() {
         <Card>
           <CardContent className="p-0">
             {filteredDrivers.length > 0 ? (
-              <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Motorista</TableHead>
-                    <TableHead className="hidden md:table-cell">Contato</TableHead>
-                    <TableHead className="hidden sm:table-cell">CNH</TableHead>
-                    <TableHead className="hidden lg:table-cell">Veículo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile card layout */}
+                <div className="md:hidden divide-y">
                   {filteredDrivers.map((driver) => {
                     const vehicle = getVehicleInfo(driver.vehicle_id);
                     const cnhExpiring = isCnhExpiringSoon(driver.cnh_expiry);
                     const cnhExpired = isCnhExpired(driver.cnh_expiry);
-                    
                     return (
-                      <TableRow key={driver.id}>
-                        <TableCell>
+                      <div key={driver.id} className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                               {driver.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
                               <p className="font-medium">{driver.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Desde {format(parseISO(driver.created_at), 'MM/yyyy')}
-                              </p>
+                              <p className="text-sm text-muted-foreground">{driver.email}</p>
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-sm">
-                              <Mail className="h-3 w-3 text-muted-foreground" />
-                              {driver.email}
-                            </div>
-                            {driver.phone && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Phone className="h-3 w-3" />
-                                {driver.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="space-y-1">
-                            <p className="font-mono text-sm">{driver.cnh_number}</p>
-                            <p className={`text-xs ${
-                              cnhExpired 
-                                ? 'text-destructive font-medium' 
-                                : cnhExpiring 
-                                  ? 'text-warning font-medium' 
-                                  : 'text-muted-foreground'
-                            }`}>
-                              Venc: {format(parseISO(driver.cnh_expiry), 'dd/MM/yyyy')}
-                              {cnhExpired && ' ❌'}
-                              {cnhExpiring && !cnhExpired && ' ⚠️'}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {vehicle ? (
-                            <div className="flex items-center gap-2">
-                              <Car className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{vehicle.brand} {vehicle.model}</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
                           <Badge variant={driver.vehicle_id ? 'success' : 'secondary'}>
                             {driver.vehicle_id ? 'Ativo' : 'Sem veículo'}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            {driver.vehicle_id ? (
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleUnassignVehicle(driver)}
-                                disabled={unassignVehicle.isPending}
-                                title="Desvincular veículo"
-                              >
-                                {unassignVehicle.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Unlink className="h-4 w-4 text-warning" />
-                                )}
-                              </Button>
-                            ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => setAssigningDriver(driver)}
-                                disabled={availableVehicles.length === 0}
-                                title={availableVehicles.length === 0 ? 'Nenhum veículo disponível' : 'Vincular veículo'}
-                              >
-                                <LinkIcon className="h-4 w-4 text-success" />
-                              </Button>
-                            )}
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleOpenEditDialog(driver)}
-                            >
-                              <Edit className="h-4 w-4" />
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          {driver.phone && (
+                            <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{driver.phone}</span>
+                          )}
+                          <span className={`flex items-center gap-1 ${cnhExpired ? 'text-destructive font-medium' : cnhExpiring ? 'text-warning font-medium' : ''}`}>
+                            CNH: {format(parseISO(driver.cnh_expiry), 'dd/MM/yyyy')}
+                            {cnhExpired && ' ❌'}{cnhExpiring && !cnhExpired && ' ⚠️'}
+                          </span>
+                          {vehicle && (
+                            <span className="flex items-center gap-1"><Car className="h-3 w-3" />{vehicle.brand} {vehicle.model}</span>
+                          )}
+                        </div>
+                        <div className="flex justify-end gap-1">
+                          {driver.vehicle_id ? (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
+                              {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setDeletingDriver(driver)}
-                            >
-                              <Trash2 className="h-4 w-4" />
+                          ) : (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAssigningDriver(driver)} disabled={availableVehicles.length === 0} title="Vincular veículo">
+                              <LinkIcon className="h-4 w-4 text-success" />
                             </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(driver)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeletingDriver(driver)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
-              </div>
+                </div>
+
+                {/* Desktop table layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Motorista</TableHead>
+                        <TableHead>Contato</TableHead>
+                        <TableHead className="hidden lg:table-cell">CNH</TableHead>
+                        <TableHead className="hidden lg:table-cell">Veículo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredDrivers.map((driver) => {
+                        const vehicle = getVehicleInfo(driver.vehicle_id);
+                        const cnhExpiring = isCnhExpiringSoon(driver.cnh_expiry);
+                        const cnhExpired = isCnhExpired(driver.cnh_expiry);
+                        return (
+                          <TableRow key={driver.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                                  {driver.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{driver.name}</p>
+                                  <p className="text-sm text-muted-foreground">Desde {format(parseISO(driver.created_at), 'MM/yyyy')}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1 text-sm"><Mail className="h-3 w-3 text-muted-foreground" />{driver.email}</div>
+                                {driver.phone && <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone className="h-3 w-3" />{driver.phone}</div>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <div className="space-y-1">
+                                <p className="font-mono text-sm">{driver.cnh_number}</p>
+                                <p className={`text-xs ${cnhExpired ? 'text-destructive font-medium' : cnhExpiring ? 'text-warning font-medium' : 'text-muted-foreground'}`}>
+                                  Venc: {format(parseISO(driver.cnh_expiry), 'dd/MM/yyyy')}{cnhExpired && ' ❌'}{cnhExpiring && !cnhExpired && ' ⚠️'}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {vehicle ? (
+                                <div className="flex items-center gap-2"><Car className="h-4 w-4 text-muted-foreground" /><span className="text-sm">{vehicle.brand} {vehicle.model}</span></div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={driver.vehicle_id ? 'success' : 'secondary'}>{driver.vehicle_id ? 'Ativo' : 'Sem veículo'}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                {driver.vehicle_id ? (
+                                  <Button variant="ghost" size="icon" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
+                                    {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
+                                  </Button>
+                                ) : (
+                                  <Button variant="ghost" size="icon" onClick={() => setAssigningDriver(driver)} disabled={availableVehicles.length === 0} title={availableVehicles.length === 0 ? 'Nenhum veículo disponível' : 'Vincular veículo'}>
+                                    <LinkIcon className="h-4 w-4 text-success" />
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(driver)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeletingDriver(driver)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Users className="mb-4 h-12 w-12 text-muted-foreground" />
