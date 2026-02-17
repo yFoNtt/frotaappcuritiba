@@ -245,48 +245,85 @@ export default function AdminAuditLogs() {
           </CardHeader>
           <CardContent className="p-0">
             {filteredLogs.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Tabela</TableHead>
-                    <TableHead>Ação</TableHead>
-                    <TableHead className="hidden md:table-cell">Campos Alterados</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile card layout */}
+                <div className="md:hidden divide-y">
                   {paginatedLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="whitespace-nowrap text-sm">
-                        {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-sm max-w-[180px] truncate" title={getUserEmail(log.changed_by) || ''}>
-                        {getUserLabel(log.changed_by)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {TABLE_LABELS[log.table_name] || log.table_name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={actionVariant(log.action) as 'default' | 'secondary' | 'destructive' | 'outline'}>
-                          {ACTION_LABELS[log.action] || log.action}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[200px] truncate">
-                        {log.changed_fields?.join(', ') || '—'}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedLog(log)}>
+                    <div key={log.id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={actionVariant(log.action) as 'default' | 'secondary' | 'destructive' | 'outline'}>
+                            {ACTION_LABELS[log.action] || log.action}
+                          </Badge>
+                          <Badge variant="outline">
+                            {TABLE_LABELS[log.table_name] || log.table_name}
+                          </Badge>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedLog(log)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </div>
+                      <div className="text-sm truncate" title={getUserEmail(log.changed_by) || ''}>
+                        <span className="text-muted-foreground">Por: </span>{getUserLabel(log.changed_by)}
+                      </div>
+                      {log.changed_fields && log.changed_fields.length > 0 && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          Campos: {log.changed_fields.join(', ')}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop table layout */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>Tabela</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead className="hidden lg:table-cell">Campos Alterados</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="whitespace-nowrap text-sm">
+                            {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-sm max-w-[180px] truncate" title={getUserEmail(log.changed_by) || ''}>
+                            {getUserLabel(log.changed_by)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {TABLE_LABELS[log.table_name] || log.table_name}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={actionVariant(log.action) as 'default' | 'secondary' | 'destructive' | 'outline'}>
+                              {ACTION_LABELS[log.action] || log.action}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm text-muted-foreground max-w-[200px] truncate">
+                            {log.changed_fields?.join(', ') || '—'}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedLog(log)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <History className="h-12 w-12 mb-3 opacity-50" />
@@ -295,17 +332,17 @@ export default function AdminAuditLogs() {
             )}
 
             {filteredLogs.length > ITEMS_PER_PAGE && (
-              <div className="flex items-center justify-between border-t px-4 py-3">
-                <p className="text-sm text-muted-foreground">
-                  Mostrando {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredLogs.length)} de {filteredLogs.length}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t px-4 py-3">
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredLogs.length)} de {filteredLogs.length}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" disabled={safeCurrentPage <= 1} onClick={() => setCurrentPage(safeCurrentPage - 1)}>
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+                    <ChevronLeft className="h-4 w-4" /><span className="hidden sm:inline ml-1">Anterior</span>
                   </Button>
-                  <span className="text-sm font-medium">{safeCurrentPage} / {totalPages}</span>
+                  <span className="text-sm font-medium">{safeCurrentPage}/{totalPages}</span>
                   <Button variant="outline" size="sm" disabled={safeCurrentPage >= totalPages} onClick={() => setCurrentPage(safeCurrentPage + 1)}>
-                    Próximo <ChevronRight className="h-4 w-4 ml-1" />
+                    <span className="hidden sm:inline mr-1">Próximo</span><ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
