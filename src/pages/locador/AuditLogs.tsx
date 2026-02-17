@@ -296,13 +296,13 @@ export default function AuditLogs() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto sm:max-w-lg md:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalhes do Log</DialogTitle>
           </DialogHeader>
           {selectedLog && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tabela</p>
                   <p className="font-medium">{TABLE_LABELS[selectedLog.table_name] || selectedLog.table_name}</p>
@@ -315,11 +315,11 @@ export default function AuditLogs() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Data/Hora</p>
-                  <p>{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+                  <p className="text-sm">{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">ID do Registro</p>
-                  <p className="text-sm font-mono break-all">{selectedLog.record_id}</p>
+                  <p className="text-xs font-mono break-all">{selectedLog.record_id}</p>
                 </div>
               </div>
 
@@ -337,7 +337,28 @@ export default function AuditLogs() {
               {selectedLog.action === 'UPDATE' && selectedLog.old_data && selectedLog.new_data && selectedLog.changed_fields && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">Comparação</p>
-                  <div className="rounded-lg border overflow-hidden">
+                  {/* Mobile: stacked cards */}
+                  <div className="space-y-3 sm:hidden">
+                    {selectedLog.changed_fields.map((field) => (
+                      <div key={field} className="rounded-lg border p-3 space-y-1">
+                        <p className="text-sm font-medium">{field}</p>
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Antes: </span>
+                          <span className="text-destructive/80 break-all">
+                            {String((selectedLog.old_data as Record<string, unknown>)?.[field] ?? '—')}
+                          </span>
+                        </div>
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Depois: </span>
+                          <span className="text-primary break-all">
+                            {String((selectedLog.new_data as Record<string, unknown>)?.[field] ?? '—')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop: table */}
+                  <div className="hidden sm:block rounded-lg border overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
