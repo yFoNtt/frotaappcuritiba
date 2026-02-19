@@ -2,3 +2,6 @@ project_id = "bohycsldnskyuwsdxrqt"
 
 [functions.check-cnh-expiry]
 verify_jwt = true
+
+[functions.generate-notifications]
+verify_jwt = false
