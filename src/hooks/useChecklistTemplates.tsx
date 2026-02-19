@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -48,7 +49,7 @@ export function useChecklistTemplates() {
 export function useEffectiveChecklist() {
   const { data: templates, isLoading } = useChecklistTemplates();
 
-  const getChecklist = (): ChecklistCategory[] => {
+  const getChecklist = useCallback((): ChecklistCategory[] => {
     if (!templates || templates.length === 0) {
       return JSON.parse(JSON.stringify(INSPECTION_CHECKLIST_TEMPLATE));
     }
@@ -77,7 +78,7 @@ export function useEffectiveChecklist() {
       title: category.title,
       items: category.items,
     }));
-  };
+  }, [templates]);
 
   return { getChecklist, isLoading, hasCustomTemplate: templates && templates.length > 0 };
 }
