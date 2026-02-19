@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
@@ -87,6 +88,7 @@ export function MotoristaSidebar() {
               </Link>
             );
           })}
+          <NotificationBell collapsed={collapsed} />
         </nav>
 
         {/* User section */}

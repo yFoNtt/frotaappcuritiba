@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
@@ -91,6 +92,7 @@ export function AdminSidebar() {
               </Link>
             );
           })}
+          <NotificationBell collapsed={collapsed} />
         </nav>
 
         {/* User section */}
