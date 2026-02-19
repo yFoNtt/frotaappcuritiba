@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Camera, Loader2, X, Upload, ClipboardList, FileText } from 'lucide-react';
 import {
   useCreateInspection,
+  useUpdateInspection,
   uploadInspectionPhotos,
   FUEL_LEVELS,
   CONDITION_LABELS,
@@ -101,12 +102,15 @@ export function InspectionFormDialog({
 }: InspectionFormDialogProps) {
   const { user } = useAuth();
   const createInspection = useCreateInspection();
+  const updateInspection = useUpdateInspection();
   const { getChecklist, isLoading: isLoadingChecklist } = useEffectiveChecklist();
+  const isEditing = !!inspection;
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistCategory[]>([]);
   const [activeTab, setActiveTab] = useState('info');
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -131,14 +135,78 @@ export function InspectionFormDialog({
   const selectedVehicleId = form.watch('vehicle_id');
   const selectedDriverId = form.watch('driver_id');
 
-  // Reset checklist when dialog opens - use custom template if available
+  // Pre-fill form and checklist when dialog opens
   useEffect(() => {
     if (open && !isLoadingChecklist) {
-      const effectiveChecklist = getChecklist();
-      setChecklist(effectiveChecklist);
       setActiveTab('info');
+
+      if (inspection) {
+        // Pre-fill form with existing inspection data
+        form.reset({
+          vehicle_id: inspection.vehicle_id,
+          driver_id: inspection.driver_id,
+          contract_id: inspection.contract_id || null,
+          type: inspection.type,
+          km_reading: inspection.km_reading,
+          fuel_level: inspection.fuel_level as any,
+          exterior_condition: inspection.exterior_condition as any,
+          interior_condition: inspection.interior_condition as any,
+          tires_condition: (inspection.tires_condition as any) || 'good',
+          lights_working: inspection.lights_working,
+          ac_working: inspection.ac_working,
+          damages: inspection.damages || '',
+          notes: inspection.notes || '',
+          performed_at: format(new Date(inspection.performed_at), "yyyy-MM-dd'T'HH:mm"),
+        });
+
+        // Load existing photos as previews
+        if (inspection.photos && inspection.photos.length > 0) {
+          setExistingPhotos(inspection.photos);
+        } else {
+          setExistingPhotos([]);
+        }
+        setPhotos([]);
+        setPreviews([]);
+
+        // Load existing checklist or default
+        if (inspection.checklist && typeof inspection.checklist === 'object') {
+          const checklistData = inspection.checklist as Record<string, string>;
+          const effectiveChecklist = getChecklist();
+          const restoredChecklist = effectiveChecklist.map(category => ({
+            ...category,
+            items: category.items.map(item => ({
+              ...item,
+              status: (checklistData[item.id] as any) || 'ok',
+            })),
+          }));
+          setChecklist(restoredChecklist);
+        } else {
+          setChecklist(getChecklist());
+        }
+      } else {
+        form.reset({
+          vehicle_id: '',
+          driver_id: '',
+          contract_id: null,
+          type: 'check_in',
+          km_reading: 0,
+          fuel_level: 'full',
+          exterior_condition: 'good',
+          interior_condition: 'good',
+          tires_condition: 'good',
+          lights_working: true,
+          ac_working: true,
+          damages: '',
+          notes: '',
+          performed_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        });
+        setPhotos([]);
+        setPreviews([]);
+        setExistingPhotos([]);
+        setChecklist(getChecklist());
+      }
     }
-  }, [open, isLoadingChecklist, getChecklist]);
+  }, [open, isLoadingChecklist, getChecklist, inspection]);
 
   // Find active contract for selected vehicle/driver
   useEffect(() => {
@@ -199,25 +267,30 @@ export function InspectionFormDialog({
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingPhoto = (index: number) => {
+    setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!user) return;
 
     try {
       setIsUploading(true);
 
-      // Generate a temporary ID for the folder structure
-      const tempId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-      // Upload photos first if any
-      let photoUrls: string[] = [];
+      // Upload new photos if any
+      let newPhotoUrls: string[] = [];
       if (photos.length > 0) {
-        photoUrls = await uploadInspectionPhotos(user.id, tempId, photos);
+        const tempId = isEditing ? inspection!.id : `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        newPhotoUrls = await uploadInspectionPhotos(user.id, tempId, photos);
       }
+
+      // Combine existing and new photos
+      const allPhotos = [...existingPhotos, ...newPhotoUrls];
 
       // Convert checklist to JSON
       const checklistJson = checklistToJson(checklist);
 
-      await createInspection.mutateAsync({
+      const inspectionData = {
         vehicle_id: data.vehicle_id,
         driver_id: data.driver_id,
         contract_id: data.contract_id || null,
@@ -232,14 +305,16 @@ export function InspectionFormDialog({
         damages: data.damages || null,
         notes: data.notes || null,
         performed_at: data.performed_at,
-        photos: photoUrls,
+        photos: allPhotos,
         checklist: checklistJson,
-      });
+      };
 
-      form.reset();
-      setPhotos([]);
-      setPreviews([]);
-      setChecklist(getChecklist());
+      if (isEditing) {
+        await updateInspection.mutateAsync({ id: inspection!.id, data: inspectionData });
+      } else {
+        await createInspection.mutateAsync(inspectionData);
+      }
+
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting inspection:', error);
@@ -248,7 +323,7 @@ export function InspectionFormDialog({
     }
   };
 
-  const isSubmitting = createInspection.isPending || isUploading;
+  const isSubmitting = createInspection.isPending || updateInspection.isPending || isUploading;
 
   // Count checklist issues
   const checklistIssues = checklist.reduce((count, category) => {
@@ -574,11 +649,27 @@ export function InspectionFormDialog({
                   <div className="space-y-3">
                     <Label>Fotos da Vistoria (máx. 10)</Label>
                     <div className="flex flex-wrap gap-3">
+                      {existingPhotos.map((url, index) => (
+                        <div key={`existing-${index}`} className="relative">
+                          <img
+                            src={url}
+                            alt={`Foto ${index + 1}`}
+                            className="h-24 w-24 rounded-lg object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingPhoto(index)}
+                            className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
                       {previews.map((preview, index) => (
-                        <div key={index} className="relative">
+                        <div key={`new-${index}`} className="relative">
                           <img
                             src={preview}
-                            alt={`Preview ${index + 1}`}
+                            alt={`Nova foto ${index + 1}`}
                             className="h-24 w-24 rounded-lg object-cover"
                           />
                           <button
@@ -591,7 +682,7 @@ export function InspectionFormDialog({
                         </div>
                       ))}
 
-                      {photos.length < 10 && (
+                      {(existingPhotos.length + photos.length) < 10 && (
                         <label className="flex h-24 w-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors">
                           <input
                             type="file"
@@ -635,7 +726,7 @@ export function InspectionFormDialog({
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Registrar Vistoria
+                    {isEditing ? 'Salvar Alterações' : 'Registrar Vistoria'}
                   </>
                 )}
               </Button>

@@ -20,6 +20,7 @@ import {
   Camera,
   ArrowDownToLine,
   ArrowUpFromLine,
+  Pencil,
 } from 'lucide-react';
 import {
   VehicleInspection,
@@ -38,6 +39,7 @@ interface InspectionCardProps {
   vehicle?: Vehicle | null;
   driver?: Driver | null;
   onView: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
@@ -53,6 +55,7 @@ export function InspectionCard({
   vehicle,
   driver,
   onView,
+  onEdit,
   onDelete,
 }: InspectionCardProps) {
   const isCheckIn = inspection.type === 'check_in';
@@ -153,6 +156,10 @@ export function InspectionCard({
               <DropdownMenuItem onClick={onView}>
                 <Eye className="mr-2 h-4 w-4" />
                 Ver detalhes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
