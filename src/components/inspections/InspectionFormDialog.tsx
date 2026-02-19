@@ -271,11 +271,11 @@ export function InspectionFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
               <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
-                <TabsTrigger value="info" className="flex items-center gap-2">
+                <TabsTrigger type="button" value="info" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Informações
                 </TabsTrigger>
-                <TabsTrigger value="checklist" className="flex items-center gap-2">
+                <TabsTrigger type="button" value="checklist" className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4" />
                   Checklist
                   {checklistIssues > 0 && (
@@ -284,7 +284,7 @@ export function InspectionFormDialog({
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="photos" className="flex items-center gap-2">
+                <TabsTrigger type="button" value="photos" className="flex items-center gap-2">
                   <Camera className="h-4 w-4" />
                   Fotos
                   {photos.length > 0 && (
