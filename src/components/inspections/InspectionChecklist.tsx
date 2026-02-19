@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -95,11 +96,14 @@ interface InspectionChecklistProps {
   readOnly?: boolean;
 }
 
-export function InspectionChecklist({
+export const InspectionChecklist = React.forwardRef<
+  HTMLDivElement,
+  InspectionChecklistProps
+>(function InspectionChecklist({
   checklist,
   onChange,
   readOnly = false,
-}: InspectionChecklistProps) {
+}: InspectionChecklistProps, ref) {
   const handleStatusChange = (
     categoryId: string,
     itemId: string,
@@ -281,7 +285,7 @@ export function InspectionChecklist({
       </div>
     </div>
   );
-}
+});
 
 // Helper to convert checklist to JSON for storage
 export function checklistToJson(checklist: ChecklistCategory[]): Record<string, ChecklistStatus> {
