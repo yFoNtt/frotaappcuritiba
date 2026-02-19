@@ -5,7 +5,8 @@ import {
   Users, 
   CreditCard, 
   Wrench, 
-  Bell, 
+  Bell,
+  BellRing,
   FileText,
   Settings,
   LogOut,
@@ -42,6 +43,7 @@ const menuItems = [
   { icon: Inbox, label: 'Solicitações', path: '/locador/solicitacoes' },
   { icon: Bell, label: 'Alertas', path: '/locador/alertas' },
   { icon: History, label: 'Auditoria', path: '/locador/auditoria' },
+  { icon: BellRing, label: 'Notificações', path: '/locador/notificacoes' },
   { icon: Settings, label: 'Configurações', path: '/locador/configuracoes' },
 ];
 

@@ -32,6 +32,7 @@ import LocadorReports from "./pages/locador/Reports";
 import LocadorSettings from "./pages/locador/Settings";
 import LocadorInspections from "./pages/locador/Inspections";
 import LocadorAuditLogs from "./pages/locador/AuditLogs";
+import LocadorNotifications from "./pages/locador/Notifications";
 
 // Admin Dashboard Pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -156,6 +157,11 @@ const App = () => (
             <Route path="/locador/auditoria" element={
               <ProtectedRoute allowedRoles={['locador']}>
                 <RouteErrorBoundary><LocadorAuditLogs /></RouteErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/locador/notificacoes" element={
+              <ProtectedRoute allowedRoles={['locador']}>
+                <RouteErrorBoundary><LocadorNotifications /></RouteErrorBoundary>
               </ProtectedRoute>
             } />
             
