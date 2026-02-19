@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
   { icon: Car, label: 'Veículos', path: '/locador/veiculos' },
@@ -108,6 +109,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
               </Link>
             );
           })}
+          <NotificationBell collapsed={collapsed} />
         </nav>
       </ScrollArea>
 
