@@ -41,6 +41,7 @@ export default function LocadorInspections() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedInspection, setSelectedInspection] = useState<VehicleInspection | null>(null);
+  const [editingInspection, setEditingInspection] = useState<VehicleInspection | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -74,6 +75,11 @@ export default function LocadorInspections() {
   const handleViewDetails = (inspection: VehicleInspection) => {
     setSelectedInspection(inspection);
     setIsDetailsOpen(true);
+  };
+
+  const handleEdit = (inspection: VehicleInspection) => {
+    setEditingInspection(inspection);
+    setIsFormOpen(true);
   };
 
   const handleDelete = async () => {
@@ -148,7 +154,7 @@ export default function LocadorInspections() {
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               Exportar Excel
             </Button>
-            <Button onClick={() => setIsFormOpen(true)}>
+            <Button onClick={() => { setEditingInspection(null); setIsFormOpen(true); }}>
               <Plus className="mr-2 h-4 w-4" />
               Nova Vistoria
             </Button>
@@ -205,7 +211,7 @@ export default function LocadorInspections() {
                 : 'Tente ajustar os filtros de busca'}
             </p>
             {inspections.length === 0 && (
-              <Button className="mt-4" onClick={() => setIsFormOpen(true)}>
+              <Button className="mt-4" onClick={() => { setEditingInspection(null); setIsFormOpen(true); }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Registrar Vistoria
               </Button>
@@ -218,14 +224,15 @@ export default function LocadorInspections() {
               const driver = drivers.find((d) => d.id === inspection.driver_id);
 
               return (
-                <InspectionCard
-                  key={inspection.id}
-                  inspection={inspection}
-                  vehicle={vehicle}
-                  driver={driver}
-                  onView={() => handleViewDetails(inspection)}
-                  onDelete={() => setDeleteConfirmId(inspection.id)}
-                />
+                  <InspectionCard
+                    key={inspection.id}
+                    inspection={inspection}
+                    vehicle={vehicle}
+                    driver={driver}
+                    onView={() => handleViewDetails(inspection)}
+                    onEdit={() => handleEdit(inspection)}
+                    onDelete={() => setDeleteConfirmId(inspection.id)}
+                  />
               );
             })}
           </div>
@@ -235,10 +242,14 @@ export default function LocadorInspections() {
       {/* Form Dialog */}
       <InspectionFormDialog
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setEditingInspection(null);
+        }}
         vehicles={vehicles}
         drivers={drivers}
         contracts={contracts}
+        inspection={editingInspection}
       />
 
       {/* Details Dialog */}
