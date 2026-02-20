@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { 
   Wrench, 
   Calendar, 
@@ -32,6 +42,8 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Maintenance, MaintenanceType, MAINTENANCE_TYPES } from '@/hooks/useMaintenances';
 import { Vehicle } from '@/hooks/useVehicles';
+
+const ITEMS_PER_PAGE = 10;
 
 const TYPE_VARIANTS: Record<MaintenanceType, 'default' | 'success' | 'warning' | 'destructive' | 'secondary'> = {
   oil_change: 'warning',
@@ -70,6 +82,33 @@ export function MaintenanceTable({
   onAddNew,
   totalCount
 }: MaintenanceTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(maintenances.length / ITEMS_PER_PAGE);
+  const paginatedMaintenances = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return maintenances.slice(start, start + ITEMS_PER_PAGE);
+  }, [maintenances, currentPage]);
+
+  // Reset page when data changes
+  useMemo(() => { setCurrentPage(1); }, [maintenances.length]);
+
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('ellipsis');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('ellipsis');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const getVehicleInfo = (vehicleId: string): Vehicle | undefined => {
     return vehicles.find(v => v.id === vehicleId);
   };
@@ -126,7 +165,7 @@ export function MaintenanceTable({
       <CardContent className="p-0">
         {/* Mobile card layout */}
         <div className="md:hidden divide-y">
-          {maintenances.map((maintenance) => {
+          {paginatedMaintenances.map((maintenance) => {
             const vehicle = getVehicleInfo(maintenance.vehicle_id);
             const statusConfig = STATUS_CONFIG[maintenance.status];
             const StatusIcon = statusConfig.icon;
@@ -218,7 +257,7 @@ export function MaintenanceTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maintenances.map((maintenance) => {
+              {paginatedMaintenances.map((maintenance) => {
                 const vehicle = getVehicleInfo(maintenance.vehicle_id);
                 const statusConfig = STATUS_CONFIG[maintenance.status];
                 const StatusIcon = statusConfig.icon;
@@ -322,6 +361,48 @@ export function MaintenanceTable({
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, maintenances.length)} de {maintenances.length} manutenções
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                {getPageNumbers().map((page, i) =>
+                  page === 'ellipsis' ? (
+                    <PaginationItem key={`ellipsis-${i}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        isActive={currentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
