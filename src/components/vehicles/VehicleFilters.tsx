@@ -134,7 +134,7 @@ export function VehicleFilters({
       </div>
 
       {/* Quick Filters Row 1 - Location & Brand */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div className="space-y-1.5">
           <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
@@ -193,6 +193,26 @@ export function VehicleFilters({
               {filterOptions.brands.map((brand) => (
                 <SelectItem key={brand} value={brand}>
                   {brand}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Car className="h-3 w-3" />
+            Ano mínimo
+          </Label>
+          <Select value={getSelectValue(filters.minYear)} onValueChange={(v) => updateFilter('minYear', v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Qualquer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer ano</SelectItem>
+              {filterOptions.years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  A partir de {year}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -293,24 +313,7 @@ export function VehicleFilters({
 
       {/* Advanced Filters */}
       {showAdvanced && (
-        <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Ano mínimo</Label>
-            <Select value={getSelectValue(filters.minYear)} onValueChange={(v) => updateFilter('minYear', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Qualquer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Qualquer ano</SelectItem>
-                {filterOptions.years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    A partir de {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+        <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Preço mínimo/semana</Label>
             <Select value={getSelectValue(filters.minPrice)} onValueChange={(v) => updateFilter('minPrice', v)}>
@@ -329,7 +332,7 @@ export function VehicleFilters({
             </Select>
           </div>
 
-          <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">Faixa de preço</Label>
               {(filters.minPrice || filters.maxPrice) && (
