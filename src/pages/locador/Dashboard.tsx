@@ -1,5 +1,8 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
+import { MaintenanceCostChart } from '@/components/dashboard/MaintenanceCostChart';
+import { FleetOccupationChart } from '@/components/dashboard/FleetOccupationChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -150,6 +153,18 @@ export default function LocadorDashboard() {
             icon={AlertTriangle}
             variant="warning"
           />
+        </div>
+
+        {/* Charts */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <RevenueChart payments={payments} />
+          </div>
+          <FleetOccupationChart vehicles={vehicles} />
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-1">
+          <MaintenanceCostChart maintenances={maintenances} />
         </div>
 
         {/* Fleet Status */}
