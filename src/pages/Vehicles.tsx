@@ -102,13 +102,15 @@ export default function Vehicles() {
 
   return (
     <PublicLayout>
-      <div className="bg-muted/30 py-8">
-        <div className="container">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground md:text-4xl">
+      {/* Header with gradient accent */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-muted/30 to-background pb-2 pt-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_70%)]" />
+        <div className="container relative">
+          <div className="mb-8 text-center sm:text-left">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
               Veículos Disponíveis
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-muted-foreground text-base">
               Encontre o veículo ideal para trabalhar com aplicativos
             </p>
           </div>
