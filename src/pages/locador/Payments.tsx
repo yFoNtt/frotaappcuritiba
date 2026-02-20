@@ -1,4 +1,13 @@
 import { useState, useMemo } from 'react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +90,8 @@ const paymentSchema = z.object({
 
 type PaymentFormData = z.infer<typeof paymentSchema>;
 
+const ITEMS_PER_PAGE = 10;
+
 const STATUS_CONFIG = {
   pending: { label: 'Pendente', variant: 'warning' as const, icon: Clock },
   paid: { label: 'Pago', variant: 'success' as const, icon: CheckCircle },
@@ -91,6 +102,7 @@ const STATUS_CONFIG = {
 export default function LocadorPayments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [payingPayment, setPayingPayment] = useState<Payment | null>(null);
   const [cancellingPayment, setCancellingPayment] = useState<Payment | null>(null);
@@ -128,6 +140,7 @@ export default function LocadorPayments() {
   }, [payments]);
 
   const filteredPayments = useMemo(() => {
+    setCurrentPage(1);
     return processedPayments.filter(payment => {
       const driver = drivers.find(d => d.id === payment.driver_id);
       const matchesSearch = 
@@ -137,6 +150,28 @@ export default function LocadorPayments() {
       return matchesSearch && matchesStatus;
     });
   }, [processedPayments, drivers, searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const paginatedPayments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPayments.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPayments, currentPage]);
+
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('ellipsis');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('ellipsis');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const stats = useMemo(() => {
     const total = processedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
@@ -357,7 +392,7 @@ export default function LocadorPayments() {
               <>
                 {/* Mobile card layout */}
                 <div className="md:hidden divide-y">
-                  {filteredPayments.map((payment) => {
+                  {paginatedPayments.map((payment) => {
                     const driver = getDriverInfo(payment.driver_id);
                     const vehicle = getVehicleInfo(payment.vehicle_id);
                     const statusConfig = STATUS_CONFIG[payment.status];
@@ -419,7 +454,7 @@ export default function LocadorPayments() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPayments.map((payment) => {
+                      {paginatedPayments.map((payment) => {
                         const driver = getDriverInfo(payment.driver_id);
                         const vehicle = getVehicleInfo(payment.vehicle_id);
                         const statusConfig = STATUS_CONFIG[payment.status];
@@ -468,6 +503,48 @@ export default function LocadorPayments() {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredPayments.length)} de {filteredPayments.length} pagamentos
+                    </p>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, i) =>
+                          page === 'ellipsis' ? (
+                            <PaginationItem key={`ellipsis-${i}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={currentPage === page}
+                                onClick={() => setCurrentPage(page)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
