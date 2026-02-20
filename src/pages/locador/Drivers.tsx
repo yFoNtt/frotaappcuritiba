@@ -1,4 +1,13 @@
 import { useState, useMemo } from 'react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -83,10 +92,13 @@ const driverSchema = z.object({
   vehicle_id: z.string().optional(),
 });
 
+const ITEMS_PER_PAGE = 10;
+
 type DriverFormData = z.infer<typeof driverSchema>;
 
 export default function LocadorDrivers() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<Driver | null>(null);
@@ -114,12 +126,35 @@ export default function LocadorDrivers() {
   });
 
   const filteredDrivers = useMemo(() => {
+    setCurrentPage(1);
     return drivers.filter(driver =>
       driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       driver.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       driver.cnh_number.includes(searchTerm)
     );
   }, [drivers, searchTerm]);
+
+  const totalPages = Math.ceil(filteredDrivers.length / ITEMS_PER_PAGE);
+  const paginatedDrivers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredDrivers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredDrivers, currentPage]);
+
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('ellipsis');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('ellipsis');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const availableVehicles = useMemo(() => {
     return vehicles.filter(v => v.status === 'available' && !v.current_driver_id);
@@ -324,7 +359,7 @@ export default function LocadorDrivers() {
               <>
                 {/* Mobile card layout */}
                 <div className="md:hidden divide-y">
-                  {filteredDrivers.map((driver) => {
+                  {paginatedDrivers.map((driver) => {
                     const vehicle = getVehicleInfo(driver.vehicle_id);
                     const cnhExpiring = isCnhExpiringSoon(driver.cnh_expiry);
                     const cnhExpired = isCnhExpired(driver.cnh_expiry);
@@ -392,7 +427,7 @@ export default function LocadorDrivers() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredDrivers.map((driver) => {
+                      {paginatedDrivers.map((driver) => {
                         const vehicle = getVehicleInfo(driver.vehicle_id);
                         const cnhExpiring = isCnhExpiringSoon(driver.cnh_expiry);
                         const cnhExpired = isCnhExpired(driver.cnh_expiry);
@@ -458,6 +493,48 @@ export default function LocadorDrivers() {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredDrivers.length)} de {filteredDrivers.length} motoristas
+                    </p>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, i) =>
+                          page === 'ellipsis' ? (
+                            <PaginationItem key={`ellipsis-${i}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={currentPage === page}
+                                onClick={() => setCurrentPage(page)}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
