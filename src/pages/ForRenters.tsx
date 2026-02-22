@@ -1,6 +1,7 @@
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { SEO } from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import {
   Car,
@@ -89,6 +90,25 @@ export default function ForRenters() {
 
   return (
     <PublicLayout>
+      <SEO
+        title="Para Locadores - Gestão de Frota Inteligente"
+        description="Plataforma completa para locadores de veículos. Gerencie frota, motoristas, pagamentos e manutenções. Planos a partir de R$ 99/mês."
+        canonical="/para-locadores"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'FrotaApp para Locadores',
+          applicationCategory: 'BusinessApplication',
+          description: 'Plataforma de gestão de frota para locadores de veículos de aplicativo.',
+          offers: {
+            '@type': 'AggregateOffer',
+            lowPrice: '99',
+            highPrice: '399',
+            priceCurrency: 'BRL',
+            offerCount: 3,
+          },
+        }}
+      />
       {/* Hero */}
       <section className="hero-gradient py-20">
         <div className="container">

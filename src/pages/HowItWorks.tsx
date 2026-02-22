@@ -2,6 +2,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Search, MessageCircle, Car, CheckCircle, ArrowRight } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export default function HowItWorks() {
   const steps = [
@@ -29,6 +30,37 @@ export default function HowItWorks() {
 
   return (
     <PublicLayout>
+      <SEO
+        title="Como Funciona - Aluguel de Veículos para Apps"
+        description="Saiba como alugar um veículo para trabalhar com Uber, 99 e outros apps. Processo simples em 4 passos: busque, contrate, rode e cresça."
+        canonical="/como-funciona"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'Preciso ter CNH para alugar?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sim, é necessário ter CNH válida categoria B ou superior.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'Como funciona a caução?',
+              acceptedAnswer: { '@type': 'Answer', text: 'A caução é um valor de segurança definido pelo locador, geralmente entre R$ 800 e R$ 1.500, devolvido ao final do contrato.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'Posso usar o veículo em qualquer aplicativo?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Depende do locador. Cada anúncio especifica quais aplicativos são permitidos.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'O que acontece se eu ultrapassar o limite de quilometragem?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Cada contrato define um limite mensal de km. Se ultrapassar, é cobrado um valor por km excedente.' },
+            },
+          ],
+        }}
+      />
       {/* Hero */}
       <section className="bg-muted/30 py-16">
         <div className="container text-center">
