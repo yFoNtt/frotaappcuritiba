@@ -4,6 +4,7 @@ import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
 import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
 import { Car, Loader2 } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 
 const initialFilters: VehicleFiltersState = {
@@ -102,6 +103,18 @@ export default function Vehicles() {
 
   return (
     <PublicLayout>
+      <SEO
+        title="Veículos Disponíveis para Locação"
+        description="Encontre veículos disponíveis para alugar e trabalhar com Uber, 99 e outros apps de transporte. Filtros por cidade, preço, marca e ano."
+        canonical="/veiculos"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Veículos Disponíveis para Locação',
+          description: 'Catálogo de veículos disponíveis para locação para motoristas de aplicativo.',
+          url: `${window.location.origin}/veiculos`,
+        }}
+      />
       {/* Header with gradient accent */}
       <div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-muted/30 to-background pb-2 pt-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.08),transparent_70%)]" />

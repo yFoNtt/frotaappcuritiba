@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { SEO } from '@/components/SEO';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -115,6 +117,30 @@ export default function VehicleDetails() {
 
   return (
     <PublicLayout>
+      <SEO
+        title={`${vehicle.brand} ${vehicle.model} ${vehicle.year} - Aluguel em ${vehicle.city}`}
+        description={`Alugue ${vehicle.brand} ${vehicle.model} ${vehicle.year} em ${vehicle.city}, ${vehicle.state}. R$ ${Number(vehicle.weekly_price).toFixed(2)}/semana. ${vehicle.description || 'Veículo disponível para apps de transporte.'}`}
+        canonical={`/veiculos/${id}`}
+        ogType="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+          description: vehicle.description || `Veículo ${vehicle.brand} ${vehicle.model} disponível para locação em ${vehicle.city}.`,
+          image: vehicleImages[0] || undefined,
+          offers: {
+            '@type': 'Offer',
+            price: Number(vehicle.weekly_price),
+            priceCurrency: 'BRL',
+            availability: vehicle.status === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          },
+          brand: { '@type': 'Brand', name: vehicle.brand },
+          color: vehicle.color,
+          vehicleModelDate: String(vehicle.year),
+          fuelType: vehicle.fuel_type,
+        }}
+      />
       <div className="container py-8">
         {/* Back button */}
         <Button variant="ghost" asChild className="mb-6">
