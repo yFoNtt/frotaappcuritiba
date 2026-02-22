@@ -6,13 +6,11 @@ import { ArrowRight, Loader2, Car } from 'lucide-react';
 
 export function FeaturedVehicles() {
   const { data: vehicles = [], isLoading } = useAvailableVehicles();
-  
-  // Show only first 3 available vehicles for the homepage
   const featuredVehicles = vehicles.slice(0, 3);
 
   if (isLoading) {
     return (
-      <section className="py-20 bg-muted/30">
+      <section className="py-24 bg-muted/30">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -24,18 +22,16 @@ export function FeaturedVehicles() {
 
   if (featuredVehicles.length === 0) {
     return (
-      <section className="py-20 bg-muted/30">
+      <section className="py-24 bg-muted/30">
         <div className="container">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
+          <div className="mx-auto max-w-2xl text-center mb-12">
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
+            <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
               Veículos em Destaque
             </h2>
-            <p className="mt-2 text-muted-foreground">
-              Confira as melhores opções disponíveis agora
-            </p>
           </div>
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
               <Car className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="mb-2 text-lg font-semibold">Em breve!</h3>
@@ -49,21 +45,22 @@ export function FeaturedVehicles() {
   }
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-24 bg-muted/30">
       <div className="container">
-        <div className="mb-8 flex items-end justify-between">
+        <div className="mb-12 flex items-end justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
+            <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
               Veículos em Destaque
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-3 text-lg text-muted-foreground">
               Confira as melhores opções disponíveis agora
             </p>
           </div>
-          <Button variant="ghost" asChild className="hidden md:flex">
+          <Button variant="outline" asChild className="hidden md:flex gap-2 rounded-full">
             <Link to="/veiculos">
               Ver todos
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
@@ -75,7 +72,7 @@ export function FeaturedVehicles() {
         </div>
 
         <div className="mt-8 flex justify-center md:hidden">
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="rounded-full">
             <Link to="/veiculos">
               Ver todos os veículos
               <ArrowRight className="ml-2 h-4 w-4" />

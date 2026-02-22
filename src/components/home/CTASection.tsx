@@ -1,63 +1,74 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Building2, ArrowRight } from 'lucide-react';
+import { ArrowRight, Car, Shield, BarChart3, Bell } from 'lucide-react';
+
+const benefits = [
+  { icon: Car, text: 'Anuncie seus veículos no marketplace' },
+  { icon: BarChart3, text: 'Controle financeiro completo' },
+  { icon: Shield, text: 'Gestão de motoristas vinculados' },
+  { icon: Bell, text: 'Alertas automáticos de revisão e IPVA' },
+];
 
 export function CTASection() {
   return (
-    <section className="py-20">
+    <section className="py-24 bg-muted/30">
       <div className="container">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-8 md:p-12 lg:p-16">
-          {/* Pattern */}
-          <div 
-            className="absolute inset-0 opacity-10"
+        <div className="relative overflow-hidden rounded-3xl">
+          {/* Background */}
+          <div className="absolute inset-0 hero-gradient" />
+          <div
+            className="absolute inset-0 opacity-[0.07]"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundImage: `radial-gradient(circle at 1px 1px, hsl(0 0% 100%) 1px, transparent 0)`,
+              backgroundSize: '32px 32px',
             }}
           />
 
-          <div className="relative grid gap-8 lg:grid-cols-2 lg:items-center">
+          <div className="relative grid gap-10 p-8 md:p-12 lg:grid-cols-2 lg:items-center lg:p-16">
+            {/* Left */}
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-1.5 text-sm font-medium text-primary-foreground">
-                <Building2 className="h-4 w-4" />
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-1.5 text-sm font-medium text-primary-foreground border border-primary-foreground/10">
+                <Car className="h-4 w-4" />
                 Para Locadores e Empresas
-              </div>
-              <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
+              </p>
+              <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
                 Gerencie sua frota de forma inteligente
               </h2>
-              <p className="mb-6 text-lg text-primary-foreground/80">
-                Dashboard completo para gerenciar veículos, motoristas, pagamentos e manutenções. 
-                Tudo em um só lugar, com relatórios e alertas automáticos.
+              <p className="mb-8 text-lg text-primary-foreground/70">
+                Dashboard completo para gerenciar veículos, motoristas, pagamentos e manutenções.
+                Tudo em um só lugar.
               </p>
-              <ul className="mb-8 space-y-2 text-primary-foreground/80">
-                <li className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs text-success-foreground">✓</span>
-                  Anuncie seus veículos no marketplace
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs text-success-foreground">✓</span>
-                  Controle financeiro completo
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs text-success-foreground">✓</span>
-                  Gestão de motoristas vinculados
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-xs text-success-foreground">✓</span>
-                  Alertas de revisão, IPVA e seguro
-                </li>
+
+              <ul className="mb-8 space-y-3">
+                {benefits.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-primary-foreground/80">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/10">
+                      <item.icon className="h-4 w-4 text-primary-foreground" />
+                    </span>
+                    {item.text}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="flex flex-col items-start gap-4 lg:items-end">
-              <Button size="xl" variant="hero" asChild className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                <Link to="/cadastro?tipo=locador">
-                  Começar Agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <p className="text-sm text-primary-foreground/60">
-                Planos a partir de R$ 99/mês
-              </p>
+            {/* Right */}
+            <div className="flex flex-col items-start gap-6 lg:items-end">
+              <div className="rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 p-6 w-full lg:max-w-sm">
+                <div className="mb-4 text-center">
+                  <p className="text-sm text-primary-foreground/60">Comece agora</p>
+                  <p className="text-3xl font-bold text-primary-foreground mt-1">Grátis</p>
+                  <p className="text-sm text-primary-foreground/60 mt-1">para começar</p>
+                </div>
+                <Button size="xl" asChild className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-lg">
+                  <Link to="/cadastro?tipo=locador">
+                    Criar Conta de Locador
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <p className="mt-3 text-center text-xs text-primary-foreground/50">
+                  Sem cartão de crédito · Cancele quando quiser
+                </p>
+              </div>
             </div>
           </div>
         </div>

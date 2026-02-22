@@ -1,79 +1,98 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Car, ArrowRight, Shield, Users, TrendingUp } from 'lucide-react';
+import { Car, ArrowRight, Shield, Users, TrendingUp, Search, MapPin } from 'lucide-react';
+import heroImage from '@/assets/hero-fleet.jpg';
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 hero-gradient" />
-      
-      {/* Pattern overlay */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img
+          src={heroImage}
+          alt="Frota de veículos"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40" />
+      </div>
 
-      <div className="container relative py-20 md:py-28 lg:py-36">
-        <div className="mx-auto max-w-4xl text-center">
+      {/* Floating Elements */}
+      <div className="absolute top-20 right-[10%] hidden lg:block">
+        <div className="glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '0.8s', opacity: 0 }}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/20">
+              <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-primary-foreground">+12 veículos</p>
+              <p className="text-xs text-primary-foreground/60">disponíveis agora</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute bottom-32 right-[15%] hidden lg:block">
+        <div className="glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '1.2s', opacity: 0 }}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+              <MapPin className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-primary-foreground">50+ cidades</p>
+              <p className="text-xs text-primary-foreground/60">em todo Brasil</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container relative z-10 py-20">
+        <div className="max-w-2xl">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-1.5 text-sm font-medium text-primary-foreground backdrop-blur-sm">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm animate-fade-in">
             <Car className="h-4 w-4" />
-            Marketplace de Locação de Veículos
+            Marketplace #1 de Locação para Apps
           </div>
 
           {/* Heading */}
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-primary-foreground md:text-5xl lg:text-6xl">
-            Alugue veículos para{' '}
-            <span className="relative">
-              aplicativos
-              <svg
-                className="absolute -bottom-2 left-0 h-3 w-full text-primary-foreground/30"
-                viewBox="0 0 200 12"
-                fill="currentColor"
-              >
-                <path d="M1 8.5c30-7 60-7 90 0s60 7 90 0" stroke="currentColor" strokeWidth="3" fill="none" />
-              </svg>
-            </span>
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-primary-foreground md:text-5xl lg:text-6xl xl:text-7xl animate-slide-up">
+            Alugue o carro ideal para{' '}
+            <span className="text-gradient">rodar por app</span>
           </h1>
 
           {/* Description */}
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-primary-foreground/80 md:text-xl">
-            Encontre o veículo ideal para trabalhar com Uber, 99 e outros apps. 
-            Conectamos motoristas a locadores de forma simples e segura.
+          <p className="mb-8 max-w-lg text-lg text-primary-foreground/70 md:text-xl animate-slide-up" style={{ animationDelay: '0.15s' }}>
+            Encontre veículos prontos para Uber, 99 e outros apps. 
+            Sem burocracia, com contratos claros e suporte completo.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="xl" variant="hero" asChild>
+          <div className="flex flex-col gap-4 sm:flex-row animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <Button size="xl" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
               <Link to="/veiculos">
+                <Search className="mr-2 h-5 w-5" />
                 Buscar Veículos
-                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button size="xl" variant="heroOutline" asChild>
+            <Button size="xl" variant="outline" asChild className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm">
               <Link to="/para-locadores">
                 Sou Locador
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-3 gap-6 border-t border-primary-foreground/20 pt-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground md:text-4xl">500+</div>
-              <div className="text-sm text-primary-foreground/70">Veículos Disponíveis</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground md:text-4xl">50+</div>
-              <div className="text-sm text-primary-foreground/70">Cidades Atendidas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-foreground md:text-4xl">2.000+</div>
-              <div className="text-sm text-primary-foreground/70">Motoristas Ativos</div>
-            </div>
+          <div className="mt-16 flex gap-8 sm:gap-12 animate-slide-up" style={{ animationDelay: '0.45s' }}>
+            {[
+              { value: '500+', label: 'Veículos' },
+              { value: '2.000+', label: 'Motoristas' },
+              { value: '50+', label: 'Cidades' },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <div className="text-2xl font-bold text-primary-foreground md:text-3xl">{stat.value}</div>
+                <div className="text-sm text-primary-foreground/50">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -86,43 +105,47 @@ export function FeaturesSection() {
     {
       icon: Shield,
       title: 'Segurança Garantida',
-      description: 'Todos os locadores são verificados. Contratos claros e transparentes para sua proteção.',
+      description: 'Locadores verificados, contratos claros e transparentes para sua total proteção.',
+      color: 'bg-success/10 text-success group-hover:bg-success group-hover:text-success-foreground',
     },
     {
       icon: Users,
       title: 'Conexão Direta',
-      description: 'Fale diretamente com os locadores via WhatsApp ou chat interno da plataforma.',
+      description: 'Fale diretamente com os locadores via WhatsApp. Sem intermediários.',
+      color: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground',
     },
     {
       icon: TrendingUp,
       title: 'Gestão Completa',
-      description: 'Para locadores: dashboard completo para gerenciar frota, motoristas e financeiro.',
+      description: 'Dashboard para gerenciar frota, motoristas, financeiro e manutenções.',
+      color: 'bg-warning/10 text-warning group-hover:bg-warning group-hover:text-warning-foreground',
     },
   ];
 
   return (
-    <section className="py-20">
+    <section className="py-24 bg-background">
       <div className="container">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+        <div className="mx-auto max-w-2xl text-center mb-16">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Vantagens</p>
+          <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
             Por que escolher o FrotaApp?
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="mt-4 text-lg text-muted-foreground">
             Uma plataforma pensada para facilitar a vida de motoristas e locadores.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg"
+              className="group relative rounded-2xl border border-border bg-card p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                <feature.icon className="h-6 w-6" />
+              <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-xl transition-all duration-500 ${feature.color}`}>
+                <feature.icon className="h-7 w-7" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
+              <h3 className="mb-3 text-xl font-bold text-foreground">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
