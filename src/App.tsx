@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ErrorBoundary, RouteErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import Index from "./pages/Index";
 import Vehicles from "./pages/Vehicles";
@@ -70,6 +71,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <ErrorBoundary>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="frotaapp-theme">
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -251,6 +253,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </ThemeProvider>
   </ErrorBoundary>
 );
 
