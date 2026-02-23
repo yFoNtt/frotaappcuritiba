@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { useAvailableVehicles } from '@/hooks/useVehicles';
 import { ArrowRight, Loader2, Car } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export function FeaturedVehicles() {
   const { data: vehicles = [], isLoading } = useAvailableVehicles();
@@ -24,12 +25,18 @@ export function FeaturedVehicles() {
     return (
       <section className="py-24 bg-muted/30">
         <div className="container">
-          <div className="mx-auto max-w-2xl text-center mb-12">
+          <motion.div
+            className="mx-auto max-w-2xl text-center mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+          >
             <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
             <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
               Veículos em Destaque
             </h2>
-          </div>
+          </motion.div>
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
               <Car className="h-8 w-8 text-muted-foreground" />
@@ -47,7 +54,13 @@ export function FeaturedVehicles() {
   return (
     <section className="py-24 bg-muted/30">
       <div className="container">
-        <div className="mb-12 flex items-end justify-between">
+        <motion.div
+          className="mb-12 flex items-end justify-between"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5 }}
+        >
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
             <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
@@ -63,11 +76,19 @@ export function FeaturedVehicles() {
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {featuredVehicles.map((vehicle) => (
-            <VehicleCard key={vehicle.id} vehicle={vehicle} />
+          {featuredVehicles.map((vehicle, index) => (
+            <motion.div
+              key={vehicle.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.5, delay: index * 0.12 }}
+            >
+              <VehicleCard vehicle={vehicle} />
+            </motion.div>
           ))}
         </div>
 

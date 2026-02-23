@@ -1,4 +1,5 @@
 import { Search, FileText, Car, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const steps = [
   {
@@ -31,7 +32,13 @@ export function HowItWorksSection() {
   return (
     <section className="py-24 bg-muted/30">
       <div className="container">
-        <div className="mx-auto max-w-2xl text-center mb-16">
+        <motion.div
+          className="mx-auto max-w-2xl text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5 }}
+        >
           <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Passo a passo</p>
           <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
             Como funciona?
@@ -39,11 +46,18 @@ export function HowItWorksSection() {
           <p className="mt-4 text-lg text-muted-foreground">
             Em poucos passos você já está rodando com o carro ideal.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((item, index) => (
-            <div key={index} className="relative text-center group">
+            <motion.div
+              key={index}
+              className="relative text-center group"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.5, delay: index * 0.12 }}
+            >
               {/* Connector line */}
               {index < steps.length - 1 && (
                 <div className="absolute top-10 left-[60%] hidden h-px w-[80%] bg-gradient-to-r from-primary/30 to-transparent lg:block" />
@@ -61,7 +75,7 @@ export function HowItWorksSection() {
 
               <h3 className="mb-2 text-lg font-bold text-foreground">{item.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
