@@ -13,33 +13,34 @@ export function HeroSection() {
           alt="Frota de veículos"
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40" />
+        {/* Simplified overlay - dark mode: black/60, light mode: white/60 */}
+        <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
       </div>
 
       {/* Floating Elements */}
       <div className="absolute top-20 right-[10%] hidden lg:block">
-        <div className="glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '0.8s', opacity: 0 }}>
+        <div className="rounded-2xl bg-white/90 dark:bg-card/95 border border-border shadow-lg p-4 animate-fade-in" style={{ animationDelay: '0.8s', opacity: 0 }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/20">
               <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-primary-foreground">+12 veículos</p>
-              <p className="text-xs text-primary-foreground/60">disponíveis agora</p>
+              <p className="text-sm font-semibold text-foreground">+12 veículos</p>
+              <p className="text-xs text-muted-foreground">disponíveis agora</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="absolute bottom-32 right-[15%] hidden lg:block">
-        <div className="glass rounded-2xl p-4 animate-fade-in" style={{ animationDelay: '1.2s', opacity: 0 }}>
+        <div className="rounded-2xl bg-white/90 dark:bg-card/95 border border-border shadow-lg p-4 animate-fade-in" style={{ animationDelay: '1.2s', opacity: 0 }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
               <MapPin className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-primary-foreground">50+ cidades</p>
-              <p className="text-xs text-primary-foreground/60">em todo Brasil</p>
+              <p className="text-sm font-semibold text-foreground">50+ cidades</p>
+              <p className="text-xs text-muted-foreground">em todo Brasil</p>
             </div>
           </div>
         </div>
@@ -48,32 +49,32 @@ export function HeroSection() {
       <div className="container relative z-10 py-20">
         <div className="max-w-2xl">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm animate-fade-in">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary dark:bg-primary/20 dark:text-primary animate-fade-in">
             <Car className="h-4 w-4" />
             Marketplace #1 de Locação para Apps
           </div>
 
           {/* Heading */}
-          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-primary-foreground md:text-5xl lg:text-6xl xl:text-7xl animate-slide-up">
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white md:text-5xl lg:text-6xl xl:text-7xl animate-slide-up">
             Alugue o carro ideal para{' '}
             <span className="text-gradient">rodar por app</span>
           </h1>
 
           {/* Description */}
-          <p className="mb-8 max-w-lg text-lg text-primary-foreground/70 md:text-xl animate-slide-up" style={{ animationDelay: '0.15s' }}>
+          <p className="mb-8 max-w-lg text-lg text-neutral-700 dark:text-white/80 md:text-xl animate-slide-up" style={{ animationDelay: '0.15s' }}>
             Encontre veículos prontos para Uber, 99 e outros apps. 
             Sem burocracia, com contratos claros e suporte completo.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <Button size="xl" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
+            <Button size="xl" asChild className="bg-primary hover:brightness-105 active:brightness-95 text-primary-foreground shadow-lg shadow-primary/25">
               <Link to="/veiculos">
                 <Search className="mr-2 h-5 w-5" />
                 Buscar Veículos
               </Link>
             </Button>
-            <Button size="xl" variant="outline" asChild className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm">
+            <Button size="xl" variant="outline" asChild className="border-neutral-400 text-neutral-900 hover:bg-neutral-100 dark:border-white/40 dark:text-white dark:hover:bg-white/10">
               <Link to="/para-locadores">
                 Sou Locador
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -89,8 +90,8 @@ export function HeroSection() {
               { value: '50+', label: 'Cidades' },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-2xl font-bold text-primary-foreground md:text-3xl">{stat.value}</div>
-                <div className="text-sm text-primary-foreground/50">{stat.label}</div>
+                <div className="text-2xl font-bold text-neutral-900 dark:text-white md:text-3xl">{stat.value}</div>
+                <div className="text-sm text-neutral-500 dark:text-white/60">{stat.label}</div>
               </div>
             ))}
           </div>
