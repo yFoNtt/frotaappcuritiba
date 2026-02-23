@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Car, ArrowRight, Shield, Users, TrendingUp, Search, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 import heroImage from '@/assets/hero-fleet.jpg';
 
 export function HeroSection() {
@@ -126,7 +127,13 @@ export function FeaturesSection() {
   return (
     <section className="py-24 bg-background">
       <div className="container">
-        <div className="mx-auto max-w-2xl text-center mb-16">
+        <motion.div
+          className="mx-auto max-w-2xl text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.5 }}
+        >
           <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Vantagens</p>
           <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
             Por que escolher o FrotaApp?
@@ -134,20 +141,24 @@ export function FeaturesSection() {
           <p className="mt-4 text-lg text-muted-foreground">
             Uma plataforma pensada para facilitar a vida de motoristas e locadores.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={index}
               className="group relative rounded-2xl border border-border bg-card p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.5, delay: index * 0.15 }}
             >
               <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-xl transition-all duration-500 ${feature.color}`}>
                 <feature.icon className="h-7 w-7" />
               </div>
               <h3 className="mb-3 text-xl font-bold text-foreground">{feature.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
