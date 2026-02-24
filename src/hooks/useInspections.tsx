@@ -219,11 +219,17 @@ export async function uploadInspectionPhotos(
       throw uploadError;
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    // Use signed URL since bucket is private
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('inspection-photos')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
 
-    uploadedUrls.push(publicUrl);
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      console.error('Error creating signed URL:', signedUrlError);
+      throw signedUrlError || new Error('Failed to create signed URL');
+    }
+
+    uploadedUrls.push(signedUrlData.signedUrl);
   }
 
   return uploadedUrls;
