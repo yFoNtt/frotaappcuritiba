@@ -51,13 +51,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-14 sm:h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Car className="h-5 w-5 text-primary-foreground" />
+        <Link to="/" className="flex items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary">
+            <Car className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-foreground">
+          <span className="text-lg sm:text-xl font-bold text-foreground">
             Frota<span className="text-primary">App</span>
           </span>
         </Link>
@@ -127,10 +127,10 @@ export function Header() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="flex items-center gap-0.5 sm:gap-1 md:hidden">
           <ThemeToggle />
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
         >
