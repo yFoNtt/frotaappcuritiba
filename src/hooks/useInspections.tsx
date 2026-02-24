@@ -198,13 +198,13 @@ export function useDeleteInspection() {
   });
 }
 
-// Upload inspection photos
+// Upload inspection photos - stores file paths (not URLs) for private bucket
 export async function uploadInspectionPhotos(
   userId: string,
   inspectionId: string,
   files: File[]
 ): Promise<string[]> {
-  const uploadedUrls: string[] = [];
+  const uploadedPaths: string[] = [];
 
   for (const file of files) {
     const fileExt = file.name.split('.').pop();
@@ -219,18 +219,33 @@ export async function uploadInspectionPhotos(
       throw uploadError;
     }
 
-    // Use signed URL since bucket is private
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('inspection-photos')
-      .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
-
-    if (signedUrlError || !signedUrlData?.signedUrl) {
-      console.error('Error creating signed URL:', signedUrlError);
-      throw signedUrlError || new Error('Failed to create signed URL');
-    }
-
-    uploadedUrls.push(signedUrlData.signedUrl);
+    uploadedPaths.push(fileName);
   }
 
-  return uploadedUrls;
+  return uploadedPaths;
+}
+
+// Helper: extract storage path from a full public/signed URL or return as-is if already a path
+function extractStoragePath(photoRef: string): string {
+  if (!photoRef.startsWith('http')) return photoRef;
+  const match = photoRef.match(/\/(?:object\/(?:public|sign)|storage\/v1\/object\/(?:public|sign))\/inspection-photos\/(.+?)(?:\?.*)?$/);
+  return match ? match[1] : photoRef;
+}
+
+// Generate signed URLs for an array of photo references (paths or legacy URLs)
+export async function getSignedPhotoUrls(photos: string[]): Promise<string[]> {
+  if (!photos || photos.length === 0) return [];
+
+  const paths = photos.map(extractStoragePath);
+
+  const { data, error } = await supabase.storage
+    .from('inspection-photos')
+    .createSignedUrls(paths, 60 * 60); // 1 hour expiry
+
+  if (error) {
+    console.error('Error creating signed URLs:', error);
+    return [];
+  }
+
+  return data.map(item => item.signedUrl);
 }

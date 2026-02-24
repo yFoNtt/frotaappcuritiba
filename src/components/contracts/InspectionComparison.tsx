@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSignedPhotoUrls } from '@/hooks/useSignedPhotoUrls';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,9 @@ export function InspectionComparison({
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxType, setLightboxType] = useState<'check_in' | 'check_out'>('check_in');
+
+  const { signedUrls: checkInPhotoUrls } = useSignedPhotoUrls(checkIn.photos);
+  const { signedUrls: checkOutPhotoUrls } = useSignedPhotoUrls(checkOut.photos);
 
   const kmDifference = checkOut.km_reading - checkIn.km_reading;
 
@@ -268,7 +272,7 @@ export function InspectionComparison({
               )}
 
               {/* Photos Comparison */}
-              {((checkIn.photos && checkIn.photos.length > 0) || (checkOut.photos && checkOut.photos.length > 0)) && (
+              {((checkInPhotoUrls.length > 0) || (checkOutPhotoUrls.length > 0)) && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <ImageIcon className="h-4 w-4" />
@@ -278,14 +282,14 @@ export function InspectionComparison({
                     {/* Check-in Photos */}
                     <div className="space-y-2">
                       <Badge variant="outline" className="text-xs">
-                        Check-in ({checkIn.photos?.length || 0} fotos)
+                        Check-in ({checkInPhotoUrls.length} fotos)
                       </Badge>
-                      {checkIn.photos && checkIn.photos.length > 0 ? (
+                      {checkInPhotoUrls.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
-                          {checkIn.photos.slice(0, 6).map((photo, index) => (
+                          {checkInPhotoUrls.slice(0, 6).map((photo, index) => (
                             <button
                               key={index}
-                              onClick={() => openLightbox(checkIn.photos || [], index, 'check_in')}
+                              onClick={() => openLightbox(checkInPhotoUrls, index, 'check_in')}
                               className="aspect-square rounded-lg overflow-hidden border hover:opacity-80 transition-opacity relative group"
                             >
                               <img
@@ -298,9 +302,9 @@ export function InspectionComparison({
                               </div>
                             </button>
                           ))}
-                          {checkIn.photos.length > 6 && (
+                          {checkInPhotoUrls.length > 6 && (
                             <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-sm text-muted-foreground">
-                              +{checkIn.photos.length - 6}
+                              +{checkInPhotoUrls.length - 6}
                             </div>
                           )}
                         </div>
@@ -314,14 +318,14 @@ export function InspectionComparison({
                     {/* Check-out Photos */}
                     <div className="space-y-2">
                       <Badge variant="secondary" className="text-xs">
-                        Check-out ({checkOut.photos?.length || 0} fotos)
+                        Check-out ({checkOutPhotoUrls.length} fotos)
                       </Badge>
-                      {checkOut.photos && checkOut.photos.length > 0 ? (
+                      {checkOutPhotoUrls.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
-                          {checkOut.photos.slice(0, 6).map((photo, index) => (
+                          {checkOutPhotoUrls.slice(0, 6).map((photo, index) => (
                             <button
                               key={index}
-                              onClick={() => openLightbox(checkOut.photos || [], index, 'check_out')}
+                              onClick={() => openLightbox(checkOutPhotoUrls, index, 'check_out')}
                               className="aspect-square rounded-lg overflow-hidden border hover:opacity-80 transition-opacity relative group"
                             >
                               <img
@@ -334,9 +338,9 @@ export function InspectionComparison({
                               </div>
                             </button>
                           ))}
-                          {checkOut.photos.length > 6 && (
+                          {checkOutPhotoUrls.length > 6 && (
                             <div className="aspect-square rounded-lg bg-muted flex items-center justify-center text-sm text-muted-foreground">
-                              +{checkOut.photos.length - 6}
+                              +{checkOutPhotoUrls.length - 6}
                             </div>
                           )}
                         </div>
