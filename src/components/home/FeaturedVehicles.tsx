@@ -11,7 +11,7 @@ export function FeaturedVehicles() {
 
   if (isLoading) {
     return (
-      <section className="py-24 bg-muted/30">
+      <section className="py-16 sm:py-20 lg:py-24 bg-muted/30">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -23,17 +23,17 @@ export function FeaturedVehicles() {
 
   if (featuredVehicles.length === 0) {
     return (
-      <section className="py-24 bg-muted/30">
+      <section className="py-16 sm:py-20 lg:py-24 bg-muted/30">
         <div className="container">
           <motion.div
-            className="mx-auto max-w-2xl text-center mb-12"
+            className="mx-auto max-w-2xl text-center mb-10 sm:mb-12"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-primary mb-2 sm:mb-3">Marketplace</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
               Veículos em Destaque
             </h2>
           </motion.div>
@@ -52,21 +52,21 @@ export function FeaturedVehicles() {
   }
 
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-16 sm:py-20 lg:py-24 bg-muted/30">
       <div className="container">
         <motion.div
-          className="mb-12 flex items-end justify-between"
+          className="mb-8 sm:mb-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5 }}
         >
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Marketplace</p>
-            <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-primary mb-2 sm:mb-3">Marketplace</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
               Veículos em Destaque
             </h2>
-            <p className="mt-3 text-lg text-muted-foreground">
+            <p className="mt-2 sm:mt-3 text-base sm:text-lg text-muted-foreground">
               Confira as melhores opções disponíveis agora
             </p>
           </div>

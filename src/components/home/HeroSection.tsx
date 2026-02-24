@@ -124,39 +124,39 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section className="py-24 bg-background">
+    <section className="py-16 sm:py-20 lg:py-24 bg-background">
       <div className="container">
         <motion.div
-          className="mx-auto max-w-2xl text-center mb-16"
+          className="mx-auto max-w-2xl text-center mb-10 sm:mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Vantagens</p>
-          <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-primary mb-2 sm:mb-3">Vantagens</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
             Por que escolher o FrotaApp?
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground">
             Uma plataforma pensada para facilitar a vida de motoristas e locadores.
           </p>
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              className="group relative rounded-2xl border border-border bg-card p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
+              className="group relative rounded-2xl border border-border bg-card p-5 sm:p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
             >
-              <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-xl transition-all duration-500 ${feature.color}`}>
-                <feature.icon className="h-7 w-7" />
+              <div className={`mb-4 sm:mb-6 flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-xl transition-all duration-500 ${feature.color}`}>
+                <feature.icon className="h-5 w-5 sm:h-7 sm:w-7" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-foreground">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="mb-2 sm:mb-3 text-lg sm:text-xl font-bold text-foreground">{feature.title}</h3>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>
