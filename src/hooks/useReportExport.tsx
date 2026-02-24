@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
+import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -49,29 +49,35 @@ interface ExportData {
   totals: Totals;
 }
 
+const boldStyle = { font: { bold: true } };
+const headerStyle = { font: { bold: true, sz: 14 } };
+const colHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '3B82F6' } } };
+
+function styledCell(v: string | number, style?: object) {
+  return { v, t: typeof v === 'number' ? 'n' as const : 's' as const, s: style };
+}
+
 export function useReportExport() {
-  const formatCurrency = (value: number) => 
+  const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   const exportToPDF = useCallback((data: ExportData) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-    
-    // Header
+
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('Relatório de Frota', pageWidth / 2, 20, { align: 'center' });
-    
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em: ${today}`, pageWidth / 2, 28, { align: 'center' });
 
-    // KPIs Summary
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('Resumo Financeiro (Últimos 6 meses)', 14, 45);
-    
+
     autoTable(doc, {
       startY: 50,
       head: [['Métrica', 'Valor']],
@@ -85,7 +91,6 @@ export function useReportExport() {
       headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // Fleet Status
     const currentY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -104,7 +109,6 @@ export function useReportExport() {
       headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // Monthly Data
     const monthlyY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -123,7 +127,6 @@ export function useReportExport() {
       headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // New page for vehicle comparison
     doc.addPage();
 
     doc.setFontSize(14);
@@ -144,7 +147,6 @@ export function useReportExport() {
       headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // Maintenance costs
     const maintY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -161,81 +163,63 @@ export function useReportExport() {
       headStyles: { fillColor: [59, 130, 246] },
     });
 
-    // Save PDF
     doc.save(`relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   }, []);
 
   const exportToExcel = useCallback(async (data: ExportData) => {
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'FrotaApp';
-    workbook.created = new Date();
+    const wb = XLSX.utils.book_new();
 
     // Summary sheet
-    const summarySheet = workbook.addWorksheet('Resumo');
-    summarySheet.addRow(['Relatório de Frota']);
-    summarySheet.addRow([`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`]);
-    summarySheet.addRow([]);
-    summarySheet.addRow(['RESUMO FINANCEIRO (ÚLTIMOS 6 MESES)']);
-    summarySheet.addRow(['Métrica', 'Valor']);
-    summarySheet.addRow(['Receita Total', data.totals.totalReceita]);
-    summarySheet.addRow(['Custos Total', data.totals.totalCustos]);
-    summarySheet.addRow(['Lucro Líquido', data.totals.totalLucro]);
-    summarySheet.addRow(['Crescimento vs Mês Anterior (%)', data.totals.receitaGrowth]);
-    summarySheet.addRow([]);
-    summarySheet.addRow(['STATUS DA FROTA']);
-    summarySheet.addRow(['Status', 'Quantidade', 'Percentual (%)']);
-    summarySheet.addRow(['Alugados', data.occupancyData.rented, data.occupancyData.total > 0 ? ((data.occupancyData.rented / data.occupancyData.total) * 100) : 0]);
-    summarySheet.addRow(['Disponíveis', data.occupancyData.available, data.occupancyData.total > 0 ? ((data.occupancyData.available / data.occupancyData.total) * 100) : 0]);
-    summarySheet.addRow(['Manutenção', data.occupancyData.maintenance, data.occupancyData.total > 0 ? ((data.occupancyData.maintenance / data.occupancyData.total) * 100) : 0]);
-    summarySheet.addRow(['Total', data.occupancyData.total, 100]);
+    const summaryData = [
+      [styledCell('Relatório de Frota', headerStyle)],
+      [`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`],
+      [],
+      [styledCell('RESUMO FINANCEIRO (ÚLTIMOS 6 MESES)', boldStyle)],
+      [styledCell('Métrica', boldStyle), styledCell('Valor', boldStyle)],
+      ['Receita Total', data.totals.totalReceita],
+      ['Custos Total', data.totals.totalCustos],
+      ['Lucro Líquido', data.totals.totalLucro],
+      ['Crescimento vs Mês Anterior (%)', data.totals.receitaGrowth],
+      [],
+      [styledCell('STATUS DA FROTA', boldStyle)],
+      [styledCell('Status', boldStyle), styledCell('Quantidade', boldStyle), styledCell('Percentual (%)', boldStyle)],
+      ['Alugados', data.occupancyData.rented, data.occupancyData.total > 0 ? ((data.occupancyData.rented / data.occupancyData.total) * 100) : 0],
+      ['Disponíveis', data.occupancyData.available, data.occupancyData.total > 0 ? ((data.occupancyData.available / data.occupancyData.total) * 100) : 0],
+      ['Manutenção', data.occupancyData.maintenance, data.occupancyData.total > 0 ? ((data.occupancyData.maintenance / data.occupancyData.total) * 100) : 0],
+      ['Total', data.occupancyData.total, 100],
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summarySheet['!cols'] = [{ wch: 35 }, { wch: 20 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Resumo');
 
-    // Style header
-    summarySheet.getRow(1).font = { bold: true, size: 14 };
-    summarySheet.getRow(4).font = { bold: true };
-    summarySheet.getRow(5).font = { bold: true };
-    summarySheet.getRow(11).font = { bold: true };
-    summarySheet.getRow(12).font = { bold: true };
+    // Monthly data
+    const monthlyRows = [
+      [styledCell('Mês', colHeaderStyle), styledCell('Receita (R$)', colHeaderStyle), styledCell('Custos (R$)', colHeaderStyle), styledCell('Lucro (R$)', colHeaderStyle)],
+      ...data.monthlyData.map(m => [m.monthFull, m.receita, m.custos, m.lucro]),
+    ];
+    const monthlySheet = XLSX.utils.aoa_to_sheet(monthlyRows);
+    monthlySheet['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, monthlySheet, 'Evolução Mensal');
 
-    // Monthly data sheet
-    const monthlySheet = workbook.addWorksheet('Evolução Mensal');
-    monthlySheet.addRow(['Mês', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)']);
-    monthlySheet.getRow(1).font = { bold: true };
-    data.monthlyData.forEach(m => {
-      monthlySheet.addRow([m.monthFull, m.receita, m.custos, m.lucro]);
-    });
+    // Vehicle comparison
+    const vehicleRows = [
+      [styledCell('Veículo', colHeaderStyle), styledCell('Placa', colHeaderStyle), styledCell('Receita (R$)', colHeaderStyle), styledCell('Custos (R$)', colHeaderStyle), styledCell('Lucro (R$)', colHeaderStyle)],
+      ...data.vehicleComparison.map(v => [v.name, v.plate, v.receita, v.custos, v.lucro]),
+    ];
+    const vehicleSheet = XLSX.utils.aoa_to_sheet(vehicleRows);
+    vehicleSheet['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, vehicleSheet, 'Por Veículo');
 
-    // Vehicle comparison sheet
-    const vehicleSheet = workbook.addWorksheet('Por Veículo');
-    vehicleSheet.addRow(['Veículo', 'Placa', 'Receita (R$)', 'Custos (R$)', 'Lucro (R$)']);
-    vehicleSheet.getRow(1).font = { bold: true };
-    data.vehicleComparison.forEach(v => {
-      vehicleSheet.addRow([v.name, v.plate, v.receita, v.custos, v.lucro]);
-    });
+    // Maintenance costs
+    const maintRows = [
+      [styledCell('Tipo de Manutenção', colHeaderStyle), styledCell('Custo Total (R$)', colHeaderStyle)],
+      ...data.maintenanceCostsByType.map(m => [m.name, m.value]),
+    ];
+    const maintSheet = XLSX.utils.aoa_to_sheet(maintRows);
+    maintSheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, maintSheet, 'Custos Manutenção');
 
-    // Maintenance costs sheet
-    const maintSheet = workbook.addWorksheet('Custos Manutenção');
-    maintSheet.addRow(['Tipo de Manutenção', 'Custo Total (R$)']);
-    maintSheet.getRow(1).font = { bold: true };
-    data.maintenanceCostsByType.forEach(m => {
-      maintSheet.addRow([m.name, m.value]);
-    });
-
-    // Auto-fit columns for all sheets
-    [summarySheet, monthlySheet, vehicleSheet, maintSheet].forEach(sheet => {
-      sheet.columns.forEach(column => {
-        column.width = 20;
-      });
-    });
-
-    // Save Excel
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-    a.click();
-    URL.revokeObjectURL(url);
+    XLSX.writeFile(wb, `relatorio-frota-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   }, []);
 
   return { exportToPDF, exportToExcel };
