@@ -12,8 +12,8 @@ export function HeroSection() {
         <img
           src={heroImage}
           alt="Frota de veículos"
-          className="h-full w-full object-cover"
-        />
+          className="h-full w-full object-cover" />
+
         <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
       </div>
 
@@ -57,7 +57,7 @@ export function HeroSection() {
           {/* Heading */}
           <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-neutral-900 dark:text-white animate-slide-up">
             Alugue o carro ideal para{' '}
-            <span className="text-gradient">rodar por app</span>
+            <span className="text-gradient text-primary">rodar por app</span>
           </h1>
 
           {/* Description */}
@@ -85,43 +85,43 @@ export function HeroSection() {
           {/* Stats */}
           <div className="mt-10 sm:mt-16 flex gap-6 sm:gap-8 md:gap-12 animate-slide-up" style={{ animationDelay: '0.45s' }}>
             {[
-              { value: '500+', label: 'Veículos' },
-              { value: '2.000+', label: 'Motoristas' },
-              { value: '50+', label: 'Cidades' },
-            ].map((stat) => (
-              <div key={stat.label}>
+            { value: '500+', label: 'Veículos' },
+            { value: '2.000+', label: 'Motoristas' },
+            { value: '50+', label: 'Cidades' }].
+            map((stat) =>
+            <div key={stat.label}>
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold text-neutral-900 dark:text-white">{stat.value}</div>
                 <div className="text-xs sm:text-sm text-neutral-500 dark:text-white/60">{stat.label}</div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
 
 export function FeaturesSection() {
   const features = [
-    {
-      icon: Shield,
-      title: 'Segurança Garantida',
-      description: 'Locadores verificados, contratos claros e transparentes para sua total proteção.',
-      color: 'bg-success/10 text-success group-hover:bg-success group-hover:text-success-foreground',
-    },
-    {
-      icon: Users,
-      title: 'Conexão Direta',
-      description: 'Fale diretamente com os locadores via WhatsApp. Sem intermediários.',
-      color: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Gestão Completa',
-      description: 'Dashboard para gerenciar frota, motoristas, financeiro e manutenções.',
-      color: 'bg-warning/10 text-warning group-hover:bg-warning group-hover:text-warning-foreground',
-    },
-  ];
+  {
+    icon: Shield,
+    title: 'Segurança Garantida',
+    description: 'Locadores verificados, contratos claros e transparentes para sua total proteção.',
+    color: 'bg-success/10 text-success group-hover:bg-success group-hover:text-success-foreground'
+  },
+  {
+    icon: Users,
+    title: 'Conexão Direta',
+    description: 'Fale diretamente com os locadores via WhatsApp. Sem intermediários.',
+    color: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'
+  },
+  {
+    icon: TrendingUp,
+    title: 'Gestão Completa',
+    description: 'Dashboard para gerenciar frota, motoristas, financeiro e manutenções.',
+    color: 'bg-warning/10 text-warning group-hover:bg-warning group-hover:text-warning-foreground'
+  }];
+
 
   return (
     <section className="py-16 sm:py-20 lg:py-24 bg-background">
@@ -131,8 +131,8 @@ export function FeaturesSection() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.5 }}
-        >
+          transition={{ duration: 0.5 }}>
+
           <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-primary mb-2 sm:mb-3">Vantagens</p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
             Por que escolher o FrotaApp?
@@ -143,24 +143,24 @@ export function FeaturesSection() {
         </motion.div>
 
         <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              className="group relative rounded-2xl border border-border bg-card p-5 sm:p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-            >
+          {features.map((feature, index) =>
+          <motion.div
+            key={index}
+            className="group relative rounded-2xl border border-border bg-card p-5 sm:p-8 transition-all duration-500 hover:border-primary/20 hover:shadow-card-hover hover:-translate-y-1"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5, delay: index * 0.15 }}>
+
               <div className={`mb-4 sm:mb-6 flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-xl transition-all duration-500 ${feature.color}`}>
                 <feature.icon className="h-5 w-5 sm:h-7 sm:w-7" />
               </div>
               <h3 className="mb-2 sm:mb-3 text-lg sm:text-xl font-bold text-foreground">{feature.title}</h3>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
             </motion.div>
-          ))}
+          )}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
