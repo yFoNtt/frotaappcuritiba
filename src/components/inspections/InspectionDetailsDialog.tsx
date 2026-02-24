@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
+import { useSignedPhotoUrls } from '@/hooks/useSignedPhotoUrls';
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,7 @@ export function InspectionDetailsDialog({
   vehicleName,
 }: InspectionDetailsDialogProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const { signedUrls: photoUrls } = useSignedPhotoUrls(inspection?.photos);
 
   if (!inspection) return null;
 
@@ -297,9 +299,9 @@ export function InspectionDetailsDialog({
               </TabsContent>
 
               <TabsContent value="photos" className="mt-0">
-                {inspection.photos && inspection.photos.length > 0 ? (
+                {photoUrls && photoUrls.length > 0 ? (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {inspection.photos.map((photo, index) => (
+                    {photoUrls.map((photo, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedPhoto(photo)}

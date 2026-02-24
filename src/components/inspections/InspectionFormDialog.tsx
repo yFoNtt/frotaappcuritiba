@@ -36,6 +36,7 @@ import {
   useCreateInspection,
   useUpdateInspection,
   uploadInspectionPhotos,
+  getSignedPhotoUrls,
   FUEL_LEVELS,
   CONDITION_LABELS,
   INSPECTION_TYPES,
@@ -110,7 +111,8 @@ export function InspectionFormDialog({
   const [isUploading, setIsUploading] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistCategory[]>([]);
   const [activeTab, setActiveTab] = useState('info');
-  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]); // raw paths for saving
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]); // signed URLs for display
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -162,8 +164,10 @@ export function InspectionFormDialog({
         // Load existing photos as previews
         if (inspection.photos && inspection.photos.length > 0) {
           setExistingPhotos(inspection.photos);
+          getSignedPhotoUrls(inspection.photos).then(urls => setExistingPhotoUrls(urls));
         } else {
           setExistingPhotos([]);
+          setExistingPhotoUrls([]);
         }
         setPhotos([]);
         setPreviews([]);
@@ -203,6 +207,7 @@ export function InspectionFormDialog({
         setPhotos([]);
         setPreviews([]);
         setExistingPhotos([]);
+        setExistingPhotoUrls([]);
         setChecklist(getChecklist());
       }
     }
@@ -269,6 +274,7 @@ export function InspectionFormDialog({
 
   const removeExistingPhoto = (index: number) => {
     setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+    setExistingPhotoUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data: FormData) => {
@@ -649,7 +655,7 @@ export function InspectionFormDialog({
                   <div className="space-y-3">
                     <Label>Fotos da Vistoria (máx. 10)</Label>
                     <div className="flex flex-wrap gap-3">
-                      {existingPhotos.map((url, index) => (
+                      {existingPhotoUrls.map((url, index) => (
                         <div key={`existing-${index}`} className="relative">
                           <img
                             src={url}
