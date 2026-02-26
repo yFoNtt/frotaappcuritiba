@@ -39,6 +39,7 @@ export function useAuditLogs() {
   return useQuery({
     queryKey: ['audit-logs', user?.id],
     queryFn: async () => {
+      // Fetch audit logs
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
@@ -46,7 +47,29 @@ export function useAuditLogs() {
         .limit(500);
 
       if (error) throw error;
-      return data as AuditLog[];
+      const logs = data as AuditLog[];
+
+      // Collect unique changed_by IDs to resolve names
+      const uniqueIds = [...new Set(logs.map(l => l.changed_by))];
+
+      // Fetch driver names for IDs that might be motoristas
+      const { data: drivers } = await supabase
+        .from('drivers')
+        .select('user_id, name')
+        .in('user_id', uniqueIds);
+
+      const driverMap = new Map<string, string>();
+      (drivers || []).forEach(d => {
+        if (d.user_id) driverMap.set(d.user_id, d.name);
+      });
+
+      // Enrich logs with author info
+      return logs.map(log => ({
+        ...log,
+        changed_by_name: log.changed_by === user?.id
+          ? 'Você'
+          : driverMap.get(log.changed_by) || null,
+      }));
     },
     enabled: !!user,
   });
