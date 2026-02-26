@@ -213,8 +213,11 @@ export default function AuditLogs() {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                        {log.changed_by_name && (
+                          <span className="text-xs font-medium">{log.changed_by_name}</span>
+                        )}
                       </div>
                       {log.changed_fields && log.changed_fields.length > 0 && (
                         <div className="text-xs text-muted-foreground truncate">
@@ -231,6 +234,7 @@ export default function AuditLogs() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Data/Hora</TableHead>
+                        <TableHead>Autor</TableHead>
                         <TableHead>Tabela</TableHead>
                         <TableHead>Ação</TableHead>
                         <TableHead className="hidden lg:table-cell">Campos Alterados</TableHead>
@@ -242,6 +246,9 @@ export default function AuditLogs() {
                         <TableRow key={log.id}>
                           <TableCell className="whitespace-nowrap text-sm">
                             {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {log.changed_by_name || '—'}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
@@ -316,6 +323,10 @@ export default function AuditLogs() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Data/Hora</p>
                   <p className="text-sm">{format(new Date(selectedLog.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Autor</p>
+                  <p className="text-sm">{selectedLog.changed_by_name || '—'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">ID do Registro</p>
