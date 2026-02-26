@@ -26,15 +26,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, History, Filter, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, History, Filter, X, Eye, ChevronLeft, ChevronRight, FileDown, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuditLogs, TABLE_LABELS, ACTION_LABELS, AuditLog } from '@/hooks/useAuditLogs';
+import { useAuditLogsExport } from '@/hooks/useAuditLogsExport';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function AuditLogs() {
   const { data: logs = [], isLoading } = useAuditLogs();
+  const { exportToPDF, exportToExcel } = useAuditLogsExport();
   const [search, setSearch] = useState('');
   const [tableFilter, setTableFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
@@ -205,10 +207,26 @@ export default function AuditLogs() {
         {/* Table */}
         <Card>
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Registros</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {filteredLogs.length} log{filteredLogs.length !== 1 ? 's' : ''} de auditoria
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle className="text-base sm:text-lg">Registros</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  {filteredLogs.length} log{filteredLogs.length !== 1 ? 's' : ''} de auditoria
+                </CardDescription>
+              </div>
+              {filteredLogs.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => exportToPDF(filteredLogs)}>
+                    <FileDown className="mr-1 h-4 w-4" />
+                    <span className="hidden sm:inline">PDF</span>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToExcel(filteredLogs)}>
+                    <FileSpreadsheet className="mr-1 h-4 w-4" />
+                    <span className="hidden sm:inline">Excel</span>
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {filteredLogs.length > 0 ? (
