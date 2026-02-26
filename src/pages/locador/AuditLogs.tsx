@@ -38,6 +38,7 @@ export default function AuditLogs() {
   const [search, setSearch] = useState('');
   const [tableFilter, setTableFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
+  const [authorFilter, setAuthorFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
@@ -47,6 +48,8 @@ export default function AuditLogs() {
     return logs.filter((log) => {
       if (tableFilter !== 'all' && log.table_name !== tableFilter) return false;
       if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+      if (authorFilter === 'me' && log.changed_by_name !== 'Você') return false;
+      if (authorFilter === 'driver' && log.changed_by_name === 'Você') return false;
       if (dateFrom) {
         const logDate = log.created_at.split('T')[0];
         if (logDate < dateFrom) return false;
@@ -66,18 +69,19 @@ export default function AuditLogs() {
       }
       return true;
     });
-  }, [logs, search, tableFilter, actionFilter, dateFrom, dateTo]);
+  }, [logs, search, tableFilter, actionFilter, authorFilter, dateFrom, dateTo]);
 
   // Reset page when filters change
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedLogs = filteredLogs.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
 
-  const hasActiveFilters = tableFilter !== 'all' || actionFilter !== 'all' || dateFrom || dateTo;
+  const hasActiveFilters = tableFilter !== 'all' || actionFilter !== 'all' || authorFilter !== 'all' || dateFrom || dateTo;
 
   const clearFilters = () => {
     setTableFilter('all');
     setActionFilter('all');
+    setAuthorFilter('all');
     setDateFrom('');
     setDateTo('');
     setCurrentPage(1);
@@ -133,7 +137,7 @@ export default function AuditLogs() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tabela</label>
                 <Select value={tableFilter} onValueChange={(v) => { setTableFilter(v); setCurrentPage(1); }}>
@@ -159,6 +163,19 @@ export default function AuditLogs() {
                     {Object.entries(ACTION_LABELS).map(([key, label]) => (
                       <SelectItem key={key} value={key}>{label}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Autor</label>
+                <Select value={authorFilter} onValueChange={(v) => { setAuthorFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os autores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os autores</SelectItem>
+                    <SelectItem value="me">Você</SelectItem>
+                    <SelectItem value="driver">Motoristas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
