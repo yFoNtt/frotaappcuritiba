@@ -202,6 +202,16 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
             </div>
           )}
         </ScrollArea>
+        <div className="border-t px-4 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => { setOpen(false); navigate('/locador/notificacoes'); }}
+          >
+            Ver todas as notificações
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

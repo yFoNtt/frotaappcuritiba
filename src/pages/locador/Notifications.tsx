@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import {
   FileText,
   Trash2,
   Filter,
+  UserPen,
 } from 'lucide-react';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -29,6 +31,7 @@ const typeFilters = [
   { value: 'cnh_expiry', label: 'CNH', icon: IdCard },
   { value: 'maintenance_due', label: 'Manutenção', icon: Wrench },
   { value: 'contract_expiry', label: 'Contratos', icon: FileText },
+  { value: 'driver_change', label: 'Motoristas', icon: UserPen },
 ] as const;
 
 const typeConfig: Record<string, { icon: typeof Bell; color: string; bgColor: string; label: string }> = {
@@ -36,6 +39,7 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; bgColor: st
   cnh_expiry: { icon: IdCard, color: 'text-warning', bgColor: 'bg-warning/10', label: 'CNH' },
   maintenance_due: { icon: Wrench, color: 'text-primary', bgColor: 'bg-primary/10', label: 'Manutenção' },
   contract_expiry: { icon: FileText, color: 'text-orange-500', bgColor: 'bg-orange-500/10', label: 'Contrato' },
+  driver_change: { icon: UserPen, color: 'text-blue-500', bgColor: 'bg-blue-500/10', label: 'Motorista' },
 };
 
 const statusFilters = [
@@ -141,6 +145,7 @@ export default function LocadorNotifications() {
     payments: notifications.filter(n => n.type === 'payment_overdue').length,
     cnh: notifications.filter(n => n.type === 'cnh_expiry').length,
     maintenance: notifications.filter(n => n.type === 'maintenance_due').length,
+    driverChanges: notifications.filter(n => n.type === 'driver_change').length,
   };
 
   return (
@@ -163,7 +168,7 @@ export default function LocadorNotifications() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-5">
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -205,6 +210,17 @@ export default function LocadorNotifications() {
               <div>
                 <p className="text-2xl font-bold">{stats.maintenance}</p>
                 <p className="text-xs text-muted-foreground">Manutenção</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
+                <UserPen className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.driverChanges}</p>
+                <p className="text-xs text-muted-foreground">Motoristas</p>
               </div>
             </CardContent>
           </Card>
