@@ -126,7 +126,6 @@ export default function LocadorDrivers() {
   });
 
   const filteredDrivers = useMemo(() => {
-    setCurrentPage(1);
     return drivers.filter(driver =>
       driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       driver.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -345,7 +344,7 @@ export default function LocadorDrivers() {
               <Input
                 placeholder="Buscar por nome, e-mail ou CNH..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className="pl-9"
               />
             </div>
