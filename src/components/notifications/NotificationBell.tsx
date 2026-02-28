@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Check, CheckCheck, Trash2, CreditCard, IdCard, Wrench, FileText, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, CreditCard, IdCard, Wrench, FileText, UserPen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +14,7 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; label: stri
   cnh_expiry: { icon: IdCard, color: 'text-warning', label: 'CNH' },
   maintenance_due: { icon: Wrench, color: 'text-primary', label: 'Manutenção' },
   contract_expiry: { icon: FileText, color: 'text-orange-500', label: 'Contrato' },
+  driver_change: { icon: UserPen, color: 'text-blue-500', label: 'Motorista' },
 };
 
 function NotificationItem({
