@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -91,7 +91,7 @@ export function MaintenanceTable({
   }, [maintenances, currentPage]);
 
   // Reset page when data changes
-  useMemo(() => { setCurrentPage(1); }, [maintenances.length]);
+  useEffect(() => { setCurrentPage(1); }, [maintenances.length]);
 
   const getPageNumbers = () => {
     const pages: (number | 'ellipsis')[] = [];
