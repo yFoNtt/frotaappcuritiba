@@ -140,7 +140,6 @@ export default function LocadorPayments() {
   }, [payments]);
 
   const filteredPayments = useMemo(() => {
-    setCurrentPage(1);
     return processedPayments.filter(payment => {
       const driver = drivers.find(d => d.id === payment.driver_id);
       const matchesSearch = 
@@ -365,11 +364,11 @@ export default function LocadorPayments() {
                 <Input
                   placeholder="Buscar por motorista ou valor..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                   className="pl-9"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
