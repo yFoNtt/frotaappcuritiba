@@ -62,11 +62,14 @@ export default function LocadorInspections() {
   const [vehicleFilter, setVehicleFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
+  const handleSearchChange = (value: string) => { setSearchTerm(value); setCurrentPage(1); };
+  const handleTypeChange = (value: string) => { setTypeFilter(value); setCurrentPage(1); };
+  const handleVehicleChange = (value: string) => { setVehicleFilter(value); setCurrentPage(1); };
+
   const isLoading = inspectionsLoading || vehiclesLoading || driversLoading;
 
   // Filter inspections
   const filteredInspections = useMemo(() => {
-    setCurrentPage(1);
     return inspections.filter((inspection) => {
       const vehicle = vehicles.find((v) => v.id === inspection.vehicle_id);
       const driver = drivers.find((d) => d.id === inspection.driver_id);
@@ -203,12 +206,12 @@ export default function LocadorInspections() {
             <Input
               placeholder="Buscar por veículo ou motorista..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9"
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={typeFilter} onValueChange={handleTypeChange}>
               <SelectTrigger className="w-full sm:w-[150px]">
                 <Filter className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="Tipo" />
@@ -219,7 +222,7 @@ export default function LocadorInspections() {
                 <SelectItem value="check_out">Check-out</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+            <Select value={vehicleFilter} onValueChange={handleVehicleChange}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Veículo" />
               </SelectTrigger>
