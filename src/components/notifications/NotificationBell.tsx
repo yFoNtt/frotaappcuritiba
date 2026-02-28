@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Bell, Check, CheckCheck, Trash2, CreditCard, IdCard, Wrench, FileText, UserPen, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, CreditCard, IdCard, Wrench, FileText, UserPen, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -17,25 +18,58 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; label: stri
   driver_change: { icon: UserPen, color: 'text-blue-500', label: 'Motorista' },
 };
 
+const tableRouteMap: Record<string, string> = {
+  contracts: '/locador/contratos',
+  payments: '/locador/pagamentos',
+  drivers: '/locador/motoristas',
+  vehicles: '/locador/veiculos',
+  maintenances: '/locador/manutencao',
+  documents: '/locador/documentos',
+  document_requests: '/locador/solicitacoes-documentos',
+  vehicle_inspections: '/locador/vistorias',
+  mileage_records: '/locador/quilometragem',
+};
+
+function getNotificationRoute(notification: Notification): string | null {
+  const meta = notification.metadata as Record<string, unknown> | null;
+  if (!meta) return null;
+
+  if (notification.type === 'driver_change' && typeof meta.table_name === 'string') {
+    return tableRouteMap[meta.table_name] || null;
+  }
+
+  if (notification.type === 'payment_overdue') return '/locador/pagamentos';
+  if (notification.type === 'cnh_expiry') return '/locador/motoristas';
+  if (notification.type === 'maintenance_due') return '/locador/manutencao';
+  if (notification.type === 'contract_expiry') return '/locador/contratos';
+
+  return null;
+}
+
 function NotificationItem({
   notification,
   onRead,
   onDelete,
+  onNavigate,
 }: {
   notification: Notification;
   onRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onNavigate: (notification: Notification) => void;
 }) {
   const config = typeConfig[notification.type] || { icon: Bell, color: 'text-muted-foreground', label: 'Notificação' };
   const Icon = config.icon;
   const isUnread = !notification.read_at;
+  const hasRoute = !!getNotificationRoute(notification);
 
   return (
     <div
       className={cn(
         'flex items-start gap-3 rounded-lg p-3 transition-colors',
-        isUnread ? 'bg-accent/50' : 'hover:bg-accent/30'
+        isUnread ? 'bg-accent/50' : 'hover:bg-accent/30',
+        hasRoute && 'cursor-pointer'
       )}
+      onClick={() => hasRoute && onNavigate(notification)}
     >
       <div className={cn('mt-0.5 flex-shrink-0', config.color)}>
         <Icon className="h-4 w-4" />
@@ -47,6 +81,9 @@ function NotificationItem({
           </Badge>
           {isUnread && (
             <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+          )}
+          {hasRoute && (
+            <ExternalLink className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />
           )}
         </div>
         <p className="mt-1 text-sm font-medium leading-tight">{notification.title}</p>
@@ -87,7 +124,16 @@ interface NotificationBellProps {
 
 export function NotificationBell({ collapsed = false }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+
+  const handleNavigate = (notification: Notification) => {
+    const route = getNotificationRoute(notification);
+    if (!route) return;
+    if (!notification.read_at) markAsRead(notification.id);
+    setOpen(false);
+    navigate(route);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -150,6 +196,7 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
                   notification={notification}
                   onRead={markAsRead}
                   onDelete={deleteNotification}
+                  onNavigate={handleNavigate}
                 />
               ))}
             </div>
