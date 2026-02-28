@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Bell,
@@ -19,6 +18,8 @@ import {
   Trash2,
   Filter,
   UserPen,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -122,6 +123,8 @@ function NotificationCard({
 export default function LocadorNotifications() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const {
     notifications,
     unreadCount,
@@ -131,12 +134,22 @@ export default function LocadorNotifications() {
     deleteNotification,
   } = useNotifications();
 
-  const filtered = notifications.filter((n) => {
+  const filtered = useMemo(() => notifications.filter((n) => {
     if (typeFilter !== 'all' && n.type !== typeFilter) return false;
     if (statusFilter === 'unread' && n.read_at) return false;
     if (statusFilter === 'read' && !n.read_at) return false;
     return true;
-  });
+  }), [notifications, typeFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedItems = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const startItem = filtered.length === 0 ? 0 : (safePage - 1) * ITEMS_PER_PAGE + 1;
+  const endItem = Math.min(safePage * ITEMS_PER_PAGE, filtered.length);
+
+  // Reset page when filters change
+  const handleTypeFilter = (v: string) => { setTypeFilter(v); setCurrentPage(1); };
+  const handleStatusFilter = (v: string) => { setStatusFilter(v); setCurrentPage(1); };
 
   // Stats
   const stats = {
@@ -235,7 +248,7 @@ export default function LocadorNotifications() {
                 <span className="text-sm font-medium">Filtros:</span>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
-                <Tabs value={typeFilter} onValueChange={setTypeFilter} className="w-full sm:w-auto">
+                <Tabs value={typeFilter} onValueChange={handleTypeFilter} className="w-full sm:w-auto">
                   <TabsList className="w-full sm:w-auto flex-wrap h-auto gap-1 p-1">
                     {typeFilters.map(f => (
                       <TabsTrigger key={f.value} value={f.value} className="text-xs px-3 py-1.5">
@@ -245,7 +258,7 @@ export default function LocadorNotifications() {
                     ))}
                   </TabsList>
                 </Tabs>
-                <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full sm:w-auto">
+                <Tabs value={statusFilter} onValueChange={handleStatusFilter} className="w-full sm:w-auto">
                   <TabsList className="w-full sm:w-auto">
                     {statusFilters.map(f => (
                       <TabsTrigger key={f.value} value={f.value} className="text-xs px-3">
@@ -289,11 +302,11 @@ export default function LocadorNotifications() {
                   : 'Você não possui notificações no momento.'}
               </p>
               {(typeFilter !== 'all' || statusFilter !== 'all') && (
-                <Button
+              <Button
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => { setTypeFilter('all'); setStatusFilter('all'); }}
+                  onClick={() => { handleTypeFilter('all'); handleStatusFilter('all'); }}
                 >
                   Limpar filtros
                 </Button>
@@ -302,7 +315,7 @@ export default function LocadorNotifications() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {filtered.map((notification) => (
+            {paginatedItems.map((notification) => (
               <NotificationCard
                 key={notification.id}
                 notification={notification}
@@ -310,6 +323,57 @@ export default function LocadorNotifications() {
                 onDelete={deleteNotification}
               />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && filtered.length > ITEMS_PER_PAGE && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {startItem}–{endItem} de {filtered.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage(safePage - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1]) > 1) acc.push('ellipsis');
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === 'ellipsis' ? (
+                    <span key={`e-${idx}`} className="px-1 text-muted-foreground">…</span>
+                  ) : (
+                    <Button
+                      key={item}
+                      variant={item === safePage ? 'default' : 'outline'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setCurrentPage(item)}
+                    >
+                      {item}
+                    </Button>
+                  )
+                )}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage(safePage + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
