@@ -59,12 +59,12 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/planos" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/para-locadores" className="text-muted-foreground hover:text-primary transition-colors">
                   Planos e Preços
                 </Link>
               </li>
               <li>
-                <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">
                   Área do Locador
                 </Link>
               </li>
