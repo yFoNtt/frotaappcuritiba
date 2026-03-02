@@ -60,8 +60,8 @@ export default function ForgotPassword() {
           <CardContent>
             {emailSent ? (
               <div className="flex flex-col items-center gap-4 py-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+                   <CheckCircle2 className="h-8 w-8 text-success" />
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
                   Enviamos um link de recuperação para <strong>{email}</strong>. 

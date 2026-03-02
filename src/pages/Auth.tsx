@@ -350,7 +350,7 @@ export default function Auth() {
                       onChange={(e) => handleDocumentChange(e.target.value)}
                       className={`pl-10 pr-10 ${
                         documentError ? 'border-destructive focus-visible:ring-destructive' : 
-                        documentValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                        documentValid ? 'border-success focus-visible:ring-success' : ''
                       }`}
                       required
                       disabled={loading}
@@ -359,7 +359,7 @@ export default function Auth() {
                     {document.replace(/\D/g, '').length >= 11 && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {documentValid ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className="h-4 w-4 text-success" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive" />
                         )}
@@ -392,7 +392,7 @@ export default function Auth() {
                       onChange={(e) => handleCnhChange(e.target.value)}
                       className={`pl-10 pr-10 ${
                         cnhError ? 'border-destructive focus-visible:ring-destructive' : 
-                        cnhValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                        cnhValid ? 'border-success focus-visible:ring-success' : ''
                       }`}
                       required
                       disabled={loading}
@@ -401,7 +401,7 @@ export default function Auth() {
                     {cnh.replace(/\D/g, '').length === 11 && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {cnhValid ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className="h-4 w-4 text-success" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive" />
                         )}
@@ -431,7 +431,7 @@ export default function Auth() {
                       min={getMinDate()}
                       className={`pl-10 pr-10 ${
                         cnhExpiryError ? 'border-destructive focus-visible:ring-destructive' : 
-                        cnhExpiryValid ? 'border-green-500 focus-visible:ring-green-500' : ''
+                        cnhExpiryValid ? 'border-success focus-visible:ring-success' : ''
                       }`}
                       required
                       disabled={loading}
@@ -439,7 +439,7 @@ export default function Auth() {
                     {cnhExpiry && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {cnhExpiryValid ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className="h-4 w-4 text-success" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive" />
                         )}
