@@ -1,21 +1,28 @@
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "@/components/ErrorBoundary";
 
-import MotoristaDashboard from "@/pages/motorista/Dashboard";
-import MotoristaVehicle from "@/pages/motorista/Vehicle";
-import MotoristaPagamentos from "@/pages/motorista/Payments";
-import MotoristaDocuments from "@/pages/motorista/Documents";
-import MotoristaHistorico from "@/pages/motorista/History";
-import MotoristaSettings from "@/pages/motorista/Settings";
+const MotoristaDashboard = lazy(() => import("@/pages/motorista/Dashboard"));
+const MotoristaVehicle = lazy(() => import("@/pages/motorista/Vehicle"));
+const MotoristaPagamentos = lazy(() => import("@/pages/motorista/Payments"));
+const MotoristaDocuments = lazy(() => import("@/pages/motorista/Documents"));
+const MotoristaHistorico = lazy(() => import("@/pages/motorista/History"));
+const MotoristaSettings = lazy(() => import("@/pages/motorista/Settings"));
 
-const motoristaRoute = (path: string, Component: React.ComponentType) => (
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+    {children}
+  </Suspense>
+);
+
+const motoristaRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
     key={path}
     path={path}
     element={
       <ProtectedRoute allowedRoles={['motorista']}>
-        <RouteErrorBoundary><Component /></RouteErrorBoundary>
+        <RouteErrorBoundary><Lazy><Component /></Lazy></RouteErrorBoundary>
       </ProtectedRoute>
     }
   />

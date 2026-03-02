@@ -1,24 +1,31 @@
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "@/components/ErrorBoundary";
 
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminUsers from "@/pages/admin/Users";
-import AdminLocadores from "@/pages/admin/Locadores";
-import AdminLocadorDetails from "@/pages/admin/LocadorDetails";
-import AdminVehicles from "@/pages/admin/Vehicles";
-import AdminPlans from "@/pages/admin/Plans";
-import AdminMetrics from "@/pages/admin/Metrics";
-import AdminSettings from "@/pages/admin/Settings";
-import AdminAuditLogs from "@/pages/admin/AuditLogs";
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/Users"));
+const AdminLocadores = lazy(() => import("@/pages/admin/Locadores"));
+const AdminLocadorDetails = lazy(() => import("@/pages/admin/LocadorDetails"));
+const AdminVehicles = lazy(() => import("@/pages/admin/Vehicles"));
+const AdminPlans = lazy(() => import("@/pages/admin/Plans"));
+const AdminMetrics = lazy(() => import("@/pages/admin/Metrics"));
+const AdminSettings = lazy(() => import("@/pages/admin/Settings"));
+const AdminAuditLogs = lazy(() => import("@/pages/admin/AuditLogs"));
 
-const adminRoute = (path: string, Component: React.ComponentType) => (
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+    {children}
+  </Suspense>
+);
+
+const adminRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
     key={path}
     path={path}
     element={
       <ProtectedRoute allowedRoles={['admin']}>
-        <RouteErrorBoundary><Component /></RouteErrorBoundary>
+        <RouteErrorBoundary><Lazy><Component /></Lazy></RouteErrorBoundary>
       </ProtectedRoute>
     }
   />
