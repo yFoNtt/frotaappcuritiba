@@ -37,11 +37,11 @@ export default function MotoristaHistorico() {
   const getTypeBadge = (tipo: string) => {
     switch (tipo) {
       case 'pagamento':
-        return <Badge className="bg-green-500/10 text-green-600">Pagamento</Badge>;
+        return <Badge className="bg-success/10 text-success">Pagamento</Badge>;
       case 'contrato':
-        return <Badge className="bg-blue-500/10 text-blue-600">Contrato</Badge>;
+        return <Badge className="bg-primary/10 text-primary">Contrato</Badge>;
       case 'manutencao':
-        return <Badge className="bg-orange-500/10 text-orange-600">Manutenção</Badge>;
+        return <Badge className="bg-warning/10 text-warning">Manutenção</Badge>;
       default:
         return <Badge variant="outline">{tipo}</Badge>;
     }
@@ -50,13 +50,13 @@ export default function MotoristaHistorico() {
   const getTypeColor = (tipo: string) => {
     switch (tipo) {
       case 'pagamento':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'contrato':
-        return 'bg-blue-500';
+        return 'bg-primary';
       case 'manutencao':
-        return 'bg-orange-500';
+        return 'bg-warning';
       default:
-        return 'bg-gray-500';
+        return 'bg-muted';
     }
   };
 
@@ -108,7 +108,7 @@ export default function MotoristaHistorico() {
                     )}
                     
                     {/* Timeline dot */}
-                    <div className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(evento.tipo)} text-white`}>
+                    <div className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${getTypeColor(evento.tipo)} text-primary-foreground`}>
                       {getTypeIcon(evento.tipo)}
                     </div>
 
@@ -128,7 +128,7 @@ export default function MotoristaHistorico() {
                         </div>
                         <div className="flex items-center gap-3">
                           {evento.valor !== null && evento.valor > 0 && (
-                            <span className="font-semibold text-green-600">
+                            <span className="font-semibold text-success">
                               R$ {evento.valor.toLocaleString('pt-BR')}
                             </span>
                           )}
@@ -156,8 +156,8 @@ export default function MotoristaHistorico() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-                  <CreditCard className="h-6 w-6 text-green-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+                  <CreditCard className="h-6 w-6 text-success" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.pagamentos}</p>
@@ -170,8 +170,8 @@ export default function MotoristaHistorico() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/10">
-                  <Wrench className="h-6 w-6 text-orange-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+                  <Wrench className="h-6 w-6 text-warning" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.manutencoes}</p>
@@ -184,8 +184,8 @@ export default function MotoristaHistorico() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
-                  <FileText className="h-6 w-6 text-blue-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.contratos}</p>

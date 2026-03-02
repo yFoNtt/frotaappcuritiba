@@ -14,8 +14,8 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; label: stri
   payment_overdue: { icon: CreditCard, color: 'text-destructive', label: 'Pagamento' },
   cnh_expiry: { icon: IdCard, color: 'text-warning', label: 'CNH' },
   maintenance_due: { icon: Wrench, color: 'text-primary', label: 'Manutenção' },
-  contract_expiry: { icon: FileText, color: 'text-orange-500', label: 'Contrato' },
-  driver_change: { icon: UserPen, color: 'text-blue-500', label: 'Motorista' },
+  contract_expiry: { icon: FileText, color: 'text-warning', label: 'Contrato' },
+  driver_change: { icon: UserPen, color: 'text-primary', label: 'Motorista' },
 };
 
 const tableRouteMap: Record<string, string> = {

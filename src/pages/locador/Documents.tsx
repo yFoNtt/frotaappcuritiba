@@ -72,11 +72,11 @@ const documentTypes: { value: DocumentType; label: string }[] = [
 
 const getTypeColor = (type: DocumentType) => {
   const colors: Record<DocumentType, string> = {
-    cnh: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    comprovante: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    contrato: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-    multa: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-    outro: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+    cnh: 'bg-primary/10 text-primary',
+    comprovante: 'bg-success/10 text-success',
+    contrato: 'bg-accent text-accent-foreground',
+    multa: 'bg-destructive/10 text-destructive',
+    outro: 'bg-muted text-muted-foreground',
   };
   return colors[type];
 };

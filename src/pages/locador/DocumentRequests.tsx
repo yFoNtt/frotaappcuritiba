@@ -59,11 +59,11 @@ const documentTypeLabels: Record<string, string> = {
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    cnh: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    comprovante: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    contrato: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-    multa: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-    outro: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+    cnh: 'bg-primary/10 text-primary',
+    comprovante: 'bg-success/10 text-success',
+    contrato: 'bg-accent text-accent-foreground',
+    multa: 'bg-destructive/10 text-destructive',
+    outro: 'bg-muted text-muted-foreground',
   };
   return colors[type] || colors.outro;
 };
@@ -71,13 +71,13 @@ const getTypeColor = (type: string) => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      return 'bg-warning/10 text-warning';
     case 'approved':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      return 'bg-success/10 text-success';
     case 'rejected':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      return 'bg-destructive/10 text-destructive';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      return 'bg-muted text-muted-foreground';
   }
 };
 
@@ -330,7 +330,7 @@ export default function DocumentRequestsPage() {
                                   onClick={() => handleApprove(request)}
                                   disabled={loadingAction === request.id}
                                   title="Aprovar"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  className="text-success hover:text-success hover:bg-success/10"
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>

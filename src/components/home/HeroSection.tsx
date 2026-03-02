@@ -14,7 +14,7 @@ export function HeroSection() {
           alt="Frota de veículos"
           className="h-full w-full object-cover" />
 
-        <div className="absolute inset-0 bg-white/60 dark:bg-black/65" />
+        <div className="absolute inset-0 bg-background/60 dark:bg-background/65" />
       </div>
 
       {/* Floating Elements - hidden on mobile/tablet */}
@@ -55,13 +55,13 @@ export function HeroSection() {
           </div>
 
           {/* Heading */}
-          <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-neutral-900 dark:text-white animate-slide-up">
+          <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-foreground animate-slide-up">
             Alugue o carro ideal para{' '}
             <span className="text-gradient text-primary">rodar por app</span>
           </h1>
 
           {/* Description */}
-          <p className="mb-6 sm:mb-8 max-w-lg text-base sm:text-lg md:text-xl text-neutral-700 dark:text-white/80 animate-slide-up" style={{ animationDelay: '0.15s' }}>
+          <p className="mb-6 sm:mb-8 max-w-lg text-base sm:text-lg md:text-xl text-muted-foreground animate-slide-up" style={{ animationDelay: '0.15s' }}>
             Encontre veículos prontos para Uber, 99 e outros apps. 
             Sem burocracia, com contratos claros e suporte completo.
           </p>
@@ -74,7 +74,7 @@ export function HeroSection() {
                 Buscar Veículos
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="border-neutral-400 text-neutral-900 hover:bg-neutral-100 dark:border-white/40 dark:text-white dark:hover:bg-white/10 sm:size-xl">
+            <Button size="lg" variant="outline" asChild className="border-border text-foreground hover:bg-accent dark:border-border dark:text-foreground dark:hover:bg-accent sm:size-xl">
               <Link to="/para-locadores">
                 Sou Locador
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -90,8 +90,8 @@ export function HeroSection() {
             { value: '50+', label: 'Cidades' }].
             map((stat) =>
             <div key={stat.label}>
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-neutral-900 dark:text-white">{stat.value}</div>
-                <div className="text-xs sm:text-sm text-neutral-500 dark:text-white/60">{stat.label}</div>
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
               </div>
             )}
           </div>

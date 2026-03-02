@@ -232,7 +232,7 @@
 
   /* Text gradient */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 drop-shadow-sm;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary to-primary drop-shadow-sm;
   }
 
   /* Animate on scroll */
