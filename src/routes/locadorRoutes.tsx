@@ -1,30 +1,37 @@
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "@/components/ErrorBoundary";
 
-import LocadorDashboard from "@/pages/locador/Dashboard";
-import LocadorVehicles from "@/pages/locador/Vehicles";
-import LocadorDrivers from "@/pages/locador/Drivers";
-import LocadorPayments from "@/pages/locador/Payments";
-import LocadorMaintenance from "@/pages/locador/Maintenance";
-import LocadorMileage from "@/pages/locador/Mileage";
-import LocadorAlerts from "@/pages/locador/Alerts";
-import LocadorContracts from "@/pages/locador/Contracts";
-import LocadorDocuments from "@/pages/locador/Documents";
-import LocadorDocumentRequests from "@/pages/locador/DocumentRequests";
-import LocadorReports from "@/pages/locador/Reports";
-import LocadorSettings from "@/pages/locador/Settings";
-import LocadorInspections from "@/pages/locador/Inspections";
-import LocadorAuditLogs from "@/pages/locador/AuditLogs";
-import LocadorNotifications from "@/pages/locador/Notifications";
+const LocadorDashboard = lazy(() => import("@/pages/locador/Dashboard"));
+const LocadorVehicles = lazy(() => import("@/pages/locador/Vehicles"));
+const LocadorDrivers = lazy(() => import("@/pages/locador/Drivers"));
+const LocadorPayments = lazy(() => import("@/pages/locador/Payments"));
+const LocadorMaintenance = lazy(() => import("@/pages/locador/Maintenance"));
+const LocadorMileage = lazy(() => import("@/pages/locador/Mileage"));
+const LocadorAlerts = lazy(() => import("@/pages/locador/Alerts"));
+const LocadorContracts = lazy(() => import("@/pages/locador/Contracts"));
+const LocadorDocuments = lazy(() => import("@/pages/locador/Documents"));
+const LocadorDocumentRequests = lazy(() => import("@/pages/locador/DocumentRequests"));
+const LocadorReports = lazy(() => import("@/pages/locador/Reports"));
+const LocadorSettings = lazy(() => import("@/pages/locador/Settings"));
+const LocadorInspections = lazy(() => import("@/pages/locador/Inspections"));
+const LocadorAuditLogs = lazy(() => import("@/pages/locador/AuditLogs"));
+const LocadorNotifications = lazy(() => import("@/pages/locador/Notifications"));
 
-const locadorRoute = (path: string, Component: React.ComponentType) => (
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+    {children}
+  </Suspense>
+);
+
+const locadorRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
     key={path}
     path={path}
     element={
       <ProtectedRoute allowedRoles={['locador']}>
-        <RouteErrorBoundary><Component /></RouteErrorBoundary>
+        <RouteErrorBoundary><Lazy><Component /></Lazy></RouteErrorBoundary>
       </ProtectedRoute>
     }
   />

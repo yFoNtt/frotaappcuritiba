@@ -1,23 +1,31 @@
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
-import Index from "@/pages/Index";
-import Vehicles from "@/pages/Vehicles";
-import VehicleDetails from "@/pages/VehicleDetails";
-import Auth from "@/pages/Auth";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import HowItWorks from "@/pages/HowItWorks";
-import ForRenters from "@/pages/ForRenters";
+
+const Index = lazy(() => import("@/pages/Index"));
+const Vehicles = lazy(() => import("@/pages/Vehicles"));
+const VehicleDetails = lazy(() => import("@/pages/VehicleDetails"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const HowItWorks = lazy(() => import("@/pages/HowItWorks"));
+const ForRenters = lazy(() => import("@/pages/ForRenters"));
+
+const Lazy = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+    {children}
+  </Suspense>
+);
 
 export const publicRoutes = (
   <>
-    <Route path="/" element={<Index />} />
-    <Route path="/veiculos" element={<Vehicles />} />
-    <Route path="/veiculos/:id" element={<VehicleDetails />} />
-    <Route path="/login" element={<Auth />} />
-    <Route path="/cadastro" element={<Auth />} />
-    <Route path="/esqueci-senha" element={<ForgotPassword />} />
-    <Route path="/redefinir-senha" element={<ResetPassword />} />
-    <Route path="/como-funciona" element={<HowItWorks />} />
-    <Route path="/para-locadores" element={<ForRenters />} />
+    <Route path="/" element={<Lazy><Index /></Lazy>} />
+    <Route path="/veiculos" element={<Lazy><Vehicles /></Lazy>} />
+    <Route path="/veiculos/:id" element={<Lazy><VehicleDetails /></Lazy>} />
+    <Route path="/login" element={<Lazy><Auth /></Lazy>} />
+    <Route path="/cadastro" element={<Lazy><Auth /></Lazy>} />
+    <Route path="/esqueci-senha" element={<Lazy><ForgotPassword /></Lazy>} />
+    <Route path="/redefinir-senha" element={<Lazy><ResetPassword /></Lazy>} />
+    <Route path="/como-funciona" element={<Lazy><HowItWorks /></Lazy>} />
+    <Route path="/para-locadores" element={<Lazy><ForRenters /></Lazy>} />
   </>
 );
