@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Car, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { preloadRoute, preloadCriticalRoutes } from '@/lib/routePreload';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,11 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
+
+  // Preload critical routes on idle after first render
+  useEffect(() => {
+    preloadCriticalRoutes();
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -68,6 +74,8 @@ export function Header() {
             <Link
               key={link.path}
               to={link.path}
+              onMouseEnter={() => preloadRoute(link.path)}
+              onFocus={() => preloadRoute(link.path)}
               className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
                 isActive(link.path)
                   ? 'text-primary bg-primary/10'
