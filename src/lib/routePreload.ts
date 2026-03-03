@@ -5,6 +5,7 @@
  */
 
 const routeImportMap: Record<string, () => Promise<unknown>> = {
+  // Public
   '/': () => import('@/pages/Index'),
   '/veiculos': () => import('@/pages/Vehicles'),
   '/como-funciona': () => import('@/pages/HowItWorks'),
@@ -13,10 +14,38 @@ const routeImportMap: Record<string, () => Promise<unknown>> = {
   '/cadastro': () => import('@/pages/Auth'),
   '/esqueci-senha': () => import('@/pages/ForgotPassword'),
   '/redefinir-senha': () => import('@/pages/ResetPassword'),
-  // Dashboard entries (preloaded on auth)
+  // Admin
   '/admin': () => import('@/pages/admin/Dashboard'),
+  '/admin/usuarios': () => import('@/pages/admin/Users'),
+  '/admin/locadores': () => import('@/pages/admin/Locadores'),
+  '/admin/veiculos': () => import('@/pages/admin/Vehicles'),
+  '/admin/planos': () => import('@/pages/admin/Plans'),
+  '/admin/metricas': () => import('@/pages/admin/Metrics'),
+  '/admin/auditoria': () => import('@/pages/admin/AuditLogs'),
+  '/admin/configuracoes': () => import('@/pages/admin/Settings'),
+  // Locador
   '/locador': () => import('@/pages/locador/Dashboard'),
+  '/locador/veiculos': () => import('@/pages/locador/Vehicles'),
+  '/locador/motoristas': () => import('@/pages/locador/Drivers'),
+  '/locador/contratos': () => import('@/pages/locador/Contracts'),
+  '/locador/vistorias': () => import('@/pages/locador/Inspections'),
+  '/locador/pagamentos': () => import('@/pages/locador/Payments'),
+  '/locador/manutencao': () => import('@/pages/locador/Maintenance'),
+  '/locador/quilometragem': () => import('@/pages/locador/Mileage'),
+  '/locador/relatorios': () => import('@/pages/locador/Reports'),
+  '/locador/documentos': () => import('@/pages/locador/Documents'),
+  '/locador/solicitacoes': () => import('@/pages/locador/DocumentRequests'),
+  '/locador/alertas': () => import('@/pages/locador/Alerts'),
+  '/locador/auditoria': () => import('@/pages/locador/AuditLogs'),
+  '/locador/notificacoes': () => import('@/pages/locador/Notifications'),
+  '/locador/configuracoes': () => import('@/pages/locador/Settings'),
+  // Motorista
   '/motorista': () => import('@/pages/motorista/Dashboard'),
+  '/motorista/veiculo': () => import('@/pages/motorista/Vehicle'),
+  '/motorista/pagamentos': () => import('@/pages/motorista/Payments'),
+  '/motorista/documentos': () => import('@/pages/motorista/Documents'),
+  '/motorista/historico': () => import('@/pages/motorista/History'),
+  '/motorista/configuracoes': () => import('@/pages/motorista/Settings'),
 };
 
 const preloaded = new Set<string>();
