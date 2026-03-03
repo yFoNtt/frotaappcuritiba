@@ -104,8 +104,8 @@ export function Header() {
                   <p className="text-xs text-muted-foreground">{getRoleName()}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={getDashboardPath()} className="cursor-pointer">
+                <DropdownMenuItem asChild onFocus={() => preloadRoute(getDashboardPath())}>
+                  <Link to={getDashboardPath()} className="cursor-pointer" onMouseEnter={() => preloadRoute(getDashboardPath())}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Meu Painel
                   </Link>
@@ -122,7 +122,7 @@ export function Header() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link to="/login">
+                <Link to="/login" onMouseEnter={() => preloadRoute('/login')} onFocus={() => preloadRoute('/login')}>
                   <User className="mr-2 h-4 w-4" />
                   Entrar
                 </Link>
