@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { preloadRoute } from '@/lib/routePreload';
 import { 
   LayoutDashboard, 
   Car, 
@@ -99,6 +100,8 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
+                onMouseEnter={() => preloadRoute(item.path)}
+                onFocus={() => preloadRoute(item.path)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
