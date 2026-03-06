@@ -57,16 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer role fetch with setTimeout to prevent deadlock
         if (session?.user) {
+          // Keep loading true until role resolves to prevent UI flash
           setTimeout(() => {
-            fetchUserRole(session.user.id).then(setRole);
+            fetchUserRole(session.user.id).then((r) => {
+              setRole(r);
+              setLoading(false);
+            });
           }, 0);
         } else {
           setRole(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -76,10 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id).then(setRole);
+        fetchUserRole(session.user.id).then((r) => {
+          setRole(r);
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
