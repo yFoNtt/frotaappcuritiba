@@ -25,10 +25,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    // Redirect to appropriate dashboard based on role
-    const redirectPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : '/motorista';
-    return <Navigate to={redirectPath} replace />;
+  if (allowedRoles) {
+    if (!role || !allowedRoles.includes(role)) {
+      // Redirect to appropriate dashboard based on role, or login if no role
+      const redirectPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : role === 'motorista' ? '/motorista' : '/login';
+      return <Navigate to={redirectPath} replace />;
+    }
   }
 
   return <>{children}</>;
