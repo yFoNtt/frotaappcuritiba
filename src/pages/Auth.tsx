@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle, CreditCard, Calendar } from 'lucide-react';
+import { Car, Mail, Lock, Building2, Truck, Loader2, Eye, EyeOff, FileText, CheckCircle2, XCircle, CreditCard, Calendar, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { validateDocument, formatDocument, validateCNHDocument, formatCNH } from '@/lib/documentValidation';
@@ -125,14 +125,34 @@ export default function Auth() {
     return format(addDays(new Date(), 1), 'yyyy-MM-dd');
   };
 
+  const getWeakPasswordMessage = (error: any): string | null => {
+    const msg = error?.message?.toLowerCase() || '';
+    if (msg.includes('weak_password') || msg.includes('pwned') || msg.includes('leaked') || msg.includes('data breach')) {
+      return 'Esta senha foi encontrada em vazamentos de dados conhecidos. Por segurança, escolha uma senha diferente.';
+    }
+    if (msg.includes('weak') || msg.includes('too short') || msg.includes('too common')) {
+      return 'Senha muito fraca. Use uma combinação de letras, números e caracteres especiais.';
+    }
+    return null;
+  };
+
+  const [passwordWarning, setPasswordWarning] = useState('');
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setPasswordWarning('');
 
     const { error } = await signIn(email, password);
 
     if (error) {
-      toast.error(error.message);
+      const weakMsg = getWeakPasswordMessage(error);
+      if (weakMsg) {
+        setPasswordWarning(weakMsg);
+        toast.error(weakMsg);
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success('Login realizado com sucesso!');
     }
@@ -205,10 +225,15 @@ export default function Auth() {
     const { error } = await signUp(email, password, selectedRole, profileData);
 
     if (error) {
-      toast.error(error.message);
+      const weakMsg = getWeakPasswordMessage(error);
+      if (weakMsg) {
+        setPasswordWarning(weakMsg);
+        toast.error(weakMsg);
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success('Conta criada com sucesso! Faça login para continuar.');
-      // Clear form and switch to login mode
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -221,6 +246,7 @@ export default function Auth() {
       setCnhExpiry('');
       setCnhExpiryError('');
       setCnhExpiryValid(false);
+      setPasswordWarning('');
       setMode('login');
     }
 
@@ -507,6 +533,12 @@ export default function Auth() {
                     )}
                   </Button>
                 </div>
+                {passwordWarning && (
+                  <div className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+                    <ShieldAlert className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                    <p className="text-xs text-destructive">{passwordWarning}</p>
+                  </div>
+                )}
                 {mode === 'login' && (
                   <div className="flex justify-end">
                     <Link 
