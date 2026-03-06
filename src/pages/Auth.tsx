@@ -7,6 +7,7 @@ import { Car, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -38,22 +39,34 @@ export default function Auth() {
     );
   }
 
+  const slideDirection = mode === 'login' ? -1 : 1;
+
   return (
     <PublicLayout>
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md overflow-hidden">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
               <Car className="h-6 w-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl">
-              {mode === 'login' ? 'Entrar no FrotaApp' : 'Criar conta no FrotaApp'}
-            </CardTitle>
-            <CardDescription>
-              {mode === 'login'
-                ? 'Acesse sua conta para gerenciar veículos e aluguéis'
-                : 'Cadastre-se para começar a usar a plataforma'}
-            </CardDescription>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CardTitle className="text-2xl">
+                  {mode === 'login' ? 'Entrar no FrotaApp' : 'Criar conta no FrotaApp'}
+                </CardTitle>
+                <CardDescription className="mt-1.5">
+                  {mode === 'login'
+                    ? 'Acesse sua conta para gerenciar veículos e aluguéis'
+                    : 'Cadastre-se para começar a usar a plataforma'}
+                </CardDescription>
+              </motion.div>
+            </AnimatePresence>
           </CardHeader>
 
           <CardContent>
@@ -64,11 +77,21 @@ export default function Auth() {
               </TabsList>
             </Tabs>
 
-            {mode === 'login' ? (
-              <LoginForm />
-            ) : (
-              <RegisterForm onRegistered={() => setMode('login')} />
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, x: slideDirection * 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: slideDirection * -30 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                {mode === 'login' ? (
+                  <LoginForm />
+                ) : (
+                  <RegisterForm onRegistered={() => setMode('login')} />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </CardContent>
 
           <CardFooter className="flex-col gap-4">
