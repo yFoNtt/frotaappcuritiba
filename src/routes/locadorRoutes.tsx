@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "@/components/ErrorBoundary";
+import { LazyFallback as Lazy } from "@/components/LazyFallback";
 
 const LocadorDashboard = lazy(() => import("@/pages/locador/Dashboard"));
 const LocadorVehicles = lazy(() => import("@/pages/locador/Vehicles"));
@@ -18,12 +19,6 @@ const LocadorSettings = lazy(() => import("@/pages/locador/Settings"));
 const LocadorInspections = lazy(() => import("@/pages/locador/Inspections"));
 const LocadorAuditLogs = lazy(() => import("@/pages/locador/AuditLogs"));
 const LocadorNotifications = lazy(() => import("@/pages/locador/Notifications"));
-
-const Lazy = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
-    {children}
-  </Suspense>
-);
 
 const locadorRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route

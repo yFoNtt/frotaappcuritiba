@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { Route } from "react-router-dom";
+import { LazyFallback as Lazy } from "@/components/LazyFallback";
 
 const Index = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
@@ -9,12 +10,6 @@ const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const HowItWorks = lazy(() => import("@/pages/HowItWorks"));
 const ForRenters = lazy(() => import("@/pages/ForRenters"));
-
-const Lazy = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
-    {children}
-  </Suspense>
-);
 
 export const publicRoutes = (
   <>

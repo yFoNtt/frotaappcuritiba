@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "@/components/ErrorBoundary";
+import { LazyFallback as Lazy } from "@/components/LazyFallback";
 
 const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin/Users"));
@@ -12,12 +13,6 @@ const AdminPlans = lazy(() => import("@/pages/admin/Plans"));
 const AdminMetrics = lazy(() => import("@/pages/admin/Metrics"));
 const AdminSettings = lazy(() => import("@/pages/admin/Settings"));
 const AdminAuditLogs = lazy(() => import("@/pages/admin/AuditLogs"));
-
-const Lazy = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
-    {children}
-  </Suspense>
-);
 
 const adminRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
