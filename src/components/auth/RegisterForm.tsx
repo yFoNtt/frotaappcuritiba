@@ -162,6 +162,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
           confirmPassword={confirmPassword}
           onConfirmPasswordChange={setConfirmPassword}
           showConfirm
+          showStrength
           passwordWarning={passwordWarning}
           loading={loading}
         />
