@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useInactivityTimeout } from './useInactivityTimeout';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -207,6 +208,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setRole(null);
   };
+
+  // Auto-logout after 30 minutes of inactivity
+  const handleInactivityTimeout = useCallback(async () => {
+    if (user) {
+      await signOut();
+      toast.info('Sua sessão expirou por inatividade. Faça login novamente.', {
+        duration: 8000,
+      });
+    }
+  }, [user]);
+
+  useInactivityTimeout(handleInactivityTimeout, !!user);
 
   return (
     <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut }}>
