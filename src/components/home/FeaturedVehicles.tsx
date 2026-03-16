@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
+import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { useAvailableVehicles } from '@/hooks/useVehicles';
-import { ArrowRight, Loader2, Car } from 'lucide-react';
+import { ArrowRight, Car } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function FeaturedVehicles() {
