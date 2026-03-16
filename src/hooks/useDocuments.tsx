@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { sanitizeText } from '@/lib/sanitize';
 
 export type DocumentType = 'cnh' | 'comprovante' | 'contrato' | 'multa' | 'outro';
 
@@ -83,11 +84,11 @@ export function useDocuments() {
           vehicle_id: input.vehicle_id || null,
           contract_id: input.contract_id || null,
           type: input.type,
-          name: input.name,
+          name: sanitizeText(input.name) || input.name,
           file_path: filePath,
           file_size: input.file.size,
           mime_type: input.file.type,
-          description: input.description || null,
+          description: sanitizeText(input.description) || null,
           expires_at: input.expires_at || null,
         })
         .select()

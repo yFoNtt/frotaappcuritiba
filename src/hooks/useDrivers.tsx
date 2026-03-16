@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export interface Driver {
   id: string;
@@ -73,10 +74,11 @@ export function useCreateDriver() {
     mutationFn: async (driver: DriverInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(driver, ['name']);
       const { data, error } = await supabase
         .from('drivers')
         .insert({
-          ...driver,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -109,9 +111,10 @@ export function useUpdateDriver() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: DriverUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['name']);
       const { data, error } = await supabase
         .from('drivers')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

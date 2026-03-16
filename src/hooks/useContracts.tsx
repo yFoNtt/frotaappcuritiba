@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export interface Contract {
   id: string;
@@ -112,10 +113,11 @@ export function useCreateContract() {
     mutationFn: async (contract: ContractInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(contract, ['terms'] as (keyof ContractInsert)[]);
       const { data, error } = await supabase
         .from('contracts')
         .insert({
-          ...contract,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -147,9 +149,10 @@ export function useUpdateContract() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: ContractUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['terms', 'cancellation_reason']);
       const { data, error } = await supabase
         .from('contracts')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();
@@ -217,7 +220,7 @@ export function useCancelContract() {
         .update({ 
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
-          cancellation_reason: reason
+          cancellation_reason: sanitizeFields({ reason }, ['reason']).reason
         })
         .eq('id', id)
         .select()

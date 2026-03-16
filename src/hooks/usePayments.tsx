@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export interface Payment {
   id: string;
@@ -139,10 +140,11 @@ export function useCreatePayment() {
     mutationFn: async (payment: PaymentInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(payment, ['notes']);
       const { data, error } = await supabase
         .from('payments')
         .insert({
-          ...payment,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -171,9 +173,10 @@ export function useUpdatePayment() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: PaymentUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['notes']);
       const { data, error } = await supabase
         .from('payments')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

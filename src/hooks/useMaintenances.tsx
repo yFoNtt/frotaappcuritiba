@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export type MaintenanceType = 'oil_change' | 'tire_change' | 'revision' | 'repair' | 'inspection' | 'other';
 export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -155,10 +156,11 @@ export function useCreateMaintenance() {
     mutationFn: async (maintenance: MaintenanceInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(maintenance, ['description', 'notes', 'service_provider']);
       const { data, error } = await supabase
         .from('maintenances')
         .insert({
-          ...maintenance,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -187,9 +189,10 @@ export function useUpdateMaintenance() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: MaintenanceUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['description', 'notes', 'service_provider']);
       const { data, error } = await supabase
         .from('maintenances')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

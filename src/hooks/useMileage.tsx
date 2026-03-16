@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export interface MileageRecord {
   id: string;
@@ -218,10 +219,11 @@ export function useCreateMileageRecord() {
     mutationFn: async (record: MileageInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(record, ['notes']);
       const { data, error } = await (supabase
         .from('mileage_records' as any)
         .insert({
-          ...record,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -252,9 +254,10 @@ export function useUpdateMileageRecord() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: MileageUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['notes']);
       const { data, error } = await (supabase
         .from('mileage_records' as any)
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single() as any);

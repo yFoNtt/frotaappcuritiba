@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export type ChecklistStatus = 'ok' | 'not_ok' | 'not_applicable';
 
@@ -113,10 +114,11 @@ export function useCreateInspection() {
     mutationFn: async (data: InspectionFormData) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(data, ['notes', 'damages']);
       const { data: inspection, error } = await supabase
         .from('vehicle_inspections')
         .insert({
-          ...data,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
@@ -146,9 +148,10 @@ export function useUpdateInspection() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InspectionFormData> }) => {
+      const sanitized = sanitizeFields(data, ['notes', 'damages']);
       const { data: inspection, error } = await supabase
         .from('vehicle_inspections')
-        .update(data)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

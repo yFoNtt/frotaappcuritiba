@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeFields } from '@/lib/sanitize';
 
 export interface Profile {
   id: string;
@@ -68,9 +69,10 @@ export function useUpdateProfile() {
     mutationFn: async (updates: Partial<Profile>) => {
       if (!user) throw new Error('Not authenticated');
 
+      const sanitized = sanitizeFields(updates, ['full_name', 'company_name']);
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(sanitized)
         .eq('user_id', user.id)
         .select()
         .single();
