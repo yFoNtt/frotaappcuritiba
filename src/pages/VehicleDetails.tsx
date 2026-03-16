@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageGallery } from '@/components/vehicles/ImageGallery';
 import { VehicleInspectionHistory } from '@/components/vehicles/VehicleInspectionHistory';
-import { useVehicle } from '@/hooks/useVehicles';
+import { useVehicle, usePublicVehicle } from '@/hooks/useVehicles';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
@@ -77,17 +77,24 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
-  const { data: vehicle, isLoading, error } = useVehicle(id);
   const { user } = useAuth();
 
+  // Use full vehicle data for authenticated users, public RPC for anonymous
+  const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
+  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(!user ? id : undefined);
+
+  const vehicle = privateVehicle || publicVehicle;
+  const isLoading = user ? privateLoading : publicLoading;
+
   // Check if the current user is the owner of the vehicle
-  const isOwner = user && vehicle && vehicle.locador_id === user.id;
+  const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
+  const plate = privateVehicle?.plate;
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
   }
 
-  if (error || !vehicle) {
+  if (!vehicle) {
     return (
       <PublicLayout>
         <div className="container py-16 text-center">
@@ -256,10 +263,12 @@ export default function VehicleDetails() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex justify-between border-b border-border pb-2">
-                    <span className="text-muted-foreground">Placa</span>
-                    <span className="font-medium">{vehicle.plate}</span>
-                  </div>
+                  {plate && (
+                    <div className="flex justify-between border-b border-border pb-2">
+                      <span className="text-muted-foreground">Placa</span>
+                      <span className="font-medium">{plate}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-b border-border pb-2">
                     <span className="text-muted-foreground">Marca</span>
                     <span className="font-medium">{vehicle.brand}</span>
@@ -281,7 +290,7 @@ export default function VehicleDetails() {
               <VehicleInspectionHistory
                 vehicleId={id}
                 vehicleName={`${vehicle.brand} ${vehicle.model}`}
-                vehiclePlate={vehicle.plate}
+                vehiclePlate={plate || ''}
               />
             )}
           </div>

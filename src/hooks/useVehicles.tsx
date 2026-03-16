@@ -27,32 +27,50 @@ export interface Vehicle {
   updated_at: string;
 }
 
+// Public vehicle type (without sensitive fields like plate, locador_id)
+export interface PublicVehicle {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  fuel_type: string;
+  status: string;
+  weekly_price: number;
+  km_limit: number | null;
+  excess_km_fee: number | null;
+  deposit: number | null;
+  allowed_apps: string[];
+  description: string | null;
+  images: string[];
+  city: string;
+  state: string;
+  current_km: number | null;
+  created_at: string;
+}
+
 const PAGE_SIZE = 12;
 
-// Fetch available vehicles for the public marketplace with pagination
+// Fetch available vehicles for the public marketplace with pagination (via secure RPC)
 export function useAvailableVehiclesInfinite() {
   return useInfiniteQuery({
     queryKey: ['vehicles', 'available', 'infinite'],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      const { data, error, count } = await supabase
-        .from('vehicles')
-        .select('*', { count: 'exact' })
-        .eq('status', 'available')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      const { data, error } = await supabase.rpc('get_public_vehicles');
 
       if (error) {
         console.error('Error fetching available vehicles:', error);
         throw error;
       }
 
+      const allVehicles = (data ?? []) as PublicVehicle[];
+      const from = pageParam * PAGE_SIZE;
+      const pageVehicles = allVehicles.slice(from, from + PAGE_SIZE);
+
       return {
-        vehicles: data as Vehicle[],
-        nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
-        totalCount: count ?? 0,
+        vehicles: pageVehicles,
+        nextPage: pageVehicles.length === PAGE_SIZE ? pageParam + 1 : undefined,
+        totalCount: allVehicles.length,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -60,23 +78,19 @@ export function useAvailableVehiclesInfinite() {
   });
 }
 
-// Fetch all available vehicles (for filter options extraction)
+// Fetch all available vehicles (for filter options extraction, via secure RPC)
 export function useAvailableVehicles() {
   return useQuery({
     queryKey: ['vehicles', 'available'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_public_vehicles');
 
       if (error) {
         console.error('Error fetching available vehicles:', error);
         throw error;
       }
 
-      return data as Vehicle[];
+      return (data ?? []) as PublicVehicle[];
     },
   });
 }
@@ -107,7 +121,30 @@ export function useLocadorVehicles() {
   });
 }
 
-// Fetch a single vehicle by ID
+// Fetch a single vehicle by ID (public view via RPC - no sensitive data)
+export function usePublicVehicle(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: ['vehicle', 'public', vehicleId],
+    queryFn: async () => {
+      if (!vehicleId) return null;
+
+      const { data, error } = await supabase.rpc('get_public_vehicle', {
+        _vehicle_id: vehicleId,
+      });
+
+      if (error) {
+        console.error('Error fetching public vehicle:', error);
+        throw error;
+      }
+
+      const vehicles = data as PublicVehicle[];
+      return vehicles.length > 0 ? vehicles[0] : null;
+    },
+    enabled: !!vehicleId,
+  });
+}
+
+// Fetch a single vehicle by ID (full data for authenticated owners)
 export function useVehicle(vehicleId: string | undefined) {
   return useQuery({
     queryKey: ['vehicle', vehicleId],

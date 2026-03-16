@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, SlidersHorizontal, X, MapPin, Fuel, Car, DollarSign, Calendar, ChevronDown } from 'lucide-react';
-import type { Vehicle } from '@/hooks/useVehicles';
+import type { Vehicle, PublicVehicle } from '@/hooks/useVehicles';
 
 export interface VehicleFiltersState {
   search: string;
@@ -29,7 +29,7 @@ interface VehicleFiltersProps {
   filters: VehicleFiltersState;
   onFiltersChange: (filters: VehicleFiltersState) => void;
   onClearFilters: () => void;
-  vehicles?: Vehicle[];
+  vehicles?: (Vehicle | PublicVehicle)[];
 }
 
 const fuelLabels: Record<string, string> = {
