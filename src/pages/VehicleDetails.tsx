@@ -263,10 +263,12 @@ export default function VehicleDetails() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex justify-between border-b border-border pb-2">
-                    <span className="text-muted-foreground">Placa</span>
-                    <span className="font-medium">{vehicle.plate}</span>
-                  </div>
+                  {plate && (
+                    <div className="flex justify-between border-b border-border pb-2">
+                      <span className="text-muted-foreground">Placa</span>
+                      <span className="font-medium">{plate}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-b border-border pb-2">
                     <span className="text-muted-foreground">Marca</span>
                     <span className="font-medium">{vehicle.brand}</span>
