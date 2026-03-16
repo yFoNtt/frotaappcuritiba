@@ -29,7 +29,7 @@ interface VehicleFiltersProps {
   filters: VehicleFiltersState;
   onFiltersChange: (filters: VehicleFiltersState) => void;
   onClearFilters: () => void;
-  vehicles?: Vehicle[];
+  vehicles?: (Vehicle | PublicVehicle)[];
 }
 
 const fuelLabels: Record<string, string> = {

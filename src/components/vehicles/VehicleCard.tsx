@@ -21,7 +21,7 @@ interface VehicleCardVehicle {
 }
 
 interface VehicleCardProps {
-  vehicle: Vehicle;
+  vehicle: VehicleCardVehicle;
 }
 
 const statusLabels: Record<string, string> = {
