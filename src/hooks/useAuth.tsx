@@ -100,8 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Validate password strength
-      if (password.length < 6) {
-        return { error: new Error('Senha deve ter pelo menos 6 caracteres') };
+      if (password.length < 8) {
+        return { error: new Error('Senha deve ter pelo menos 8 caracteres') };
+      }
+      if (!/[A-Z]/.test(password)) {
+        return { error: new Error('Senha deve conter pelo menos uma letra maiúscula') };
+      }
+      if (!/[0-9]/.test(password)) {
+        return { error: new Error('Senha deve conter pelo menos um número') };
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        return { error: new Error('Senha deve conter pelo menos um caractere especial') };
       }
 
       // Prevent self-registration as admin
