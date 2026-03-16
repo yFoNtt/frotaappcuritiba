@@ -140,10 +140,11 @@ export function useCreatePayment() {
     mutationFn: async (payment: PaymentInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(payment, ['notes']);
       const { data, error } = await supabase
         .from('payments')
         .insert({
-          ...payment,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
