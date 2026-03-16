@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import NotFound from "./pages/NotFound";
+import { NavigationProgress } from "@/components/NavigationProgress";
 
 import { publicRoutes } from "@/routes/publicRoutes";
 import { locadorRoutes } from "@/routes/locadorRoutes";
