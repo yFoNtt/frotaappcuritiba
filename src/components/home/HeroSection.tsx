@@ -33,7 +33,7 @@ export function HeroSection() {
       </div>
 
       <div className="absolute bottom-32 right-[15%] hidden xl:block">
-        <div className="rounded-2xl bg-white/90 dark:bg-card/95 border border-border shadow-lg p-4 animate-fade-in" style={{ animationDelay: '1.2s', opacity: 0 }}>
+        <div className="rounded-2xl bg-card/95 border border-border shadow-lg p-4 animate-fade-in" style={{ animationDelay: '1.2s', opacity: 0 }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
               <MapPin className="h-5 w-5 text-primary" />
