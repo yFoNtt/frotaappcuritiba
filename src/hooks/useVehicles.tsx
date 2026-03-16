@@ -27,6 +27,28 @@ export interface Vehicle {
   updated_at: string;
 }
 
+// Public vehicle type (without sensitive fields like plate, locador_id)
+export interface PublicVehicle {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  fuel_type: string;
+  status: string;
+  weekly_price: number;
+  km_limit: number | null;
+  excess_km_fee: number | null;
+  deposit: number | null;
+  allowed_apps: string[];
+  description: string | null;
+  images: string[];
+  city: string;
+  state: string;
+  current_km: number | null;
+  created_at: string;
+}
+
 const PAGE_SIZE = 12;
 
 // Fetch available vehicles for the public marketplace with pagination
