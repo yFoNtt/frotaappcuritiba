@@ -219,10 +219,11 @@ export function useCreateMileageRecord() {
     mutationFn: async (record: MileageInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(record, ['notes']);
       const { data, error } = await (supabase
         .from('mileage_records' as any)
         .insert({
-          ...record,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
