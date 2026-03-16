@@ -113,10 +113,11 @@ export function useCreateContract() {
     mutationFn: async (contract: ContractInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(contract, ['terms', 'cancellation_reason']);
       const { data, error } = await supabase
         .from('contracts')
         .insert({
-          ...contract,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
