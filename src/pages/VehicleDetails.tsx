@@ -94,7 +94,7 @@ export default function VehicleDetails() {
     return <VehicleDetailsSkeleton />;
   }
 
-  if (error || !vehicle) {
+  if (!vehicle) {
     return (
       <PublicLayout>
         <div className="container py-16 text-center">
