@@ -150,13 +150,6 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "contracts_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       document_requests: {
@@ -302,13 +295,6 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "documents_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       drivers: {
@@ -360,13 +346,6 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drivers_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -470,13 +449,6 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "maintenances_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       mileage_records: {
@@ -536,13 +508,6 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mileage_records_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -649,13 +614,6 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -821,13 +779,6 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       vehicles: {
@@ -907,71 +858,55 @@ export type Database = {
       }
     }
     Views: {
-      vehicles_public: {
-        Row: {
-          allowed_apps: string[] | null
-          brand: string | null
-          city: string | null
-          color: string | null
-          created_at: string | null
-          current_km: number | null
-          deposit: number | null
-          description: string | null
-          excess_km_fee: number | null
-          fuel_type: string | null
-          id: string | null
-          images: string[] | null
-          km_limit: number | null
-          model: string | null
-          state: string | null
-          status: string | null
-          weekly_price: number | null
-          year: number | null
-        }
-        Insert: {
-          allowed_apps?: string[] | null
-          brand?: string | null
-          city?: string | null
-          color?: string | null
-          created_at?: string | null
-          current_km?: number | null
-          deposit?: number | null
-          description?: string | null
-          excess_km_fee?: number | null
-          fuel_type?: string | null
-          id?: string | null
-          images?: string[] | null
-          km_limit?: number | null
-          model?: string | null
-          state?: string | null
-          status?: string | null
-          weekly_price?: number | null
-          year?: number | null
-        }
-        Update: {
-          allowed_apps?: string[] | null
-          brand?: string | null
-          city?: string | null
-          color?: string | null
-          created_at?: string | null
-          current_km?: number | null
-          deposit?: number | null
-          description?: string | null
-          excess_km_fee?: number | null
-          fuel_type?: string | null
-          id?: string | null
-          images?: string[] | null
-          km_limit?: number | null
-          model?: string | null
-          state?: string | null
-          status?: string | null
-          weekly_price?: number | null
-          year?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_public_vehicle: {
+        Args: { _vehicle_id: string }
+        Returns: {
+          allowed_apps: string[]
+          brand: string
+          city: string
+          color: string
+          created_at: string
+          current_km: number
+          deposit: number
+          description: string
+          excess_km_fee: number
+          fuel_type: string
+          id: string
+          images: string[]
+          km_limit: number
+          model: string
+          state: string
+          status: string
+          weekly_price: number
+          year: number
+        }[]
+      }
+      get_public_vehicles: {
+        Args: never
+        Returns: {
+          allowed_apps: string[]
+          brand: string
+          city: string
+          color: string
+          created_at: string
+          current_km: number
+          deposit: number
+          description: string
+          excess_km_fee: number
+          fuel_type: string
+          id: string
+          images: string[]
+          km_limit: number
+          model: string
+          state: string
+          status: string
+          weekly_price: number
+          year: number
+        }[]
+      }
       get_user_emails_for_admin: {
         Args: never
         Returns: {
