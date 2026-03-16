@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageGallery } from '@/components/vehicles/ImageGallery';
 import { VehicleInspectionHistory } from '@/components/vehicles/VehicleInspectionHistory';
-import { useVehicle } from '@/hooks/useVehicles';
+import { useVehicle, usePublicVehicle } from '@/hooks/useVehicles';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
