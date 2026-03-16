@@ -77,11 +77,18 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
-  const { data: vehicle, isLoading, error } = useVehicle(id);
   const { user } = useAuth();
 
+  // Use full vehicle data for authenticated users, public RPC for anonymous
+  const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
+  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(!user ? id : undefined);
+
+  const vehicle = privateVehicle || publicVehicle;
+  const isLoading = user ? privateLoading : publicLoading;
+
   // Check if the current user is the owner of the vehicle
-  const isOwner = user && vehicle && vehicle.locador_id === user.id;
+  const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
+  const plate = privateVehicle?.plate;
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
