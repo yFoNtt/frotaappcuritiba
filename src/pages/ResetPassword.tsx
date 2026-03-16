@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Car, Loader2, CheckCircle2 } from 'lucide-react';
+import { PasswordField } from '@/components/auth/PasswordField';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
