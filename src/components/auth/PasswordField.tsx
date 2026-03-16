@@ -15,7 +15,7 @@ interface PasswordStrength {
 
 function evaluatePassword(password: string): PasswordStrength {
   const checks = [
-    { label: 'Mínimo 6 caracteres', passed: password.length >= 6 },
+    { label: 'Mínimo 8 caracteres', passed: password.length >= 8 },
     { label: 'Letra maiúscula', passed: /[A-Z]/.test(password) },
     { label: 'Letra minúscula', passed: /[a-z]/.test(password) },
     { label: 'Número', passed: /[0-9]/.test(password) },

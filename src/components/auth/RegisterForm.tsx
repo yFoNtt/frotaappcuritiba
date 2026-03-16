@@ -97,8 +97,26 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    if (password.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres');
+      setLoading(false);
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      toast.error('A senha deve conter pelo menos uma letra maiúscula');
+      setLoading(false);
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      toast.error('A senha deve conter pelo menos um número');
+      setLoading(false);
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      toast.error('A senha deve conter pelo menos um caractere especial');
       setLoading(false);
       return;
     }
