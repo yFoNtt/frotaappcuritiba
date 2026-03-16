@@ -37,6 +37,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <NavigationProgress />
         <AuthProvider>
           <Routes>
             {publicRoutes}
