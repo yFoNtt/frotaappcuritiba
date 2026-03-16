@@ -25,8 +25,27 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [passwordWarning, setPasswordWarning] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        toast.error('Erro ao entrar com Google. Tente novamente.');
+        console.error('Google OAuth error:', error);
+      }
+    } catch (err) {
+      toast.error('Erro ao entrar com Google. Tente novamente.');
+      console.error('Google OAuth error:', err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   // Document state
   const [document, setDocument] = useState('');
