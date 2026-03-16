@@ -7,15 +7,12 @@ import { Car, Loader2, CheckCircle2 } from 'lucide-react';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validSession, setValidSession] = useState<boolean | null>(null);
 
