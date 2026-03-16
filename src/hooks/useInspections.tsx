@@ -114,10 +114,11 @@ export function useCreateInspection() {
     mutationFn: async (data: InspectionFormData) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(data, ['notes', 'damages']);
       const { data: inspection, error } = await supabase
         .from('vehicle_inspections')
         .insert({
-          ...data,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
