@@ -51,30 +51,26 @@ export interface PublicVehicle {
 
 const PAGE_SIZE = 12;
 
-// Fetch available vehicles for the public marketplace with pagination
+// Fetch available vehicles for the public marketplace with pagination (via secure RPC)
 export function useAvailableVehiclesInfinite() {
   return useInfiniteQuery({
     queryKey: ['vehicles', 'available', 'infinite'],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      const { data, error, count } = await supabase
-        .from('vehicles')
-        .select('*', { count: 'exact' })
-        .eq('status', 'available')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      const { data, error } = await supabase.rpc('get_public_vehicles');
 
       if (error) {
         console.error('Error fetching available vehicles:', error);
         throw error;
       }
 
+      const allVehicles = (data ?? []) as PublicVehicle[];
+      const from = pageParam * PAGE_SIZE;
+      const pageVehicles = allVehicles.slice(from, from + PAGE_SIZE);
+
       return {
-        vehicles: data as Vehicle[],
-        nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
-        totalCount: count ?? 0,
+        vehicles: pageVehicles,
+        nextPage: pageVehicles.length === PAGE_SIZE ? pageParam + 1 : undefined,
+        totalCount: allVehicles.length,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
@@ -82,23 +78,19 @@ export function useAvailableVehiclesInfinite() {
   });
 }
 
-// Fetch all available vehicles (for filter options extraction)
+// Fetch all available vehicles (for filter options extraction, via secure RPC)
 export function useAvailableVehicles() {
   return useQuery({
     queryKey: ['vehicles', 'available'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_public_vehicles');
 
       if (error) {
         console.error('Error fetching available vehicles:', error);
         throw error;
       }
 
-      return data as Vehicle[];
+      return (data ?? []) as PublicVehicle[];
     },
   });
 }
