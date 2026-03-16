@@ -74,10 +74,11 @@ export function useCreateDriver() {
     mutationFn: async (driver: DriverInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(driver, ['name']);
       const { data, error } = await supabase
         .from('drivers')
         .insert({
-          ...driver,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
