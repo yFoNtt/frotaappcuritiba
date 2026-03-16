@@ -209,6 +209,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
   };
 
+  // Auto-logout after 30 minutes of inactivity
+  const handleInactivityTimeout = useCallback(async () => {
+    if (user) {
+      await signOut();
+      toast.info('Sua sessão expirou por inatividade. Faça login novamente.', {
+        duration: 8000,
+      });
+    }
+  }, [user]);
+
+  useInactivityTimeout(handleInactivityTimeout, !!user);
+
   return (
     <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut }}>
       {children}
