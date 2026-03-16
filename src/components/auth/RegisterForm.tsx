@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { EmailField } from './EmailField';
 import { PasswordField } from './PasswordField';
 import { DocumentFields } from './DocumentFields';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 import { validateDocument, validateCNHDocument } from '@/lib/documentValidation';
 import { isAfter, startOfDay } from 'date-fns';
 import { getWeakPasswordMessage } from './utils';
+import { lovable } from '@/integrations/lovable/index';
 
 type AppRole = 'locador' | 'motorista';
 
