@@ -149,9 +149,10 @@ export function useUpdateContract() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: ContractUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['terms', 'cancellation_reason']);
       const { data, error } = await supabase
         .from('contracts')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();
