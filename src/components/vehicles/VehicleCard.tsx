@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Fuel, Calendar, Eye, Gauge } from 'lucide-react';
 
-interface Vehicle {
+interface VehicleCardVehicle {
   id: string;
   brand: string;
   model: string;
   year: number;
   color: string;
   fuel_type: string;
-  status: 'available' | 'rented' | 'maintenance' | 'inactive';
+  status: string;
   weekly_price: number;
   km_limit: number | null;
   allowed_apps: string[];
