@@ -156,10 +156,11 @@ export function useCreateMaintenance() {
     mutationFn: async (maintenance: MaintenanceInsert) => {
       if (!user) throw new Error('User not authenticated');
 
+      const sanitized = sanitizeFields(maintenance, ['description', 'notes', 'service_provider']);
       const { data, error } = await supabase
         .from('maintenances')
         .insert({
-          ...maintenance,
+          ...sanitized,
           locador_id: user.id,
         })
         .select()
