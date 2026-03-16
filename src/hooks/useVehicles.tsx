@@ -121,7 +121,30 @@ export function useLocadorVehicles() {
   });
 }
 
-// Fetch a single vehicle by ID
+// Fetch a single vehicle by ID (public view via RPC - no sensitive data)
+export function usePublicVehicle(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: ['vehicle', 'public', vehicleId],
+    queryFn: async () => {
+      if (!vehicleId) return null;
+
+      const { data, error } = await supabase.rpc('get_public_vehicle', {
+        _vehicle_id: vehicleId,
+      });
+
+      if (error) {
+        console.error('Error fetching public vehicle:', error);
+        throw error;
+      }
+
+      const vehicles = data as PublicVehicle[];
+      return vehicles.length > 0 ? vehicles[0] : null;
+    },
+    enabled: !!vehicleId,
+  });
+}
+
+// Fetch a single vehicle by ID (full data for authenticated owners)
 export function useVehicle(vehicleId: string | undefined) {
   return useQuery({
     queryKey: ['vehicle', vehicleId],
