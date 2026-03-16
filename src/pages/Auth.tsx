@@ -44,6 +44,11 @@ export default function Auth() {
   return (
     <PublicLayout>
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
         <Card className="w-full max-w-md overflow-hidden">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
@@ -114,6 +119,7 @@ export default function Auth() {
             </div>
           </CardFooter>
         </Card>
+        </motion.div>
       </div>
     </PublicLayout>
   );
