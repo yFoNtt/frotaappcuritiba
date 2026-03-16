@@ -69,9 +69,10 @@ export function useUpdateProfile() {
     mutationFn: async (updates: Partial<Profile>) => {
       if (!user) throw new Error('Not authenticated');
 
+      const sanitized = sanitizeFields(updates, ['full_name', 'company_name']);
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(sanitized)
         .eq('user_id', user.id)
         .select()
         .single();

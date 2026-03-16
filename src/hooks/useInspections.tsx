@@ -148,9 +148,10 @@ export function useUpdateInspection() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InspectionFormData> }) => {
+      const sanitized = sanitizeFields(data, ['notes', 'damages']);
       const { data: inspection, error } = await supabase
         .from('vehicle_inspections')
-        .update(data)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

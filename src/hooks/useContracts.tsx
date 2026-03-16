@@ -220,7 +220,7 @@ export function useCancelContract() {
         .update({ 
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
-          cancellation_reason: reason
+          cancellation_reason: sanitizeFields({ reason }, ['reason']).reason
         })
         .eq('id', id)
         .select()

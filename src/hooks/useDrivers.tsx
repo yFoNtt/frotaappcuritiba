@@ -111,9 +111,10 @@ export function useUpdateDriver() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: DriverUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['name']);
       const { data, error } = await supabase
         .from('drivers')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

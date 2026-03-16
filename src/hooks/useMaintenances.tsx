@@ -189,9 +189,10 @@ export function useUpdateMaintenance() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: MaintenanceUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['description', 'notes', 'service_provider']);
       const { data, error } = await supabase
         .from('maintenances')
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();

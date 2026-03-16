@@ -86,11 +86,11 @@ export function useMotoristaDocumentRequests() {
           driver_id: input.driver_id,
           document_id: input.document_id || null,
           type: input.type,
-          name: input.name,
+          name: sanitizeText(input.name) || input.name,
           file_path: filePath,
           file_size: input.file.size,
           mime_type: input.file.type,
-          description: input.description || null,
+          description: sanitizeText(input.description) || null,
           expires_at: input.expires_at || null,
           status: 'pending',
         })

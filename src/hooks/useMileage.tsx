@@ -254,9 +254,10 @@ export function useUpdateMileageRecord() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: MileageUpdate }) => {
+      const sanitized = sanitizeFields(updates, ['notes']);
       const { data, error } = await (supabase
         .from('mileage_records' as any)
-        .update(updates)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single() as any);
