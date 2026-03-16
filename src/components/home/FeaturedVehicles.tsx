@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
+import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { useAvailableVehicles } from '@/hooks/useVehicles';
-import { ArrowRight, Loader2, Car } from 'lucide-react';
+import { ArrowRight, Car } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function FeaturedVehicles() {
@@ -13,8 +15,15 @@ export function FeaturedVehicles() {
     return (
       <section className="py-16 sm:py-20 lg:py-24 bg-muted/30">
         <div className="container">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="mb-8 sm:mb-12">
+            <Skeleton className="h-4 w-24 mb-3" />
+            <Skeleton className="h-9 w-64 mb-3" />
+            <Skeleton className="h-5 w-80" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <VehicleCardSkeleton key={i} />
+            ))}
           </div>
         </div>
       </section>

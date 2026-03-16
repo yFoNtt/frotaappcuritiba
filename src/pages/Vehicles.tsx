@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
+import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
 import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
 import { Car, Loader2 } from 'lucide-react';
@@ -94,8 +95,12 @@ export default function Vehicles() {
   if (isLoading) {
     return (
       <PublicLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="container py-12">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <VehicleCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </PublicLayout>
     );
