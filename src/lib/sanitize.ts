@@ -52,7 +52,7 @@ export function sanitizeText(value: string | null | undefined): string | null | 
  * @param obj - Object with string fields to sanitize
  * @param fields - Optional list of field names to sanitize. If omitted, all string fields are sanitized.
  */
-export function sanitizeFields<T extends Record<string, unknown>>(
+export function sanitizeFields<T extends object>(
   obj: T,
   fields?: (keyof T)[]
 ): T {
@@ -62,7 +62,7 @@ export function sanitizeFields<T extends Record<string, unknown>>(
   for (const key of keys) {
     const value = result[key];
     if (typeof value === 'string') {
-      (result as Record<string, unknown>)[key as string] = sanitizeText(value) as string;
+      (result as any)[key] = sanitizeText(value) as any;
     }
   }
 
