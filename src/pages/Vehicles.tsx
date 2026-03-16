@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
+import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
 import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
-import { Car, Loader2 } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 
