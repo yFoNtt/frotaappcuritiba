@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
