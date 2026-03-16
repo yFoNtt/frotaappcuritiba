@@ -119,6 +119,7 @@ export default function Auth() {
             </div>
           </CardFooter>
         </Card>
+        </motion.div>
       </div>
     </PublicLayout>
   );
