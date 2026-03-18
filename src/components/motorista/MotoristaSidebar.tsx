@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
@@ -29,11 +28,15 @@ const menuItems = [
   { icon: Settings, label: 'Configurações', path: '/motorista/configuracoes' },
 ];
 
-export function MotoristaSidebar() {
+interface MotoristaSidebarProps {
+  collapsed: boolean;
+  onCollapseChange: (collapsed: boolean) => void;
+}
+
+export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -62,7 +65,7 @@ export function MotoristaSidebar() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => onCollapseChange(!collapsed)}
             className="text-sidebar-foreground hover:bg-sidebar-accent"
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
