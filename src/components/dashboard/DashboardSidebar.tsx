@@ -30,6 +30,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
   { icon: Car, label: 'Veículos', path: '/locador/veiculos' },
@@ -147,8 +148,12 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
   );
 }
 
-export function DashboardSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface DashboardSidebarProps {
+  collapsed: boolean;
+  onCollapseChange: (collapsed: boolean) => void;
+}
+
+export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -194,7 +199,7 @@ export function DashboardSidebar() {
       >
         <SidebarContent 
           collapsed={collapsed} 
-          onCollapse={() => setCollapsed(!collapsed)}
+          onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
         />
       </aside>
