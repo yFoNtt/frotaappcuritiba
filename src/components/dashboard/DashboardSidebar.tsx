@@ -170,6 +170,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { unreadCount } = useNotifications();
 
   // Close mobile menu on route change
   const location = useLocation();

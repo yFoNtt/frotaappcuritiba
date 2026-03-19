@@ -154,6 +154,7 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { unreadCount } = useNotifications();
 
   // Close mobile menu on route change
   const location = useLocation();
