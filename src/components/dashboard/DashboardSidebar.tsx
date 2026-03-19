@@ -95,28 +95,40 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
       {/* Navigation - Scrollable */}
       <ScrollArea className="flex-1">
         <nav className="space-y-1 p-3">
-          {menuItems.map((item) => {
+          {menuItems.map((item, index) => {
             const isActive = location.pathname === item.path;
             return (
-              <Link
+              <motion.div
                 key={item.path}
-                to={item.path}
-                onClick={onClose}
-                onMouseEnter={() => preloadRoute(item.path)}
-                onFocus={() => preloadRoute(item.path)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
+                initial={onClose ? { opacity: 0, x: -20 } : false}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.25, ease: "easeOut" }}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
+                <Link
+                  to={item.path}
+                  onClick={onClose}
+                  onMouseEnter={() => preloadRoute(item.path)}
+                  onFocus={() => preloadRoute(item.path)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              </motion.div>
             );
           })}
-          <NotificationBell collapsed={collapsed} />
+          <motion.div
+            initial={onClose ? { opacity: 0, x: -20 } : false}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: menuItems.length * 0.05, duration: 0.25, ease: "easeOut" }}
+          >
+            <NotificationBell collapsed={collapsed} />
+          </motion.div>
         </nav>
       </ScrollArea>
 
