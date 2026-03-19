@@ -31,6 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
