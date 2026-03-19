@@ -184,7 +184,6 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
               )}
             </Button>
           </SheetTrigger>
-          </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
             <SidebarContent
               collapsed={false}
