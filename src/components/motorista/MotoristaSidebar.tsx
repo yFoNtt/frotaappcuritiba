@@ -175,9 +175,15 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
       <div className="fixed left-4 top-4 z-50 md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="bg-background">
+            <Button size="icon" variant="outline" className="bg-background relative">
               <Menu className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Button>
+          </SheetTrigger>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
             <SidebarContent
