@@ -60,12 +60,12 @@
 
     /* Sidebar */
     --sidebar-background: 222 30% 7%;
-    --sidebar-foreground: 0 0% 9%;
+    --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 20 90% 48%;
     --sidebar-primary-foreground: 33 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
+    --sidebar-accent: 222 20% 16%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 222 20% 18%;
     --sidebar-ring: 20 90% 48%;
 
     /* Custom gradients */
