@@ -60,7 +60,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
   const location = useLocation();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4 flex-shrink-0">
         {!collapsed && (
@@ -68,7 +68,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
               <Car className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-sidebar-foreground">FrotaApp</span>
+            <span className="text-lg font-bold">FrotaApp</span>
           </Link>
         )}
         {onCollapse && (
@@ -76,7 +76,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
             variant="ghost"
             size="icon"
             onClick={onCollapse}
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
@@ -86,7 +86,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-sidebar-foreground hover:bg-sidebar-accent md:hidden"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
           >
             <X className="h-5 w-5" />
           </Button>
