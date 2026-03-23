@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useNotifications } from '@/hooks/useNotifications';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
@@ -44,15 +45,15 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
   const location = useLocation();
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4 flex-shrink-0">
         {!collapsed && (
           <Link to="/motorista" className="flex items-center gap-2" onClick={onClose}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Truck className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
+              <Truck className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-sidebar-foreground">Motorista</span>
+            <span className="text-lg font-bold">Motorista</span>
           </Link>
         )}
         {onCollapse && (
@@ -60,7 +61,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
             variant="ghost"
             size="icon"
             onClick={onCollapse}
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
@@ -70,7 +71,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-sidebar-foreground hover:bg-sidebar-accent md:hidden"
+            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -97,7 +98,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
@@ -120,27 +121,30 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
       {/* User section */}
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">
         <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", collapsed && "justify-center")}>
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
             <Truck className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">Motorista</p>
+              <p className="truncate text-sm font-medium">Motorista</p>
               <p className="truncate text-xs text-sidebar-foreground/60">{userEmail}</p>
             </div>
           )}
         </div>
-        <LogoutConfirmDialog onConfirm={onLogout}>
-          <button
-            className={cn(
-              "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              collapsed && "justify-center"
-            )}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>Sair</span>}
-          </button>
-        </LogoutConfirmDialog>
+        <div className={cn("mt-2 flex items-center gap-2", collapsed && "flex-col")}>
+          <ThemeToggle />
+          <LogoutConfirmDialog onConfirm={onLogout}>
+            <button
+              className={cn(
+                "flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                collapsed && "justify-center w-full"
+              )}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Sair</span>}
+            </button>
+          </LogoutConfirmDialog>
+        </div>
       </div>
     </div>
   );
@@ -171,11 +175,11 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="fixed left-4 top-4 z-50 md:hidden">
+      {/* Mobile Top Bar */}
+      <div className="fixed left-0 top-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-background border-b border-border md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="bg-background relative">
+            <Button size="icon" variant="outline" className="relative">
               <Menu className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
@@ -184,7 +188,7 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+          <SheetContent side="left" className="w-64 p-0 bg-[hsl(var(--sidebar-background))] border-sidebar-border [&>button]:text-sidebar-foreground">
             <SidebarContent
               collapsed={false}
               onClose={() => setMobileOpen(false)}
@@ -193,6 +197,8 @@ export function MotoristaSidebar({ collapsed, onCollapseChange }: MotoristaSideb
             />
           </SheetContent>
         </Sheet>
+        <span className="text-sm font-semibold text-foreground">FrotaApp</span>
+        <ThemeToggle />
       </div>
 
       {/* Desktop Sidebar */}
