@@ -1,39 +1,22 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState } from 'react';
 import { AdminSidebar } from './AdminSidebar';
+import { cn } from '@/lib/utils';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleResize = () => {
-      // Check if sidebar is collapsed based on its width
-      const sidebar = document.querySelector('aside');
-      if (sidebar) {
-        setSidebarCollapsed(sidebar.classList.contains('w-[70px]'));
-      }
-    };
-
-    // Use MutationObserver to detect class changes on sidebar
-    const sidebar = document.querySelector('aside');
-    if (sidebar) {
-      const observer = new MutationObserver(() => {
-        setSidebarCollapsed(sidebar.classList.contains('w-[70px]'));
-      });
-      observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-      return () => observer.disconnect();
-    }
-  }, []);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminSidebar />
-      <main className={`min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'ml-[70px]' : 'ml-64'}`}>
-        <div className="p-6">
+      <AdminSidebar collapsed={collapsed} onCollapseChange={setCollapsed} />
+      <main className={cn(
+        "min-h-screen transition-all duration-300 pt-16 md:pt-0",
+        collapsed ? "md:ml-[70px]" : "md:ml-64"
+      )}>
+        <div className="p-4 md:p-6">
           {children}
         </div>
       </main>
