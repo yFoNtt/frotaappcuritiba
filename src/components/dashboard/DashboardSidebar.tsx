@@ -187,11 +187,11 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="fixed left-4 top-4 z-50 md:hidden">
+      {/* Mobile Top Bar */}
+      <div className="fixed left-0 top-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-background border-b border-border md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="bg-background relative">
+            <Button size="icon" variant="outline" className="relative">
               <Menu className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
@@ -200,7 +200,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
+          <SheetContent side="left" className="w-64 p-0 bg-[hsl(var(--sidebar-background))] border-sidebar-border [&>button]:text-sidebar-foreground">
             <SidebarContent 
               collapsed={false} 
               onClose={() => setMobileOpen(false)}
@@ -208,6 +208,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
             />
           </SheetContent>
         </Sheet>
+        <span className="text-sm font-semibold text-foreground">FrotaApp</span>
+        <ThemeToggle />
       </div>
 
       {/* Desktop Sidebar */}
