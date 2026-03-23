@@ -66,16 +66,6 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
             {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
         )}
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        )}
       </div>
 
       {/* Navigation */}
