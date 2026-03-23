@@ -142,22 +142,25 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">João Silva</p>
+              <p className="truncate text-sm font-medium">João Silva</p>
               <p className="truncate text-xs text-sidebar-foreground/60">JS Locações</p>
             </div>
           )}
         </div>
-        <LogoutConfirmDialog onConfirm={onLogout}>
-          <button
-            className={cn(
-              "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              collapsed && "justify-center"
-            )}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>Sair</span>}
-          </button>
-        </LogoutConfirmDialog>
+        <div className={cn("mt-2 flex items-center gap-2", collapsed && "flex-col")}>
+          <ThemeToggle />
+          <LogoutConfirmDialog onConfirm={onLogout}>
+            <button
+              className={cn(
+                "flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                collapsed && "justify-center w-full"
+              )}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Sair</span>}
+            </button>
+          </LogoutConfirmDialog>
+        </div>
       </div>
     </div>
   );
