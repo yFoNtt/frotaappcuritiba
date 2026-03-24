@@ -212,6 +212,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshRole = useCallback(async () => {
+    if (user) {
+      const r = await fetchUserRole(user.id);
+      setRole(r);
+    }
+  }, [user]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
