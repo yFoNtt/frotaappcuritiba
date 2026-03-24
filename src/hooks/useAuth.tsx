@@ -239,7 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useInactivityTimeout(handleInactivityTimeout, !!user);
 
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut, refreshRole }}>
       {children}
     </AuthContext.Provider>
   );
