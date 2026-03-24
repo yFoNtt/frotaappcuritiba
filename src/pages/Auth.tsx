@@ -7,6 +7,7 @@ import { Car, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { OAuthRoleSelection } from '@/components/auth/OAuthRoleSelection';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function Auth() {
@@ -36,6 +37,15 @@ export default function Auth() {
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // OAuth user without role — show role selection
+  if (user && !role) {
+    return (
+      <PublicLayout>
+        <OAuthRoleSelection />
+      </PublicLayout>
     );
   }
 
