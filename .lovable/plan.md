@@ -2,49 +2,48 @@
 
 ## Problem
 
-When a user signs in via Google OAuth, authentication succeeds (confirmed in auth logs: user `efontana51@gmail.com` logged in via Google), but **no role is assigned** in the `user_roles` table. The redirect logic in `Auth.tsx` requires both `user` and `role` to be non-null, so the user gets stuck on the login page.
+The Google OAuth login works (user `efontana51@gmail.com` authenticates successfully), but:
+1. The user has **no entry** in `user_roles` and **no entry** in `profiles` — confirmed via database query.
+2. After Google OAuth redirect, the user lands on `/` (homepage), NOT on `/login` (Auth page).
+3. The `OAuthRoleSelection` component only renders inside `Auth.tsx` at `/login`, so the user never sees it.
 
-## Root Cause
-
-The `signUp` function manually inserts into `user_roles` after email signup, but Google OAuth bypasses this entirely — it goes through `lovable.auth.signInWithOAuth` which creates/signs in the user but never assigns a role.
+The user is stuck: authenticated but without a role, unable to access any dashboard.
 
 ## Solution
 
-Two-part fix:
+Two changes needed:
 
-### 1. Role selection page for new OAuth users
+### 1. Global redirect for authenticated users without a role
 
-When `useAuth` detects a user with no role (user exists, role is null, loading is false), instead of showing the login form, show a **role selection screen** so the user can choose "locador" or "motorista". This handles first-time Google signups.
+Add logic to the **Index page** (`src/pages/Index.tsx`) that detects `user && !role && !authLoading` and redirects to `/login`. This ensures that after Google OAuth returns the user to `/`, they get sent to the Auth page where `OAuthRoleSelection` will render.
 
-**File: `src/pages/Auth.tsx`**
-- Add logic: if `user` exists but `role` is null and not loading, render a role selection component instead of redirecting or showing login form.
+This same check should also be added to other public pages that a user might land on (or better yet, handled once in a shared component like `PublicLayout` or `Header`).
 
-**New component: `src/components/auth/OAuthRoleSelection.tsx`**
-- Shows role selector (locador/motorista) and a confirm button.
-- On confirm, inserts the role into `user_roles` and creates a basic `profiles` entry.
-- Updates the auth context role state.
+**Preferred approach**: Add the redirect in `src/components/layout/Header.tsx` or `PublicLayout.tsx` since it wraps all public pages — single point of change.
 
-### 2. Update `useAuth` to support role refresh
+### 2. Immediate fix for the existing user
 
-**File: `src/hooks/useAuth.tsx`**
-- Add a `refreshRole` function that re-fetches the user's role and updates state.
-- Expose it in the context so `OAuthRoleSelection` can call it after inserting the role.
+Run a database migration/query to manually assign the role for user `bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1` so they can access the system right away. This will be done via an INSERT into `user_roles` and `profiles`.
 
-### Flow
+## Technical Details
 
-```text
-Google OAuth → user created (no role)
-  → Auth.tsx detects user + no role
-  → Shows OAuthRoleSelection
-  → User picks locador/motorista
-  → Insert into user_roles + profiles
-  → refreshRole() → role set → redirect to dashboard
+**File: `src/components/layout/PublicLayout.tsx`**
+- Import `useAuth` and `useNavigate`
+- Add effect: if `user` exists, `role` is null, and not loading → `navigate('/login', { replace: true })`
+- This catches ALL public pages (Index, Vehicles, HowItWorks, etc.) so no matter where OAuth lands, the user gets routed to role selection
+
+**Database**: Insert role and profile for the existing stuck user:
+```sql
+INSERT INTO user_roles (user_id, role) VALUES ('bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1', 'locador');
+INSERT INTO profiles (user_id) VALUES ('bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1');
 ```
 
-### Technical Details
+## Flow After Fix
 
-- `OAuthRoleSelection` will use `supabase.from('user_roles').insert(...)` directly.
-- Profile creation will insert minimal data (user_id only) since Google OAuth doesn't collect documents.
-- The "admin" role remains blocked (same as email signup).
-- Existing Google OAuth users who already have a role will redirect normally.
+```text
+Google OAuth → redirect to / → PublicLayout detects user+no role
+  → redirect to /login → Auth.tsx shows OAuthRoleSelection
+  → User picks role → insert into user_roles + profiles
+  → refreshRole() → redirect to dashboard
+```
 
