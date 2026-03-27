@@ -14,32 +14,55 @@ export function OAuthRoleSelection() {
   const { user, refreshRole } = useAuth();
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const handleConfirm = async () => {
     if (!user) return;
     setSubmitting(true);
+    setErrorMessage(null);
 
     try {
-      // Insert role
-      const { error: roleError } = await supabase
+      // Check if role already exists (idempotent)
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .insert({ user_id: user.id, role: selectedRole });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        toast.error('Erro ao definir tipo de conta. Tente novamente.');
-        setSubmitting(false);
-        return;
+      if (!existingRole) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: selectedRole });
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+          const msg = roleError.code === '23505'
+            ? 'Sua conta já possui um tipo definido. Recarregue a página.'
+            : 'Erro ao definir tipo de conta. Tente novamente.';
+          setErrorMessage(msg);
+          setSubmitting(false);
+          setRetryCount((c) => c + 1);
+          return;
+        }
       }
 
-      // Create basic profile
-      const { error: profileError } = await supabase
+      // Check if profile already exists (idempotent)
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-        // Non-blocking — role was set, profile can be completed later
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Non-blocking — role was set, profile can be completed later
+        }
       }
 
       // Refresh role in auth context to trigger redirect
@@ -47,8 +70,9 @@ export function OAuthRoleSelection() {
       toast.success('Conta configurada com sucesso!');
     } catch (err) {
       console.error('Unexpected error:', err);
-      toast.error('Erro inesperado. Tente novamente.');
+      setErrorMessage('Erro inesperado de conexão. Verifique sua internet e tente novamente.');
       setSubmitting(false);
+      setRetryCount((c) => c + 1);
     }
   };
 
