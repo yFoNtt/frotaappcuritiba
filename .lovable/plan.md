@@ -1,49 +1,75 @@
 
 
-## Problem
+# Relatório Completo do FrotaApp - Plano de Geração
 
-The Google OAuth login works (user `efontana51@gmail.com` authenticates successfully), but:
-1. The user has **no entry** in `user_roles` and **no entry** in `profiles` — confirmed via database query.
-2. After Google OAuth redirect, the user lands on `/` (homepage), NOT on `/login` (Auth page).
-3. The `OAuthRoleSelection` component only renders inside `Auth.tsx` at `/login`, so the user never sees it.
+## Objetivo
+Gerar um PDF profissional e detalhado documentando toda a arquitetura do sistema FrotaApp, cobrindo frontend, backend e banco de dados.
 
-The user is stuck: authenticated but without a role, unable to access any dashboard.
+## Conteudo do Relatório
 
-## Solution
+### 1. Visão Geral do Projeto
+- Nome, URL publicada, stack tecnológica (React 18, TypeScript, Vite, Tailwind CSS, Lovable Cloud)
+- Status: ~80% pronto para produção
 
-Two changes needed:
+### 2. Frontend
+- **Páginas Públicas** (9): Index, Vehicles, VehicleDetails, ForRenters, HowItWorks, Auth, ForgotPassword, ResetPassword, NotFound
+- **Painel Locador** (15 rotas): Dashboard, Veículos, Motoristas, Pagamentos, Manutenção, Quilometragem, Alertas, Contratos, Vistorias, Documentos, Solicitações, Relatórios, Configurações, Auditoria, Notificações
+- **Painel Admin** (9 rotas): Dashboard, Usuários, Locadores, Detalhes Locador, Veículos, Planos, Métricas, Configurações, Auditoria
+- **Painel Motorista** (6 rotas): Dashboard, Veículo, Pagamentos, Histórico, Documentos, Configurações
+- **Componentes**: ~80+ componentes organizados em 12 diretórios
+- **Hooks personalizados**: 27 hooks para lógica de negócio
+- **Bibliotecas**: Recharts (gráficos), jsPDF/xlsx-js-style (exportações), Framer Motion (animações), React Hook Form + Zod (formulários)
+- **Funcionalidades**: Tema claro/escuro, SEO com JSON-LD, lazy loading, error boundaries, progresso de navegação
 
-### 1. Global redirect for authenticated users without a role
+### 3. Autenticação e Segurança
+- Login com email/senha via Edge Function rate-limited
+- Login social com Google (Lovable Cloud OAuth)
+- Seleção de perfil pós-OAuth (OAuthRoleSelection)
+- Validação de senha forte (8+ chars, maiúscula, número, especial)
+- Timeout por inatividade (30 min)
+- Proteção de rotas por role (ProtectedRoute)
+- Redirecionamento global para usuários sem role
 
-Add logic to the **Index page** (`src/pages/Index.tsx`) that detects `user && !role && !authLoading` and redirects to `/login`. This ensures that after Google OAuth returns the user to `/`, they get sent to the Auth page where `OAuthRoleSelection` will render.
+### 4. Banco de Dados (13 tabelas)
+- `user_roles` - Controle de acesso (admin, locador, motorista)
+- `profiles` - Dados do perfil com validação de CPF/CNPJ/CNH
+- `vehicles` - Frota de veículos
+- `drivers` - Motoristas vinculados a locadores
+- `contracts` - Contratos de locação
+- `payments` - Pagamentos semanais
+- `maintenances` - Registros de manutenção
+- `mileage_records` - Controle de quilometragem
+- `vehicle_inspections` - Vistorias com checklist e fotos
+- `documents` / `document_requests` - Gestão documental
+- `notifications` - Notificações em tempo real
+- `cnh_alerts` - Alertas de vencimento de CNH
+- `audit_logs` - Log de auditoria completo
+- `login_attempts` - Controle de tentativas de login
+- `inspection_checklist_templates` - Templates de checklist
 
-This same check should also be added to other public pages that a user might land on (or better yet, handled once in a shared component like `PublicLayout` or `Header`).
+### 5. RLS (Row-Level Security)
+- Todas as tabelas com RLS ativo
+- Acesso anônimo bloqueado em todas as tabelas sensíveis
+- Isolamento por `locador_id` e `user_id`
+- Função `has_role()` SECURITY DEFINER para verificação segura
 
-**Preferred approach**: Add the redirect in `src/components/layout/Header.tsx` or `PublicLayout.tsx` since it wraps all public pages — single point of change.
+### 6. Funções do Banco
+- 14 funções: validações (CPF, CNPJ, CNH), auditoria, triggers, acesso público a veículos, gestão de roles
 
-### 2. Immediate fix for the existing user
+### 7. Backend (Edge Functions)
+- `rate-limited-login` - Login com proteção contra brute-force
+- `check-cnh-expiry` - Verificação de CNH vencida/próxima ao vencimento
+- `generate-notifications` - Geração automática de notificações
 
-Run a database migration/query to manually assign the role for user `bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1` so they can access the system right away. This will be done via an INSERT into `user_roles` and `profiles`.
+### 8. Storage
+- 3 buckets: `vehicle-images` (público), `documents` (privado), `inspection-photos` (privado)
+- URLs assinadas temporárias (1h) para arquivos privados
 
-## Technical Details
+### 9. Testes
+- 18 arquivos de teste cobrindo auth, hooks, componentes, fluxos e acessibilidade
 
-**File: `src/components/layout/PublicLayout.tsx`**
-- Import `useAuth` and `useNavigate`
-- Add effect: if `user` exists, `role` is null, and not loading → `navigate('/login', { replace: true })`
-- This catches ALL public pages (Index, Vehicles, HowItWorks, etc.) so no matter where OAuth lands, the user gets routed to role selection
-
-**Database**: Insert role and profile for the existing stuck user:
-```sql
-INSERT INTO user_roles (user_id, role) VALUES ('bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1', 'locador');
-INSERT INTO profiles (user_id) VALUES ('bf3e2785-0f1b-4a97-ac0e-987ce38bd2a1');
-```
-
-## Flow After Fix
-
-```text
-Google OAuth → redirect to / → PublicLayout detects user+no role
-  → redirect to /login → Auth.tsx shows OAuthRoleSelection
-  → User picks role → insert into user_roles + profiles
-  → refreshRole() → redirect to dashboard
-```
+## Implementação
+- Script Python com reportlab gerando PDF formatado com seções, tabelas e diagramas
+- Saída em `/mnt/documents/relatorio-frotaapp.pdf`
+- QA visual obrigatória
 
