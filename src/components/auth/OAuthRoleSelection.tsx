@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { RoleSelector } from './RoleSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Car, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -14,32 +15,55 @@ export function OAuthRoleSelection() {
   const { user, refreshRole } = useAuth();
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const handleConfirm = async () => {
     if (!user) return;
     setSubmitting(true);
+    setErrorMessage(null);
 
     try {
-      // Insert role
-      const { error: roleError } = await supabase
+      // Check if role already exists (idempotent)
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .insert({ user_id: user.id, role: selectedRole });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        toast.error('Erro ao definir tipo de conta. Tente novamente.');
-        setSubmitting(false);
-        return;
+      if (!existingRole) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: selectedRole });
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+          const msg = roleError.code === '23505'
+            ? 'Sua conta já possui um tipo definido. Recarregue a página.'
+            : 'Erro ao definir tipo de conta. Tente novamente.';
+          setErrorMessage(msg);
+          setSubmitting(false);
+          setRetryCount((c) => c + 1);
+          return;
+        }
       }
 
-      // Create basic profile
-      const { error: profileError } = await supabase
+      // Check if profile already exists (idempotent)
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-        // Non-blocking — role was set, profile can be completed later
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Non-blocking — role was set, profile can be completed later
+        }
       }
 
       // Refresh role in auth context to trigger redirect
@@ -47,8 +71,9 @@ export function OAuthRoleSelection() {
       toast.success('Conta configurada com sucesso!');
     } catch (err) {
       console.error('Unexpected error:', err);
-      toast.error('Erro inesperado. Tente novamente.');
+      setErrorMessage('Erro inesperado de conexão. Verifique sua internet e tente novamente.');
       setSubmitting(false);
+      setRetryCount((c) => c + 1);
     }
   };
 
@@ -70,12 +95,23 @@ export function OAuthRoleSelection() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <RoleSelector selectedRole={selectedRole} onRoleChange={setSelectedRole} />
             <Button onClick={handleConfirm} disabled={submitting} className="w-full" size="lg">
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Configurando...
+                </>
+              ) : retryCount > 0 ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tentar novamente
                 </>
               ) : (
                 'Confirmar e continuar'
