@@ -95,12 +95,23 @@ export function OAuthRoleSelection() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <RoleSelector selectedRole={selectedRole} onRoleChange={setSelectedRole} />
             <Button onClick={handleConfirm} disabled={submitting} className="w-full" size="lg">
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Configurando...
+                </>
+              ) : retryCount > 0 ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tentar novamente
                 </>
               ) : (
                 'Confirmar e continuar'
