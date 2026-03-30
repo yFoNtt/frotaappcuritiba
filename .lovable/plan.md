@@ -1,75 +1,55 @@
 
 
-# Relatório Completo do FrotaApp - Plano de Geração
+# Adicionar Testes E2E com Playwright
 
-## Objetivo
-Gerar um PDF profissional e detalhado documentando toda a arquitetura do sistema FrotaApp, cobrindo frontend, backend e banco de dados.
+## Limitação Importante
 
-## Conteudo do Relatório
+O ambiente Lovable **não suporta execução de Playwright** diretamente — Playwright requer um navegador real (Chromium/Firefox) e um servidor local rodando, o que não está disponível no sandbox. 
 
-### 1. Visão Geral do Projeto
-- Nome, URL publicada, stack tecnológica (React 18, TypeScript, Vite, Tailwind CSS, Lovable Cloud)
-- Status: ~80% pronto para produção
+O que posso fazer é **criar toda a estrutura de testes E2E** (configuração + arquivos de teste) para que você rode localmente no seu computador.
 
-### 2. Frontend
-- **Páginas Públicas** (9): Index, Vehicles, VehicleDetails, ForRenters, HowItWorks, Auth, ForgotPassword, ResetPassword, NotFound
-- **Painel Locador** (15 rotas): Dashboard, Veículos, Motoristas, Pagamentos, Manutenção, Quilometragem, Alertas, Contratos, Vistorias, Documentos, Solicitações, Relatórios, Configurações, Auditoria, Notificações
-- **Painel Admin** (9 rotas): Dashboard, Usuários, Locadores, Detalhes Locador, Veículos, Planos, Métricas, Configurações, Auditoria
-- **Painel Motorista** (6 rotas): Dashboard, Veículo, Pagamentos, Histórico, Documentos, Configurações
-- **Componentes**: ~80+ componentes organizados em 12 diretórios
-- **Hooks personalizados**: 27 hooks para lógica de negócio
-- **Bibliotecas**: Recharts (gráficos), jsPDF/xlsx-js-style (exportações), Framer Motion (animações), React Hook Form + Zod (formulários)
-- **Funcionalidades**: Tema claro/escuro, SEO com JSON-LD, lazy loading, error boundaries, progresso de navegação
+## O que será criado
 
-### 3. Autenticação e Segurança
-- Login com email/senha via Edge Function rate-limited
-- Login social com Google (Lovable Cloud OAuth)
-- Seleção de perfil pós-OAuth (OAuthRoleSelection)
-- Validação de senha forte (8+ chars, maiúscula, número, especial)
-- Timeout por inatividade (30 min)
-- Proteção de rotas por role (ProtectedRoute)
-- Redirecionamento global para usuários sem role
+### 1. Configuração (`playwright.config.ts`)
+- Base URL apontando para `localhost:5173` (dev) ou URL publicada
+- Timeout, retries, screenshots on failure
+- Projeto configurado para Chromium
 
-### 4. Banco de Dados (13 tabelas)
-- `user_roles` - Controle de acesso (admin, locador, motorista)
-- `profiles` - Dados do perfil com validação de CPF/CNPJ/CNH
-- `vehicles` - Frota de veículos
-- `drivers` - Motoristas vinculados a locadores
-- `contracts` - Contratos de locação
-- `payments` - Pagamentos semanais
-- `maintenances` - Registros de manutenção
-- `mileage_records` - Controle de quilometragem
-- `vehicle_inspections` - Vistorias com checklist e fotos
-- `documents` / `document_requests` - Gestão documental
-- `notifications` - Notificações em tempo real
-- `cnh_alerts` - Alertas de vencimento de CNH
-- `audit_logs` - Log de auditoria completo
-- `login_attempts` - Controle de tentativas de login
-- `inspection_checklist_templates` - Templates de checklist
+### 2. Testes E2E — Fluxos Críticos
 
-### 5. RLS (Row-Level Security)
-- Todas as tabelas com RLS ativo
-- Acesso anônimo bloqueado em todas as tabelas sensíveis
-- Isolamento por `locador_id` e `user_id`
-- Função `has_role()` SECURITY DEFINER para verificação segura
+| Arquivo | Fluxo coberto |
+|---------|--------------|
+| `e2e/auth.spec.ts` | Login email/senha, login Google (verifica redirect), cadastro, logout, senha incorreta, rate-limit |
+| `e2e/role-redirect.spec.ts` | Redirecionamento por role (locador→/locador, motorista→/motorista, admin→/admin) |
+| `e2e/locador-vehicles.spec.ts` | CRUD de veículos: criar, editar, excluir, upload de fotos |
+| `e2e/locador-contracts.spec.ts` | Criar contrato, vincular motorista, finalizar contrato |
+| `e2e/locador-payments.spec.ts` | Registrar pagamento, filtrar, exportar |
+| `e2e/locador-maintenance.spec.ts` | Criar manutenção, editar status, filtrar |
+| `e2e/motorista-dashboard.spec.ts` | Visualizar veículo, pagamentos, documentos |
+| `e2e/public-pages.spec.ts` | Navegação pública: home, veículos, detalhes, como funciona |
+| `e2e/theme-responsive.spec.ts` | Alternância de tema, layout mobile |
 
-### 6. Funções do Banco
-- 14 funções: validações (CPF, CNPJ, CNH), auditoria, triggers, acesso público a veículos, gestão de roles
+### 3. Scripts no `package.json`
+```
+"test:e2e": "playwright test",
+"test:e2e:ui": "playwright test --ui"
+```
 
-### 7. Backend (Edge Functions)
-- `rate-limited-login` - Login com proteção contra brute-force
-- `check-cnh-expiry` - Verificação de CNH vencida/próxima ao vencimento
-- `generate-notifications` - Geração automática de notificações
+### 4. Helper de autenticação (`e2e/helpers/auth.ts`)
+- Função reutilizável para login com contas de teste existentes
+- Storage state para evitar re-login entre testes
 
-### 8. Storage
-- 3 buckets: `vehicle-images` (público), `documents` (privado), `inspection-photos` (privado)
-- URLs assinadas temporárias (1h) para arquivos privados
+## Como usar (localmente)
+```bash
+npm install -D @playwright/test
+npx playwright install chromium
+npm run dev  # em um terminal
+npm run test:e2e  # em outro terminal
+```
 
-### 9. Testes
-- 18 arquivos de teste cobrindo auth, hooks, componentes, fluxos e acessibilidade
-
-## Implementação
-- Script Python com reportlab gerando PDF formatado com seções, tabelas e diagramas
-- Saída em `/mnt/documents/relatorio-frotaapp.pdf`
-- QA visual obrigatória
+## Detalhes técnicos
+- Usará as contas de teste já existentes (`motorista.teste@frotaapp.com` e `locador.teste@frotaapp.com`)
+- Testes isolados por contexto de browser (sem interferência entre testes)
+- Screenshots automáticos em caso de falha salvos em `e2e/screenshots/`
+- ~9 arquivos de teste cobrindo os ~40 cenários manuais mais críticos
 
