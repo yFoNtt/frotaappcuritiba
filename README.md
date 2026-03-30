@@ -1,5 +1,7 @@
 # Welcome to your Lovable project
 
+[![E2E Tests](https://github.com/<OWNER>/<REPO>/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/e2e-tests.yml)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
