@@ -72,7 +72,7 @@ export function HeroSection() {
                   Ver Veículos Disponíveis
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="border-background/20 text-background bg-primary hover:bg-primary/90 text-base px-7 h-12">
+              <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-7 h-12">
                 <Link to="/como-funciona">
                   <Play className="mr-2 h-4 w-4" />
                   Como Funciona
