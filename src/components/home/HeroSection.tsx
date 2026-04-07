@@ -39,7 +39,7 @@ export function HeroSection() {
 
             <motion.h1
               variants={item}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-background leading-[1.08]"
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-white leading-[1.08]"
             >
               Seu próximo carro para{' '}
               <span className="text-primary">app</span>{' '}
