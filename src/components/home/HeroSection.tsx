@@ -27,7 +27,7 @@ export function HeroSection() {
       </div>
 
       <div className="container relative z-10">
-        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
+        <div className="grid min-h-[85vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
           
           {/* Left — Copy */}
           <motion.div
