@@ -48,11 +48,6 @@ export function HeroSection() {
 
       <div className="container relative z-10 py-12 sm:py-16 lg:py-20">
         <div className="max-w-2xl">
-          {/* Badge */}
-          <div className="mb-4 sm:mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-primary dark:bg-primary/20 dark:text-primary animate-fade-in">
-            <Car className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-            <span className="truncate">Marketplace #1 de Locação para Apps</span>
-          </div>
 
           {/* Heading */}
           <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-foreground animate-slide-up">
