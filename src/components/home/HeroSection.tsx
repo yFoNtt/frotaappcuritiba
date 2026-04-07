@@ -19,10 +19,15 @@ const item = {
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-foreground">
-      {/* Split layout */}
+    <section className="relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/75" />
+      </div>
+
       <div className="container relative z-10">
-        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-2 lg:gap-12 py-12 lg:py-0">
+        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
           
           {/* Left — Copy */}
           <motion.div
@@ -100,49 +105,6 @@ export function HeroSection() {
                 </div>
               ))}
             </motion.div>
-          </motion.div>
-
-          {/* Right — Image */}
-          <motion.div
-            className="relative hidden lg:block"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-          >
-            <div className="relative overflow-hidden rounded-3xl shadow-2xl">
-              <img
-                src={heroImage}
-                alt="Frota de veículos disponíveis para locação"
-                className="h-[540px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-
-              {/* Floating card */}
-              <motion.div
-                className="absolute bottom-6 left-6 right-6 rounded-2xl bg-card/95 backdrop-blur-sm border border-border p-5 shadow-xl"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.5 }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/20">
-                      <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">12 veículos disponíveis</p>
-                      <p className="text-xs text-muted-foreground">na sua região agora</p>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" asChild className="text-xs">
-                    <Link to="/veiculos">
-                      Ver todos
-                      <ArrowRight className="ml-1 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
           </motion.div>
         </div>
       </div>
