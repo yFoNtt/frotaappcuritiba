@@ -106,7 +106,7 @@ export function HeroSection() {
               ))}
             </motion.div>
           </motion.div>
-
+        </div>
       </div>
     </section>
   );
