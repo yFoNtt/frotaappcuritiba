@@ -23,7 +23,7 @@ export function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img src={heroImage} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/75" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       <div className="container relative z-10">
