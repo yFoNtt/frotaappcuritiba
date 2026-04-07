@@ -56,7 +56,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-14 sm:h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
@@ -121,13 +121,13 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="border-0">
                 <Link to="/login" onMouseEnter={() => preloadRoute('/login')} onFocus={() => preloadRoute('/login')}>
                   <User className="mr-2 h-4 w-4" />
                   Entrar
                 </Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="shadow-none">
                 <Link to="/cadastro">Cadastrar</Link>
               </Button>
             </>
