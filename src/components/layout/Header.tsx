@@ -121,13 +121,13 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="border-0">
                 <Link to="/login" onMouseEnter={() => preloadRoute('/login')} onFocus={() => preloadRoute('/login')}>
                   <User className="mr-2 h-4 w-4" />
                   Entrar
                 </Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="shadow-none">
                 <Link to="/cadastro">Cadastrar</Link>
               </Button>
             </>
