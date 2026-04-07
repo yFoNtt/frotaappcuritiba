@@ -56,7 +56,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-14 sm:h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
