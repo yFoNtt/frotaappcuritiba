@@ -23,11 +23,11 @@ export function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img src={heroImage} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/75" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       <div className="container relative z-10">
-        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
+        <div className="grid min-h-[85vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
           
           {/* Left — Copy */}
           <motion.div
@@ -39,7 +39,7 @@ export function HeroSection() {
 
             <motion.h1
               variants={item}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-background leading-[1.08]"
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-white leading-[1.08]"
             >
               Seu próximo carro para{' '}
               <span className="text-primary">app</span>{' '}
@@ -48,14 +48,14 @@ export function HeroSection() {
 
             <motion.p
               variants={item}
-              className="mt-5 text-base sm:text-lg text-background/70 max-w-md leading-relaxed"
+              className="mt-5 text-base sm:text-lg text-white/80 max-w-md leading-relaxed"
             >
               Alugue veículos prontos para Uber, 99 e iFood.
               Contratos flexíveis, sem burocracia e com suporte dedicado.
             </motion.p>
 
             {/* Checklist */}
-            <motion.ul variants={item} className="mt-6 flex flex-col gap-2.5 text-sm text-background/80">
+            <motion.ul variants={item} className="mt-6 flex flex-col gap-2.5 text-sm text-white/90">
               {['Sem entrada ou fiador', 'Carros revisados e documentados', 'Suporte 7 dias por semana'].map((text) => (
                 <li key={text} className="flex items-center gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -72,7 +72,7 @@ export function HeroSection() {
                   Ver Veículos Disponíveis
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="border-background/20 text-background bg-primary hover:bg-primary/90 text-base px-7 h-12">
+              <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 text-base px-7 h-12">
                 <Link to="/como-funciona">
                   <Play className="mr-2 h-4 w-4" />
                   Como Funciona
