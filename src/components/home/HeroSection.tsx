@@ -19,10 +19,15 @@ const item = {
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-foreground">
-      {/* Split layout */}
+    <section className="relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/75" />
+      </div>
+
       <div className="container relative z-10">
-        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-2 lg:gap-12 py-12 lg:py-0">
+        <div className="grid min-h-[90vh] items-center gap-8 lg:grid-cols-1 py-12 lg:py-0">
           
           {/* Left — Copy */}
           <motion.div
