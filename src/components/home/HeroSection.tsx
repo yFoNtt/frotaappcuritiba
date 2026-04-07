@@ -55,7 +55,7 @@ export function HeroSection() {
             </motion.p>
 
             {/* Checklist */}
-            <motion.ul variants={item} className="mt-6 flex flex-col gap-2.5 text-sm text-background/80">
+            <motion.ul variants={item} className="mt-6 flex flex-col gap-2.5 text-sm text-white/90">
               {['Sem entrada ou fiador', 'Carros revisados e documentados', 'Suporte 7 dias por semana'].map((text) => (
                 <li key={text} className="flex items-center gap-2.5">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
