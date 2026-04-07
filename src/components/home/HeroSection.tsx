@@ -48,7 +48,7 @@ export function HeroSection() {
 
             <motion.p
               variants={item}
-              className="mt-5 text-base sm:text-lg text-background/70 max-w-md leading-relaxed"
+              className="mt-5 text-base sm:text-lg text-white/80 max-w-md leading-relaxed"
             >
               Alugue veículos prontos para Uber, 99 e iFood.
               Contratos flexíveis, sem burocracia e com suporte dedicado.
