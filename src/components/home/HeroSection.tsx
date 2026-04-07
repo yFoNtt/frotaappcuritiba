@@ -36,15 +36,6 @@ export function HeroSection() {
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={item} className="mb-5">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-4 py-1.5 text-sm font-semibold text-primary backdrop-blur">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                  <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-                </span>
-                Vagas abertas em 50+ cidades
-              </span>
-            </motion.div>
 
             <motion.h1
               variants={item}
@@ -89,22 +80,6 @@ export function HeroSection() {
               </Button>
             </motion.div>
 
-            {/* Stats row */}
-            <motion.div
-              variants={item}
-              className="mt-10 flex items-center gap-8 border-t border-background/10 pt-8"
-            >
-              {[
-                { value: '500+', label: 'Veículos' },
-                { value: '2.000+', label: 'Motoristas ativos' },
-                { value: '4.8★', label: 'Avaliação média' },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <div className="text-2xl sm:text-3xl font-bold text-background">{stat.value}</div>
-                  <div className="text-xs sm:text-sm text-background/50">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
           </motion.div>
         </div>
       </div>
