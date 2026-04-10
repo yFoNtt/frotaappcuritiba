@@ -194,6 +194,4 @@ src/
 
 ### Feito com ❤️ em Curitiba, PR
 
-[![Lovable](https://img.shields.io/badge/Construído%20com-Lovable-ff69b4?style=for-the-badge)](https://lovable.dev)
-
 </div>
