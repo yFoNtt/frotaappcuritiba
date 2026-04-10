@@ -1,75 +1,101 @@
-# Welcome to your Lovable project
+# 🚗 FrotaApp Curitiba
 
-[![E2E Tests](https://github.com/<OWNER>/<REPO>/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/e2e-tests.yml)
+Sistema completo de **gestão de frotas e locação de veículos** para locadores e motoristas de aplicativo na região de Curitiba.
 
-## Project info
+🔗 **Acesse a aplicação**: [frotaappcuritiba.lovable.app](https://frotaappcuritiba.lovable.app)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Funcionalidades
 
-## How can I edit this code?
+### 📋 Gestão de Veículos
+- Cadastro completo com fotos, dados do veículo e localização
+- Controle de quilometragem e status (disponível, alugado, manutenção)
+- Galeria de imagens e filtros de busca
 
-There are several ways of editing your application.
+### 📝 Contratos
+- Criação e gestão de contratos de locação
+- Vínculo entre veículo e motorista
+- Controle de valor semanal, caução, limite de km e taxa por km excedente
 
-**Use Lovable**
+### 🔧 Manutenções
+- Registro de manutenções preventivas e corretivas
+- Controle de custos, prestador de serviço e próxima manutenção
+- Filtros por status, tipo e veículo
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### 🔍 Inspeções
+- Checklist personalizável de entrega e devolução
+- Registro de condição externa/interna, nível de combustível e fotos
+- Comparação entre inspeções de entrada e saída
 
-Changes made via Lovable will be committed automatically to this repo.
+### 👥 Motoristas
+- Cadastro de motoristas com CNH e dados de contato
+- Alertas automáticos de vencimento de CNH
+- Vínculo com veículos e contratos
 
-**Use your preferred IDE**
+### 💰 Pagamentos
+- Controle de pagamentos semanais por motorista
+- Registro de método de pagamento, status e observações
+- Exportação de relatórios
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 📄 Documentos
+- Upload e gestão de documentos (contratos, CNH, CRLV, etc.)
+- Solicitação de documentos ao motorista
+- Controle de validade
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 🔔 Notificações e Alertas
+- Notificações em tempo real
+- Alertas de vencimento de CNH
+- Alertas de manutenção programada
 
-Follow these steps:
+### 📊 Relatórios e Métricas
+- Dashboard com indicadores de receita, ocupação e custos
+- Gráficos de evolução de receita e custos de manutenção
+- Exportação de dados
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Perfis de Usuário
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+| Perfil | Descrição |
+|--------|-----------|
+| **Locador** | Proprietário dos veículos. Gerencia frota, contratos, motoristas, pagamentos e manutenções. |
+| **Motorista** | Motorista de aplicativo. Visualiza seu veículo, pagamentos, documentos e histórico. |
+| **Administrador** | Acesso completo ao sistema. Gerencia usuários, roles, métricas e logs de auditoria. |
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Tecnologias
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- **React 18** + **TypeScript 5**
+- **Vite 5** (build e dev server)
+- **Tailwind CSS v3** (estilização)
+- **shadcn/ui** (componentes de interface)
+- **Lovable Cloud** (backend, autenticação, banco de dados e storage)
+- **Playwright** (testes E2E)
+
+## Como rodar localmente
+
+```bash
+# 1. Clone o repositório
+git clone <URL_DO_REPOSITORIO>
+
+# 2. Acesse a pasta do projeto
+cd frotaapp-curitiba
+
+# 3. Instale as dependências
+npm install
+
+# 4. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+O projeto estará disponível em `http://localhost:5173`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Testes
 
-**Use GitHub Codespaces**
+```bash
+# Testes unitários
+npm run test
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Testes E2E (requer Playwright instalado)
+npm run test:e2e
+```
 
-## What technologies are used for this project?
+## Licença
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Projeto privado — todos os direitos reservados.
