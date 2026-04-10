@@ -4,6 +4,14 @@ Sistema completo de **gestão de frotas e locação de veículos** para locadore
 
 🔗 **Acesse a aplicação**: [frotaappcuritiba.lovable.app](https://frotaappcuritiba.lovable.app)
 
+## Screenshots
+
+### Página Inicial
+![Página Inicial](public/screenshots/home.png)
+
+### Veículos Disponíveis
+![Veículos Disponíveis](public/screenshots/vehicles.png)
+
 ## Funcionalidades
 
 ### 📋 Gestão de Veículos
