@@ -1,19 +1,19 @@
 
 
-## Plano: Atualizar README com descrição do projeto em português
+## Plano: Gerar relatório dos testes do sistema
 
-O README atual está genérico (template padrão do Lovable) e em inglês. Vou reescrevê-lo completamente em português com a descrição real do projeto.
+Vou executar todos os testes (unitários e E2E) e gerar um relatório em PDF com os resultados.
 
-### Conteúdo do novo README
+### Etapas
 
-- **Título**: FrotaApp Curitiba
-- **Descrição**: Sistema de gestão de frotas e locação de veículos
-- **Funcionalidades principais**: Gestão de veículos, contratos, manutenções, inspeções, motoristas, pagamentos, documentos, alertas e relatórios
-- **Perfis de usuário**: Locador, Motorista e Administrador
-- **Tecnologias**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Lovable Cloud
-- **Como rodar localmente**: Instruções em português
-- **URL publicada**: https://frotaappcuritiba.lovable.app
+1. **Executar testes unitários (Vitest)** com output JSON para capturar resultados detalhados
+2. **Compilar resultados** — total de testes, aprovados, falhos, tempo de execução, cobertura por área
+3. **Gerar relatório PDF** com:
+   - Resumo executivo (total, aprovados, falhos, taxa de sucesso)
+   - Detalhamento por categoria (autenticação, hooks, validações, acessibilidade, performance)
+   - Lista dos testes E2E disponíveis (~50 cenários)
+   - Data de execução e ambiente
 
-### Arquivo alterado
-- `README.md` — reescrito integralmente em português
+### Arquivo gerado
+- `/mnt/documents/relatorio_testes_frotaapp.pdf`
 
