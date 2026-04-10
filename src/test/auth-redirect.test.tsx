@@ -115,9 +115,10 @@ describe('Auth page - role-based redirect', () => {
       signIn: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
+      refreshRole: vi.fn(),
     });
     renderAuthPage();
-    // Should NOT redirect — user + role must both exist
-    expect(screen.getByText('Entrar no FrotaApp')).toBeInTheDocument();
+    // Should NOT redirect — shows role selection redirect state
+    expect(screen.getByText('Redirecionando para seleção de perfil...')).toBeInTheDocument();
   });
 });
