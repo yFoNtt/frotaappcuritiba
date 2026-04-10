@@ -118,7 +118,7 @@ describe('Auth page - role-based redirect', () => {
       refreshRole: vi.fn(),
     });
     renderAuthPage();
-    // Should NOT redirect — shows OAuth role selection instead
-    expect(screen.getByText('Bem-vindo ao FrotaApp!')).toBeInTheDocument();
+    // Should NOT redirect — shows role selection redirect state
+    expect(screen.getByText('Redirecionando para seleção de perfil...')).toBeInTheDocument();
   });
 });
