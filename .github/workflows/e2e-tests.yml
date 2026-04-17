@@ -78,6 +78,7 @@ jobs:
 
   e2e:
     name: Run E2E Tests
+    needs: seed-test-accounts
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
