@@ -57,9 +57,37 @@ Deno.serve(async (req) => {
     return json({ error: "method not allowed" }, 405);
   }
 
-  // --- Auth: shared secret ---------------------------------------------------
+  // --- Auth: shared secret, service-role bearer, OR admin JWT ---------------
+  //  1. `x-seed-token: <E2E_SEED_TOKEN>` — used by GitHub Actions
+  //  2. `Authorization: Bearer <SERVICE_ROLE_KEY>` — internal tooling
+  //  3. `Authorization: Bearer <admin user JWT>` — internal tooling via Lovable
   const provided = req.headers.get("x-seed-token") ?? "";
-  if (!SEED_TOKEN || provided !== SEED_TOKEN) {
+  const bearer = (req.headers.get("Authorization") ?? "").replace(
+    /^Bearer\s+/i,
+    "",
+  );
+  const tokenOk = !!SEED_TOKEN && provided === SEED_TOKEN;
+  const serviceRoleOk = !!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY;
+
+  let adminJwtOk = false;
+  if (!tokenOk && !serviceRoleOk && bearer) {
+    const verifier = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: claimsData } = await verifier.auth.getClaims(bearer);
+    const sub = claimsData?.claims?.sub as string | undefined;
+    if (sub) {
+      const { data: roleRow } = await verifier
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", sub)
+        .eq("role", "admin")
+        .maybeSingle();
+      adminJwtOk = !!roleRow;
+    }
+  }
+
+  if (!tokenOk && !serviceRoleOk && !adminJwtOk) {
     return json({ error: "unauthorized" }, 401);
   }
 
