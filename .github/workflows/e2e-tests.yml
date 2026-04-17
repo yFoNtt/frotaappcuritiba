@@ -7,6 +7,47 @@ on:
     branches: [main, master]
 
 jobs:
+  rls-isolation:
+    name: Storage RLS Isolation (API-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run isolation test (no browser, no webserver)
+        # This spec only hits the Supabase REST/Storage API, so we skip the
+        # webServer + browser install for a fast safety net on every PR.
+        run: |
+          cat > playwright.isolation.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './e2e',
+            reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report-isolation' }]],
+            timeout: 60000,
+            projects: [{ name: 'api', use: {} }],
+          });
+          EOF
+          npx playwright test --config=playwright.isolation.config.ts e2e/motorista-isolation.spec.ts -g "Motorista A não consegue"
+
+      - name: Upload isolation report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: rls-isolation-report
+          path: playwright-report-isolation/
+          retention-days: 14
+
   e2e:
     name: Run E2E Tests
     runs-on: ubuntu-latest
