@@ -35,8 +35,9 @@ async function loginViaApi(email: string, password: string) {
     },
     body: JSON.stringify({ email, password }),
   });
-  expect(res.ok, `Login failed for ${email}: ${await res.text()}`).toBeTruthy();
-  const data = await res.json();
+  const text = await res.text();
+  expect(res.ok, `Login failed for ${email}: ${text}`).toBeTruthy();
+  const data = JSON.parse(text);
   return {
     accessToken: data.access_token as string,
     userId: data.user.id as string,
