@@ -7,8 +7,36 @@ on:
     branches: [main, master]
 
 jobs:
+  seed-test-accounts:
+    name: Seed E2E Test Motoristas
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      seeded: ${{ steps.seed.outputs.seeded }}
+
+    steps:
+      - name: Call seed edge function (idempotent)
+        id: seed
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -sS -w "\n%{http_code}" \
+            -X POST \
+            -H "x-seed-token: ${{ secrets.E2E_SEED_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://bohycsldnskyuwsdxrqt.supabase.co/functions/v1/seed-test-motoristas")
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          STATUS=$(echo "$RESPONSE" | tail -n1)
+          echo "HTTP $STATUS"
+          echo "$BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "Seed failed with status $STATUS"
+            exit 1
+          fi
+          echo "seeded=true" >> "$GITHUB_OUTPUT"
+
   rls-isolation:
     name: Storage RLS Isolation (API-only)
+    needs: seed-test-accounts
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -50,6 +78,7 @@ jobs:
 
   e2e:
     name: Run E2E Tests
+    needs: seed-test-accounts
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
