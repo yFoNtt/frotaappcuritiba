@@ -35,8 +35,9 @@ async function loginViaApi(email: string, password: string) {
     },
     body: JSON.stringify({ email, password }),
   });
-  expect(res.ok, `Login failed for ${email}: ${await res.text()}`).toBeTruthy();
-  const data = await res.json();
+  const text = await res.text();
+  expect(res.ok, `Login failed for ${email}: ${text}`).toBeTruthy();
+  const data = JSON.parse(text);
   return {
     accessToken: data.access_token as string,
     userId: data.user.id as string,
@@ -54,8 +55,9 @@ async function fetchDriverId(accessToken: string, userId: string) {
       },
     }
   );
-  expect(res.ok, `Driver lookup failed: ${await res.text()}`).toBeTruthy();
-  const rows = (await res.json()) as { id: string }[];
+  const text = await res.text();
+  expect(res.ok, `Driver lookup failed: ${text}`).toBeTruthy();
+  const rows = JSON.parse(text) as { id: string }[];
   expect(rows.length, `No driver row for user ${userId}`).toBeGreaterThan(0);
   return rows[0].id;
 }
