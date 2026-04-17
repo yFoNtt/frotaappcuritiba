@@ -57,9 +57,18 @@ Deno.serve(async (req) => {
     return json({ error: "method not allowed" }, 405);
   }
 
-  // --- Auth: shared secret ---------------------------------------------------
+  // --- Auth: shared secret OR service-role bearer ---------------------------
+  // Two ways to authenticate this admin endpoint:
+  //  1. `x-seed-token: <E2E_SEED_TOKEN>` — used by GitHub Actions
+  //  2. `Authorization: Bearer <SERVICE_ROLE_KEY>` — used by internal tooling
   const provided = req.headers.get("x-seed-token") ?? "";
-  if (!SEED_TOKEN || provided !== SEED_TOKEN) {
+  const bearer = (req.headers.get("Authorization") ?? "").replace(
+    /^Bearer\s+/i,
+    "",
+  );
+  const tokenOk = !!SEED_TOKEN && provided === SEED_TOKEN;
+  const serviceRoleOk = !!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY;
+  if (!tokenOk && !serviceRoleOk) {
     return json({ error: "unauthorized" }, 401);
   }
 
