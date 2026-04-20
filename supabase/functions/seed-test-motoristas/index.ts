@@ -74,8 +74,8 @@ Deno.serve(async (req) => {
     const verifier = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { data: claimsData } = await verifier.auth.getClaims(bearer);
-    const sub = claimsData?.claims?.sub as string | undefined;
+    const { data: userData } = await verifier.auth.getUser(bearer);
+    const sub = userData?.user?.id;
     if (sub) {
       const { data: roleRow } = await verifier
         .from("user_roles")
