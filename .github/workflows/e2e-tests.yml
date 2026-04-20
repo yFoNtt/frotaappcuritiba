@@ -129,3 +129,28 @@ jobs:
           name: e2e-screenshots
           path: e2e/test-results/
           retention-days: 7
+
+  cleanup-test-artifacts:
+    name: Cleanup E2E Test Artifacts
+    needs: [e2e, rls-isolation]
+    if: ${{ always() && needs.seed-test-accounts.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Call cleanup edge function (idempotent)
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -sS -w "\n%{http_code}" \
+            -X POST \
+            -H "x-seed-token: ${{ secrets.E2E_SEED_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://bohycsldnskyuwsdxrqt.supabase.co/functions/v1/cleanup-test-motoristas")
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          STATUS=$(echo "$RESPONSE" | tail -n1)
+          echo "HTTP $STATUS"
+          echo "$BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "Cleanup failed with status $STATUS"
+            exit 1
+          fi
