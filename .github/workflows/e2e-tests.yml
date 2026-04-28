@@ -8,6 +8,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint-design-tokens:
+    name: Lint - No hardcoded color classes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify no hardcoded Tailwind color classes in src/
+        run: node scripts/check-hardcoded-colors.mjs
+
   seed-test-accounts:
     name: Seed E2E Test Motoristas
     runs-on: ubuntu-latest
