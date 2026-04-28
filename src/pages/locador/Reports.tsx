@@ -277,11 +277,11 @@ export default function LocadorReports() {
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               {totals.receitaGrowth >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-green-500" />
+                <TrendingUp className="h-3 w-3 text-success" />
               ) : (
-                <TrendingDown className="h-3 w-3 text-red-500" />
+                <TrendingDown className="h-3 w-3 text-destructive" />
               )}
-              <span className={totals.receitaGrowth >= 0 ? 'text-green-500' : 'text-red-500'}>
+              <span className={totals.receitaGrowth >= 0 ? 'text-success' : 'text-destructive'}>
                 {totals.receitaGrowth.toFixed(1)}%
               </span>
               vs mês anterior
@@ -310,7 +310,7 @@ export default function LocadorReports() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totals.totalLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-2xl font-bold ${totals.totalLucro >= 0 ? 'text-success' : 'text-destructive'}`}>
               R$ {totals.totalLucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-muted-foreground">

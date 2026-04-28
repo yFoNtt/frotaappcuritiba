@@ -81,8 +81,8 @@ export function InspectionComparison({
   };
 
   const getDifferenceIndicator = (before: number, after: number) => {
-    if (after > before) return { icon: ArrowUp, color: 'text-green-500', label: 'Melhorou' };
-    if (after < before) return { icon: ArrowDown, color: 'text-red-500', label: 'Piorou' };
+    if (after > before) return { icon: ArrowUp, color: 'text-success', label: 'Melhorou' };
+    if (after < before) return { icon: ArrowDown, color: 'text-destructive', label: 'Piorou' };
     return { icon: null, color: 'text-muted-foreground', label: 'Igual' };
   };
 
@@ -454,10 +454,10 @@ function ComparisonRow({
 }: ComparisonRowProps) {
   const getConditionColor = (condition?: string) => {
     const colors: Record<string, string> = {
-      excellent: 'text-green-600 bg-green-50',
-      good: 'text-blue-600 bg-blue-50',
-      fair: 'text-yellow-600 bg-yellow-50',
-      poor: 'text-red-600 bg-red-50',
+      excellent: 'text-success-soft-foreground bg-success-soft',
+      good: 'text-info-soft-foreground bg-info-soft',
+      fair: 'text-warning-soft-foreground bg-warning-soft',
+      poor: 'text-destructive-soft-foreground bg-destructive-soft',
     };
     return condition ? colors[condition] || '' : '';
   };
@@ -465,8 +465,8 @@ function ComparisonRow({
   const getBoolIcon = (value?: boolean) => {
     if (value === undefined) return null;
     return value 
-      ? <Check className="h-4 w-4 text-green-600" />
-      : <X className="h-4 w-4 text-red-600" />;
+      ? <Check className="h-4 w-4 text-success" />
+      : <X className="h-4 w-4 text-destructive" />;
   };
 
   return (
@@ -506,7 +506,7 @@ function ComparisonRow({
         {checkInBool !== undefined && checkOutBool !== undefined && (
           <span className={cn(
             "text-xs",
-            checkInBool === checkOutBool ? 'text-muted-foreground' : checkOutBool ? 'text-green-600' : 'text-red-600'
+            checkInBool === checkOutBool ? 'text-muted-foreground' : checkOutBool ? 'text-success' : 'text-destructive'
           )}>
             {checkInBool === checkOutBool ? 'Igual' : checkOutBool ? 'Reparado' : 'Defeito'}
           </span>
