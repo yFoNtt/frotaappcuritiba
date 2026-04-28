@@ -63,7 +63,15 @@ export default {
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
+  				foreground: 'hsl(var(--destructive-foreground))',
+  				soft: 'hsl(var(--destructive-soft))',
+  				'soft-foreground': 'hsl(var(--destructive-soft-foreground))'
+  			},
+  			info: {
+  				DEFAULT: 'hsl(var(--info))',
+  				foreground: 'hsl(var(--info-foreground))',
+  				soft: 'hsl(var(--info-soft))',
+  				'soft-foreground': 'hsl(var(--info-soft-foreground))'
   			},
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
@@ -83,11 +91,15 @@ export default {
   			},
   			success: {
   				DEFAULT: 'hsl(var(--success))',
-  				foreground: 'hsl(var(--success-foreground))'
+  				foreground: 'hsl(var(--success-foreground))',
+  				soft: 'hsl(var(--success-soft))',
+  				'soft-foreground': 'hsl(var(--success-soft-foreground))'
   			},
   			warning: {
   				DEFAULT: 'hsl(var(--warning))',
-  				foreground: 'hsl(var(--warning-foreground))'
+  				foreground: 'hsl(var(--warning-foreground))',
+  				soft: 'hsl(var(--warning-soft))',
+  				'soft-foreground': 'hsl(var(--warning-soft-foreground))'
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',

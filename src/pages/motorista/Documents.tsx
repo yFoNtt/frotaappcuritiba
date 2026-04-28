@@ -349,8 +349,8 @@ export default function MotoristaDocuments() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className={`rounded-xl p-3 ${pendingRequests.length > 0 ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-muted'}`}>
-                  <Clock className={`h-6 w-6 ${pendingRequests.length > 0 ? 'text-yellow-600 dark:text-yellow-300' : 'text-muted-foreground'}`} />
+                <div className={`rounded-xl p-3 ${pendingRequests.length > 0 ? 'bg-warning-soft' : 'bg-muted'}`}>
+                  <Clock className={`h-6 w-6 ${pendingRequests.length > 0 ? 'text-warning-soft-foreground' : 'text-muted-foreground'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pendentes</p>
@@ -600,9 +600,9 @@ export default function MotoristaDocuments() {
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <StatusIcon className={`h-4 w-4 ${
-                                    request.status === 'pending' ? 'text-yellow-600' :
-                                    request.status === 'approved' ? 'text-green-600' :
-                                    'text-red-600'
+                                    request.status === 'pending' ? 'text-warning' :
+                                    request.status === 'approved' ? 'text-success' :
+                                    'text-destructive'
                                   }`} />
                                   <Badge className={getStatusColor(request.status)}>
                                     {getStatusLabel(request.status)}
