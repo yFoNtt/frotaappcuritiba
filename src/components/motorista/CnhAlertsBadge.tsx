@@ -61,7 +61,7 @@ export function CnhAlertsBadge() {
                   >
                     <div className={cn(
                       "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                      severity === 'error' ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-600"
+                      severity === 'error' ? "bg-destructive-soft text-destructive-soft-foreground" : "bg-warning-soft text-warning-soft-foreground"
                     )}>
                       {severity === 'error' ? (
                         <AlertCircle className="h-4 w-4" />
@@ -75,7 +75,7 @@ export function CnhAlertsBadge() {
                           {title}
                         </p>
                         {!isUnread && (
-                          <Check className="h-4 w-4 shrink-0 text-green-500" />
+                          <Check className="h-4 w-4 shrink-0 text-success" />
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{description}</p>
