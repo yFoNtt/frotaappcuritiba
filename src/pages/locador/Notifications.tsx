@@ -39,8 +39,8 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; bgColor: st
   payment_overdue: { icon: CreditCard, color: 'text-destructive', bgColor: 'bg-destructive/10', label: 'Pagamento' },
   cnh_expiry: { icon: IdCard, color: 'text-warning', bgColor: 'bg-warning/10', label: 'CNH' },
   maintenance_due: { icon: Wrench, color: 'text-primary', bgColor: 'bg-primary/10', label: 'Manutenção' },
-  contract_expiry: { icon: FileText, color: 'text-orange-500', bgColor: 'bg-orange-500/10', label: 'Contrato' },
-  driver_change: { icon: UserPen, color: 'text-blue-500', bgColor: 'bg-blue-500/10', label: 'Motorista' },
+  contract_expiry: { icon: FileText, color: 'text-warning', bgColor: 'bg-warning/10', label: 'Contrato' },
+  driver_change: { icon: UserPen, color: 'text-info', bgColor: 'bg-info/10', label: 'Motorista' },
 };
 
 const statusFilters = [
@@ -228,8 +228,8 @@ export default function LocadorNotifications() {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
-                <UserPen className="h-5 w-5 text-blue-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-info/10">
+                <UserPen className="h-5 w-5 text-info" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.driverChanges}</p>

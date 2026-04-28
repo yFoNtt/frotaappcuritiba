@@ -81,8 +81,8 @@ export function InspectionComparison({
   };
 
   const getDifferenceIndicator = (before: number, after: number) => {
-    if (after > before) return { icon: ArrowUp, color: 'text-green-500', label: 'Melhorou' };
-    if (after < before) return { icon: ArrowDown, color: 'text-red-500', label: 'Piorou' };
+    if (after > before) return { icon: ArrowUp, color: 'text-success', label: 'Melhorou' };
+    if (after < before) return { icon: ArrowDown, color: 'text-destructive', label: 'Piorou' };
     return { icon: null, color: 'text-muted-foreground', label: 'Igual' };
   };
 
@@ -506,7 +506,7 @@ function ComparisonRow({
         {checkInBool !== undefined && checkOutBool !== undefined && (
           <span className={cn(
             "text-xs",
-            checkInBool === checkOutBool ? 'text-muted-foreground' : checkOutBool ? 'text-green-600' : 'text-red-600'
+            checkInBool === checkOutBool ? 'text-muted-foreground' : checkOutBool ? 'text-success' : 'text-destructive'
           )}>
             {checkInBool === checkOutBool ? 'Igual' : checkOutBool ? 'Reparado' : 'Defeito'}
           </span>

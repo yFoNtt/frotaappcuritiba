@@ -199,10 +199,10 @@ function InspectionSummaryCard({ inspection, onView }: InspectionSummaryCardProp
 
 function ConditionBadge({ condition }: { condition: string }) {
   const conditionColors: Record<string, string> = {
-    excellent: 'text-green-600',
-    good: 'text-blue-600',
-    fair: 'text-yellow-600',
-    poor: 'text-red-600',
+    excellent: 'text-success',
+    good: 'text-info',
+    fair: 'text-warning',
+    poor: 'text-destructive',
   };
 
   return (
