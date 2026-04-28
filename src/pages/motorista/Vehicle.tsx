@@ -96,7 +96,7 @@ export default function MotoristaVehicle() {
                     </h2>
                     <p className="text-lg text-muted-foreground">{vehicle.year}</p>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-600">
+                  <Badge className="bg-success-soft text-success-soft-foreground">
                     Em uso
                   </Badge>
                 </div>

@@ -27,10 +27,10 @@ function evaluatePassword(password: string): PasswordStrength {
   const levels: Record<number, { label: string; color: string }> = {
     0: { label: 'Muito fraca', color: 'bg-destructive' },
     1: { label: 'Fraca', color: 'bg-destructive' },
-    2: { label: 'Razoável', color: 'bg-orange-500' },
-    3: { label: 'Boa', color: 'bg-yellow-500' },
-    4: { label: 'Forte', color: 'bg-emerald-500' },
-    5: { label: 'Excelente', color: 'bg-emerald-600' },
+    2: { label: 'Razoável', color: 'bg-warning' },
+    3: { label: 'Boa', color: 'bg-warning' },
+    4: { label: 'Forte', color: 'bg-success' },
+    5: { label: 'Excelente', color: 'bg-success' },
   };
 
   const { label, color } = levels[score];
@@ -123,11 +123,11 @@ export function PasswordField({
               {strength.checks.map((check) => (
                 <div key={check.label} className="flex items-center gap-1.5">
                   {check.passed ? (
-                    <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+                    <Check className="h-3 w-3 text-success shrink-0" />
                   ) : (
                     <X className="h-3 w-3 text-muted-foreground/50 shrink-0" />
                   )}
-                  <span className={`text-[11px] ${check.passed ? 'text-emerald-500' : 'text-muted-foreground/50'}`}>
+                  <span className={`text-[11px] ${check.passed ? 'text-success' : 'text-muted-foreground/50'}`}>
                     {check.label}
                   </span>
                 </div>
