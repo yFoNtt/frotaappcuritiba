@@ -124,10 +124,10 @@ export default function MotoristaDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Total Pago</CardTitle>
-              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <div className="text-lg sm:text-2xl font-bold text-green-600">
+              <div className="text-lg sm:text-2xl font-bold text-success">
                 R$ {(stats?.totalPago || 0).toLocaleString('pt-BR')}
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">Pagamentos em dia</p>
@@ -137,10 +137,10 @@ export default function MotoristaDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Pendente</CardTitle>
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <div className="text-lg sm:text-2xl font-bold text-yellow-600">
+              <div className="text-lg sm:text-2xl font-bold text-warning">
                 R$ {(stats?.pendente || 0).toLocaleString('pt-BR')}
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">Aguardando pagamento</p>
@@ -217,7 +217,7 @@ export default function MotoristaDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">{vehicle.fuel_type}</Badge>
-                      <Badge className="bg-green-500/10 text-green-600 text-xs">
+                      <Badge className="bg-success-soft text-success-soft-foreground text-xs">
                         Em uso
                       </Badge>
                     </div>
@@ -288,7 +288,7 @@ export default function MotoristaDashboard() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center">
-                  <CheckCircle2 className="mb-2 h-10 w-10 sm:h-12 sm:w-12 text-green-500" />
+                  <CheckCircle2 className="mb-2 h-10 w-10 sm:h-12 sm:w-12 text-success" />
                   <p className="font-medium text-sm">Tudo em dia!</p>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     Você não tem pagamentos pendentes
