@@ -454,10 +454,10 @@ function ComparisonRow({
 }: ComparisonRowProps) {
   const getConditionColor = (condition?: string) => {
     const colors: Record<string, string> = {
-      excellent: 'text-green-600 bg-green-50',
-      good: 'text-blue-600 bg-blue-50',
-      fair: 'text-yellow-600 bg-yellow-50',
-      poor: 'text-red-600 bg-red-50',
+      excellent: 'text-success-soft-foreground bg-success-soft',
+      good: 'text-info-soft-foreground bg-info-soft',
+      fair: 'text-warning-soft-foreground bg-warning-soft',
+      poor: 'text-destructive-soft-foreground bg-destructive-soft',
     };
     return condition ? colors[condition] || '' : '';
   };
@@ -465,8 +465,8 @@ function ComparisonRow({
   const getBoolIcon = (value?: boolean) => {
     if (value === undefined) return null;
     return value 
-      ? <Check className="h-4 w-4 text-green-600" />
-      : <X className="h-4 w-4 text-red-600" />;
+      ? <Check className="h-4 w-4 text-success" />
+      : <X className="h-4 w-4 text-destructive" />;
   };
 
   return (
