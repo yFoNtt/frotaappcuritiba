@@ -188,32 +188,74 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
   }, [conversationId]);
 
   const uploadAttachment = useCallback(
-    async (file: File): Promise<AttachmentInput | null> => {
+    async (
+      file: File,
+      options?: {
+        maxAttempts?: number;
+        onRetry?: (attempt: number, maxAttempts: number, delayMs: number) => void;
+      },
+    ): Promise<AttachmentInput | null> => {
       if (!conversationId || !user) return null;
+      const maxAttempts = options?.maxAttempts ?? 3;
       const ext = file.name.split('.').pop() || 'bin';
       const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
-      const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
 
-      const { error } = await supabase.storage
-        .from('chat-attachments')
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type || `application/${ext}`,
-        });
+      // Errors we should NOT retry (auth/permission/payload problems)
+      const isFatal = (err: { message?: string; statusCode?: string | number }) => {
+        const msg = (err.message || '').toLowerCase();
+        const status = String(err.statusCode ?? '');
+        return (
+          status === '401' ||
+          status === '403' ||
+          status === '413' ||
+          msg.includes('unauthorized') ||
+          msg.includes('forbidden') ||
+          msg.includes('payload too large') ||
+          msg.includes('invalid') ||
+          msg.includes('mime')
+        );
+      };
 
-      if (error) {
-        console.error('[useConversation] upload error', error);
-        toast.error('Erro ao enviar anexo');
-        return null;
+      let lastError: unknown = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        // Use a fresh path per attempt so a partial upload doesn't block the retry
+        const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
+        const { error } = await supabase.storage
+          .from('chat-attachments')
+          .upload(path, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type || `application/${ext}`,
+          });
+
+        if (!error) {
+          return {
+            path,
+            name: file.name,
+            mime: file.type || 'application/octet-stream',
+            size: file.size,
+          };
+        }
+
+        lastError = error;
+        console.warn(
+          `[useConversation] upload attempt ${attempt}/${maxAttempts} failed`,
+          error,
+        );
+
+        if (isFatal(error as any) || attempt === maxAttempts) break;
+
+        // Exponential backoff with jitter: 500ms, 1500ms, 3500ms (+/- 30%)
+        const base = 500 * Math.pow(2, attempt - 1) + (attempt - 1) * 500;
+        const jitter = base * 0.3 * (Math.random() * 2 - 1);
+        const delayMs = Math.max(200, Math.round(base + jitter));
+        options?.onRetry?.(attempt + 1, maxAttempts, delayMs);
+        await new Promise((r) => setTimeout(r, delayMs));
       }
 
-      return {
-        path,
-        name: file.name,
-        mime: file.type || 'application/octet-stream',
-        size: file.size,
-      };
+      console.error('[useConversation] upload failed after retries', lastError);
+      toast.error('Não foi possível enviar o anexo. Tente novamente.');
+      return null;
     },
     [conversationId, user],
   );
