@@ -1,0 +1,218 @@
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+
+export type ChatRole = 'locador' | 'motorista';
+
+export interface Conversation {
+  id: string;
+  locador_id: string;
+  driver_id: string;
+  last_message_preview: string | null;
+  last_message_at: string;
+  unread_locador: number;
+  unread_motorista: number;
+  created_at: string;
+  updated_at: string;
+  // joined
+  driver?: { id: string; name: string; user_id: string | null } | null;
+  locador?: { user_id: string; full_name: string | null } | null;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_role: ChatRole;
+  content: string | null;
+  attachment_url: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+/**
+ * Lists conversations for the current user (locador or motorista) with realtime updates.
+ */
+export function useConversations(role: ChatRole) {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+
+    let query = supabase
+      .from('conversations')
+      .select('*, driver:drivers!conversations_driver_id_fkey(id,name,user_id)')
+      .order('last_message_at', { ascending: false });
+
+    if (role === 'locador') {
+      query = query.eq('locador_id', user.id);
+    } else {
+      // motorista: filtered by RLS through drivers.user_id
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('[useConversations] load error', error);
+      toast.error('Erro ao carregar conversas');
+      setLoading(false);
+      return;
+    }
+    setConversations((data ?? []) as unknown as Conversation[]);
+    setLoading(false);
+  }, [user, role]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Realtime: any change in conversations involving this user reloads the list
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`conversations-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => {
+          load();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, load]);
+
+  return { conversations, loading, reload: load };
+}
+
+/**
+ * Manages messages of a single conversation: load, send, mark as read, realtime.
+ */
+export function useConversation(conversationId: string | null, role: ChatRole) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const seenIds = useRef<Set<string>>(new Set());
+
+  const load = useCallback(async () => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[useConversation] load error', error);
+      toast.error('Erro ao carregar mensagens');
+      setLoading(false);
+      return;
+    }
+    const list = (data ?? []) as unknown as Message[];
+    seenIds.current = new Set(list.map((m) => m.id));
+    setMessages(list);
+    setLoading(false);
+  }, [conversationId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Realtime new messages
+  useEffect(() => {
+    if (!conversationId) return;
+    const channel = supabase
+      .channel(`messages-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const m = payload.new as Message;
+          if (seenIds.current.has(m.id)) return;
+          seenIds.current.add(m.id);
+          setMessages((prev) => [...prev, m]);
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const m = payload.new as Message;
+          setMessages((prev) => prev.map((x) => (x.id === m.id ? m : x)));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId]);
+
+  const send = useCallback(
+    async (content: string, attachmentUrl?: string | null) => {
+      if (!user || !conversationId) return;
+      const text = content.trim();
+      if (!text && !attachmentUrl) return;
+
+      setSending(true);
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        sender_role: role,
+        content: text || null,
+        attachment_url: attachmentUrl ?? null,
+      });
+      setSending(false);
+
+      if (error) {
+        console.error('[useConversation] send error', error);
+        toast.error('Erro ao enviar mensagem');
+      }
+    },
+    [user, conversationId, role],
+  );
+
+  const markAsRead = useCallback(async () => {
+    if (!user || !conversationId) return;
+
+    const otherRole: ChatRole = role === 'locador' ? 'motorista' : 'locador';
+    const unreadIds = messages
+      .filter((m) => !m.read_at && m.sender_role === otherRole)
+      .map((m) => m.id);
+
+    if (unreadIds.length > 0) {
+      await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', unreadIds);
+    }
+
+    // Reset unread counter on conversation
+    const counterField = role === 'locador' ? 'unread_locador' : 'unread_motorista';
+    await supabase
+      .from('conversations')
+      .update({ [counterField]: 0 })
+      .eq('id', conversationId);
+  }, [user, conversationId, role, messages]);
+
+  return { messages, loading, sending, send, markAsRead, reload: load };
+}
