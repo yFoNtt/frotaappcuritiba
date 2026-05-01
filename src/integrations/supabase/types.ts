@@ -152,6 +152,42 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          last_message_at: string
+          last_message_preview: string | null
+          locador_id: string
+          unread_locador: number
+          unread_motorista: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          locador_id: string
+          unread_locador?: number
+          unread_motorista?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          locador_id?: string
+          unread_locador?: number
+          unread_motorista?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_requests: {
         Row: {
           created_at: string
@@ -471,6 +507,47 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          attachment_url: string | null
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          attachment_url?: string | null
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]

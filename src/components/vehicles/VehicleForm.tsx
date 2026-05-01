@@ -36,6 +36,7 @@ import { toast } from 'sonner';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Vehicle } from '@/hooks/useVehicles';
+import { PriceSuggestion } from './PriceSuggestion';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -464,6 +465,17 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
             </div>
 
             {/* Pricing */}
+            <PriceSuggestion
+              brand={form.watch('brand')}
+              model={form.watch('model')}
+              year={form.watch('year')}
+              city={form.watch('city')}
+              state={form.watch('state')}
+              fuel_type={form.watch('fuel_type')}
+              km_limit={form.watch('km_limit')}
+              allowed_apps={form.watch('allowed_apps')}
+              onApply={(price) => form.setValue('weekly_price', price, { shouldValidate: true, shouldDirty: true })}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
