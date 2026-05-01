@@ -32,9 +32,12 @@ export function ChatWindow({ role }: Props) {
   const { user } = useAuth();
   const { conversations, loading: loadingList } = useConversations(role);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { messages, loading, sending, send, markAsRead } = useConversation(activeId, role);
+  const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [showListMobile, setShowListMobile] = useState(true);
 
   // Auto-select first conversation on desktop
@@ -67,9 +70,36 @@ export function ChatWindow({ role }: Props) {
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     const value = text.trim();
-    if (!value) return;
+    if (!value && !pendingFile) return;
+
+    let attachment: AttachmentInput | null = null;
+    if (pendingFile) {
+      setUploading(true);
+      attachment = await uploadAttachment(pendingFile);
+      setUploading(false);
+      if (!attachment) return; // upload failed; toast already shown
+    }
+
     setText('');
-    await send(value);
+    setPendingFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    await send(value, attachment);
+  };
+
+  const handlePickFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      toast.error('Arquivo muito grande (máx. 10 MB).');
+      e.target.value = '';
+      return;
+    }
+    if (!ALLOWED_MIME.test(file.type)) {
+      toast.error('Tipo de arquivo não permitido.');
+      e.target.value = '';
+      return;
+    }
+    setPendingFile(file);
   };
 
   const handleSelect = (id: string) => {
