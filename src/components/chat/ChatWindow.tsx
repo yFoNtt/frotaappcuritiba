@@ -366,14 +366,22 @@ export function ChatWindow({ role }: Props) {
                 <div className="mb-2 flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
                   <Paperclip className="h-3.5 w-3.5 shrink-0" />
                   <span className="flex-1 truncate">{pendingFile.name}</span>
-                  <span className="opacity-70">
-                    {(pendingFile.size / 1024).toFixed(0)} KB
-                  </span>
+                  {retryInfo ? (
+                    <span className="flex items-center gap-1 text-warning">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Tentativa {retryInfo.attempt}/{retryInfo.max}
+                    </span>
+                  ) : (
+                    <span className="opacity-70">
+                      {(pendingFile.size / 1024).toFixed(0)} KB
+                    </span>
+                  )}
                   <Button
                     type="button"
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6"
+                    disabled={uploading}
                     onClick={() => {
                       setPendingFile(null);
                       if (fileInputRef.current) fileInputRef.current.value = '';
