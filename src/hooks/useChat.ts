@@ -268,5 +268,5 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
       .eq('id', conversationId);
   }, [user, conversationId, role, messages]);
 
-  return { messages, loading, sending, send, markAsRead, reload: load };
+  return { messages, loading, sending, send, uploadAttachment, markAsRead, reload: load };
 }
