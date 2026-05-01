@@ -264,6 +264,15 @@ export function ChatWindow({ role }: Props) {
                             )}
                           >
                             {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
+                            {m.attachment_path && (
+                              <MessageAttachment
+                                path={m.attachment_path}
+                                name={m.attachment_name}
+                                mime={m.attachment_mime}
+                                size={m.attachment_size}
+                                mine={mine}
+                              />
+                            )}
                             <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
                               <span>{format(new Date(m.created_at), 'HH:mm')}</span>
                               {mine && m.read_at && <span>✓✓</span>}
@@ -278,18 +287,66 @@ export function ChatWindow({ role }: Props) {
               )}
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
-              <Input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Digite sua mensagem..."
-                disabled={sending}
-                maxLength={2000}
-                autoComplete="off"
-              />
-              <Button type="submit" disabled={sending || !text.trim()} size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
+            <form onSubmit={handleSend} className="border-t p-3">
+              {pendingFile && (
+                <div className="mb-2 flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                  <span className="flex-1 truncate">{pendingFile.name}</span>
+                  <span className="opacity-70">
+                    {(pendingFile.size / 1024).toFixed(0)} KB
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setPendingFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  onChange={handlePickFile}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sending || uploading}
+                  aria-label="Anexar arquivo"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <Input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                  disabled={sending || uploading}
+                  maxLength={2000}
+                  autoComplete="off"
+                />
+                <Button
+                  type="submit"
+                  disabled={sending || uploading || (!text.trim() && !pendingFile)}
+                  size="icon"
+                >
+                  {uploading || sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </form>
           </>
         )}
