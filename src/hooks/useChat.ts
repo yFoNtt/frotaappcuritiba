@@ -27,8 +27,19 @@ export interface Message {
   sender_role: ChatRole;
   content: string | null;
   attachment_url: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_mime: string | null;
+  attachment_size: number | null;
   read_at: string | null;
   created_at: string;
+}
+
+export interface AttachmentInput {
+  path: string;
+  name: string;
+  mime: string;
+  size: number;
 }
 
 /**
