@@ -12,6 +12,7 @@ import {
   Menu,
   Truck,
   FolderOpen,
+  MessageSquare,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
   { icon: Car, label: 'Meu Veículo', path: '/motorista/veiculo' },
   { icon: CreditCard, label: 'Pagamentos', path: '/motorista/pagamentos' },
+  { icon: MessageSquare, label: 'Mensagens', path: '/motorista/mensagens' },
   { icon: FolderOpen, label: 'Documentos', path: '/motorista/documentos' },
   { icon: History, label: 'Histórico', path: '/motorista/historico' },
   { icon: Settings, label: 'Configurações', path: '/motorista/configuracoes' },
