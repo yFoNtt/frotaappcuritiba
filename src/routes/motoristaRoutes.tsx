@@ -10,6 +10,7 @@ const MotoristaPagamentos = lazy(() => import("@/pages/motorista/Payments"));
 const MotoristaDocuments = lazy(() => import("@/pages/motorista/Documents"));
 const MotoristaHistorico = lazy(() => import("@/pages/motorista/History"));
 const MotoristaSettings = lazy(() => import("@/pages/motorista/Settings"));
+const MotoristaMessages = lazy(() => import("@/pages/motorista/Messages"));
 
 const motoristaRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
@@ -31,5 +32,6 @@ export const motoristaRoutes = (
     {motoristaRoute("/motorista/historico", MotoristaHistorico)}
     {motoristaRoute("/motorista/documentos", MotoristaDocuments)}
     {motoristaRoute("/motorista/configuracoes", MotoristaSettings)}
+    {motoristaRoute("/motorista/mensagens", MotoristaMessages)}
   </>
 );
