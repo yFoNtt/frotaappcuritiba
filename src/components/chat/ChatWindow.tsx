@@ -1,16 +1,21 @@
-import { useEffect, useRef, useState, FormEvent } from 'react';
+import { useEffect, useRef, useState, FormEvent, ChangeEvent } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, ArrowLeft, Paperclip, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useConversation, useConversations, type ChatRole } from '@/hooks/useChat';
+import { useConversation, useConversations, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { MessageAttachment } from './MessageAttachment';
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/)/;
 
 interface Props {
   role: ChatRole;
@@ -27,9 +32,12 @@ export function ChatWindow({ role }: Props) {
   const { user } = useAuth();
   const { conversations, loading: loadingList } = useConversations(role);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { messages, loading, sending, send, markAsRead } = useConversation(activeId, role);
+  const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [showListMobile, setShowListMobile] = useState(true);
 
   // Auto-select first conversation on desktop
@@ -62,9 +70,36 @@ export function ChatWindow({ role }: Props) {
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     const value = text.trim();
-    if (!value) return;
+    if (!value && !pendingFile) return;
+
+    let attachment: AttachmentInput | null = null;
+    if (pendingFile) {
+      setUploading(true);
+      attachment = await uploadAttachment(pendingFile);
+      setUploading(false);
+      if (!attachment) return; // upload failed; toast already shown
+    }
+
     setText('');
-    await send(value);
+    setPendingFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    await send(value, attachment);
+  };
+
+  const handlePickFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      toast.error('Arquivo muito grande (máx. 10 MB).');
+      e.target.value = '';
+      return;
+    }
+    if (!ALLOWED_MIME.test(file.type)) {
+      toast.error('Tipo de arquivo não permitido.');
+      e.target.value = '';
+      return;
+    }
+    setPendingFile(file);
   };
 
   const handleSelect = (id: string) => {
@@ -229,6 +264,15 @@ export function ChatWindow({ role }: Props) {
                             )}
                           >
                             {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
+                            {m.attachment_path && (
+                              <MessageAttachment
+                                path={m.attachment_path}
+                                name={m.attachment_name}
+                                mime={m.attachment_mime}
+                                size={m.attachment_size}
+                                mine={mine}
+                              />
+                            )}
                             <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
                               <span>{format(new Date(m.created_at), 'HH:mm')}</span>
                               {mine && m.read_at && <span>✓✓</span>}
@@ -243,18 +287,66 @@ export function ChatWindow({ role }: Props) {
               )}
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t p-3">
-              <Input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Digite sua mensagem..."
-                disabled={sending}
-                maxLength={2000}
-                autoComplete="off"
-              />
-              <Button type="submit" disabled={sending || !text.trim()} size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
+            <form onSubmit={handleSend} className="border-t p-3">
+              {pendingFile && (
+                <div className="mb-2 flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                  <span className="flex-1 truncate">{pendingFile.name}</span>
+                  <span className="opacity-70">
+                    {(pendingFile.size / 1024).toFixed(0)} KB
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setPendingFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  onChange={handlePickFile}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sending || uploading}
+                  aria-label="Anexar arquivo"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <Input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                  disabled={sending || uploading}
+                  maxLength={2000}
+                  autoComplete="off"
+                />
+                <Button
+                  type="submit"
+                  disabled={sending || uploading || (!text.trim() && !pendingFile)}
+                  size="icon"
+                >
+                  {uploading || sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </form>
           </>
         )}

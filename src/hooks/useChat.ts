@@ -27,8 +27,19 @@ export interface Message {
   sender_role: ChatRole;
   content: string | null;
   attachment_url: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_mime: string | null;
+  attachment_size: number | null;
   read_at: string | null;
   created_at: string;
+}
+
+export interface AttachmentInput {
+  path: string;
+  name: string;
+  mime: string;
+  size: number;
 }
 
 /**
@@ -176,11 +187,42 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
     };
   }, [conversationId]);
 
+  const uploadAttachment = useCallback(
+    async (file: File): Promise<AttachmentInput | null> => {
+      if (!conversationId || !user) return null;
+      const ext = file.name.split('.').pop() || 'bin';
+      const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+      const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
+
+      const { error } = await supabase.storage
+        .from('chat-attachments')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type || `application/${ext}`,
+        });
+
+      if (error) {
+        console.error('[useConversation] upload error', error);
+        toast.error('Erro ao enviar anexo');
+        return null;
+      }
+
+      return {
+        path,
+        name: file.name,
+        mime: file.type || 'application/octet-stream',
+        size: file.size,
+      };
+    },
+    [conversationId, user],
+  );
+
   const send = useCallback(
-    async (content: string, attachmentUrl?: string | null) => {
+    async (content: string, attachment?: AttachmentInput | null) => {
       if (!user || !conversationId) return;
       const text = content.trim();
-      if (!text && !attachmentUrl) return;
+      if (!text && !attachment) return;
 
       setSending(true);
       const { error } = await supabase.from('messages').insert({
@@ -188,7 +230,10 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
         sender_id: user.id,
         sender_role: role,
         content: text || null,
-        attachment_url: attachmentUrl ?? null,
+        attachment_path: attachment?.path ?? null,
+        attachment_name: attachment?.name ?? null,
+        attachment_mime: attachment?.mime ?? null,
+        attachment_size: attachment?.size ?? null,
       });
       setSending(false);
 
@@ -223,5 +268,5 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
       .eq('id', conversationId);
   }, [user, conversationId, role, messages]);
 
-  return { messages, loading, sending, send, markAsRead, reload: load };
+  return { messages, loading, sending, send, uploadAttachment, markAsRead, reload: load };
 }
