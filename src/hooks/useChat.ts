@@ -219,10 +219,10 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
   );
 
   const send = useCallback(
-    async (content: string, attachment?: AttachmentInput | null) => {
-      if (!user || !conversationId) return;
+    async (content: string, attachment?: AttachmentInput | null): Promise<boolean> => {
+      if (!user || !conversationId) return false;
       const text = content.trim();
-      if (!text && !attachment) return;
+      if (!text && !attachment) return false;
 
       setSending(true);
       const { error } = await supabase.from('messages').insert({
@@ -240,7 +240,9 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
       if (error) {
         console.error('[useConversation] send error', error);
         toast.error('Erro ao enviar mensagem');
+        return false;
       }
+      return true;
     },
     [user, conversationId, role],
   );
