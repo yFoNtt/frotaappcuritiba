@@ -19,6 +19,7 @@ const LocadorSettings = lazy(() => import("@/pages/locador/Settings"));
 const LocadorInspections = lazy(() => import("@/pages/locador/Inspections"));
 const LocadorAuditLogs = lazy(() => import("@/pages/locador/AuditLogs"));
 const LocadorNotifications = lazy(() => import("@/pages/locador/Notifications"));
+const LocadorMessages = lazy(() => import("@/pages/locador/Messages"));
 
 const locadorRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
@@ -49,5 +50,6 @@ export const locadorRoutes = (
     {locadorRoute("/locador/configuracoes", LocadorSettings)}
     {locadorRoute("/locador/auditoria", LocadorAuditLogs)}
     {locadorRoute("/locador/notificacoes", LocadorNotifications)}
+    {locadorRoute("/locador/mensagens", LocadorMessages)}
   </>
 );
