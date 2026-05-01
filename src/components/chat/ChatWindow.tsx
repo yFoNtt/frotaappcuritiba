@@ -38,6 +38,11 @@ export function ChatWindow({ role }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Tracks the last failed send so the user can retry with the same file/text
+  const [failedAttempt, setFailedAttempt] = useState<
+    | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
+    | null
+  >(null);
   const [showListMobile, setShowListMobile] = useState(true);
 
   // Auto-select first conversation on desktop
@@ -67,23 +72,51 @@ export function ChatWindow({ role }: Props) {
       ? activeConv?.driver?.name ?? 'Motorista'
       : 'Locador';
 
-  const handleSend = async (e: FormEvent) => {
-    e.preventDefault();
-    const value = text.trim();
-    if (!value && !pendingFile) return;
-
-    let attachment: AttachmentInput | null = null;
-    if (pendingFile) {
+  const trySend = async (
+    value: string,
+    file: File | null,
+    /** If we already uploaded the file in a prior attempt, reuse it instead of re-uploading. */
+    existingAttachment: AttachmentInput | null = null,
+  ) => {
+    let attachment: AttachmentInput | null = existingAttachment;
+    if (file && !attachment) {
       setUploading(true);
-      attachment = await uploadAttachment(pendingFile);
+      attachment = await uploadAttachment(file);
       setUploading(false);
-      if (!attachment) return; // upload failed; toast already shown
+      if (!attachment) {
+        // Upload failed → keep file so the user can retry the upload
+        setFailedAttempt({ file, uploadedAttachment: null, text: value });
+        return;
+      }
+    }
+
+    const ok = await send(value, attachment);
+    if (!ok) {
+      // DB insert failed → file is already uploaded, just retry the insert
+      setFailedAttempt({ file, uploadedAttachment: attachment, text: value });
+      return;
     }
 
     setText('');
     setPendingFile(null);
+    setFailedAttempt(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    await send(value, attachment);
+  };
+
+  const handleSend = async (e: FormEvent) => {
+    e.preventDefault();
+    const value = text.trim();
+    if (!value && !pendingFile) return;
+    await trySend(value, pendingFile);
+  };
+
+  const handleRetry = async () => {
+    if (!failedAttempt) return;
+    await trySend(
+      failedAttempt.text,
+      failedAttempt.file,
+      failedAttempt.uploadedAttachment,
+    );
   };
 
   const handlePickFile = (e: ChangeEvent<HTMLInputElement>) => {
