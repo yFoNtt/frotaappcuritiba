@@ -1,16 +1,21 @@
-import { useEffect, useRef, useState, FormEvent } from 'react';
+import { useEffect, useRef, useState, FormEvent, ChangeEvent } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, ArrowLeft, Paperclip, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useConversation, useConversations, type ChatRole } from '@/hooks/useChat';
+import { useConversation, useConversations, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { MessageAttachment } from './MessageAttachment';
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/)/;
 
 interface Props {
   role: ChatRole;
