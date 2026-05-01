@@ -38,6 +38,8 @@ export function ChatWindow({ role }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Auto-retry feedback for the user while backoff runs
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number } | null>(null);
   // Tracks the last failed send so the user can retry with the same file/text
   const [failedAttempt, setFailedAttempt] = useState<
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
@@ -81,10 +83,15 @@ export function ChatWindow({ role }: Props) {
     let attachment: AttachmentInput | null = existingAttachment;
     if (file && !attachment) {
       setUploading(true);
-      attachment = await uploadAttachment(file);
+      setRetryInfo(null);
+      attachment = await uploadAttachment(file, {
+        maxAttempts: 3,
+        onRetry: (attempt, max) => setRetryInfo({ attempt, max }),
+      });
+      setRetryInfo(null);
       setUploading(false);
       if (!attachment) {
-        // Upload failed → keep file so the user can retry the upload
+        // Upload failed after all retries → keep file so the user can retry manually
         setFailedAttempt({ file, uploadedAttachment: null, text: value });
         return;
       }
@@ -359,14 +366,22 @@ export function ChatWindow({ role }: Props) {
                 <div className="mb-2 flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
                   <Paperclip className="h-3.5 w-3.5 shrink-0" />
                   <span className="flex-1 truncate">{pendingFile.name}</span>
-                  <span className="opacity-70">
-                    {(pendingFile.size / 1024).toFixed(0)} KB
-                  </span>
+                  {retryInfo ? (
+                    <span className="flex items-center gap-1 text-warning">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Tentativa {retryInfo.attempt}/{retryInfo.max}
+                    </span>
+                  ) : (
+                    <span className="opacity-70">
+                      {(pendingFile.size / 1024).toFixed(0)} KB
+                    </span>
+                  )}
                   <Button
                     type="button"
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6"
+                    disabled={uploading}
                     onClick={() => {
                       setPendingFile(null);
                       if (fileInputRef.current) fileInputRef.current.value = '';
