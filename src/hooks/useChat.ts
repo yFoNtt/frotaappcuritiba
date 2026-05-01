@@ -43,25 +43,34 @@ export function useConversations(role: ChatRole) {
     if (!user) return;
     setLoading(true);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from('conversations')
-      .select('*, driver:drivers!conversations_driver_id_fkey(id,name,user_id)')
+      .select('*')
       .order('last_message_at', { ascending: false });
 
-    if (role === 'locador') {
-      query = query.eq('locador_id', user.id);
-    } else {
-      // motorista: filtered by RLS through drivers.user_id
-    }
-
-    const { data, error } = await query;
     if (error) {
       console.error('[useConversations] load error', error);
       toast.error('Erro ao carregar conversas');
       setLoading(false);
       return;
     }
-    setConversations((data ?? []) as unknown as Conversation[]);
+
+    const convs = (data ?? []) as unknown as Conversation[];
+
+    // Hydrate driver info (name) for display
+    const driverIds = Array.from(new Set(convs.map((c) => c.driver_id)));
+    if (driverIds.length > 0) {
+      const { data: drivers } = await supabase
+        .from('drivers')
+        .select('id,name,user_id')
+        .in('id', driverIds);
+      const byId = new Map((drivers ?? []).map((d: any) => [d.id, d]));
+      convs.forEach((c) => {
+        c.driver = byId.get(c.driver_id) ?? null;
+      });
+    }
+
+    setConversations(convs);
     setLoading(false);
   }, [user, role]);
 
