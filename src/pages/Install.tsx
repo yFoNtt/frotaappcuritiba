@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Apple, Smartphone, Share, Plus, Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { SEO } from "@/components/SEO";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -52,14 +52,11 @@ export default function Install() {
 
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Instale o FrotaApp | App para motoristas e locadores</title>
-        <meta
-          name="description"
-          content="Instale o FrotaApp Curitiba na tela inicial do seu celular. Acesso rápido, experiência de aplicativo nativo e funciona em qualquer Android ou iPhone."
-        />
-        <link rel="canonical" href="https://frotaappcuritiba.lovable.app/instalar" />
-      </Helmet>
+      <SEO
+        title="Instale o FrotaApp"
+        description="Instale o FrotaApp Curitiba na tela inicial do seu celular. Acesso rápido, experiência de aplicativo nativo e funciona em qualquer Android ou iPhone."
+        canonical="/instalar"
+      />
 
       <section className="container py-16 sm:py-24">
         <motion.div
