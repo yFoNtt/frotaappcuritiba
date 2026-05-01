@@ -1,90 +1,130 @@
+# Roadmap FrotaApp Curitiba — 3 Fases
 
+## Visão geral
 
-# Abrir PR de teste para validar seed + rls-isolation no CI
-
-## Objetivo
-
-Disparar o workflow `e2e-tests.yml` no GitHub Actions através de um Pull Request trivial, para validar end-to-end que:
-1. O job `seed-test-accounts` recria as contas `motorista.teste.a/b` via Edge Function.
-2. O job `rls-isolation` autentica nessas contas e confirma o isolamento por RLS no bucket `documents`.
-3. O job `e2e` completo continua passando.
-
-## Limitação importante
-
-Eu **não consigo** abrir Pull Requests no GitHub diretamente — não tenho acesso à API do GitHub nem permissão para executar comandos `git`. O que posso fazer é gerar uma alteração trivial no repositório (um commit "no-op") que, ao ser sincronizada via integração Lovable↔GitHub, dispara o workflow no branch padrão. Para um **PR real** (rodando em `pull_request`), você precisa criar o branch e abrir o PR manualmente no GitHub.
-
-## Pré-requisitos (você precisa confirmar antes)
-
-1. **Secret `E2E_SEED_TOKEN` configurado no GitHub** em `Settings → Secrets and variables → Actions`, com o **mesmo valor** salvo no Lovable Cloud.
-2. **Secrets `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`** já configurados (necessários para o build no job `e2e`).
-
-Se algum desses faltar, o workflow falha imediatamente com 401 ou erro de build.
-
-## Abordagens possíveis
-
-### Opção A — Commit trivial no `main` (rápido, sem PR)
-
-Eu adiciono um comentário inócuo em `.github/workflows/e2e-tests.yml` (ex.: `# trigger CI run` no topo). O sync com GitHub gera um commit em `main`, e o workflow roda em `push`. Você consegue ver o resultado em `Actions` poucos segundos depois.
-
-- ✅ Não exige ação manual sua.
-- ❌ Não testa o caminho `pull_request` (mas a config dispara nos dois eventos, então cobre o mesmo workflow).
-- ❌ Polui o histórico do `main` com 1 commit.
-
-### Opção B — Você abre o PR manualmente (recomendado)
-
-Eu preparo um arquivo trivial novo (ex.: `.github/workflows/.ci-trigger`) com um timestamp. Depois você:
-1. No GitHub, cria branch `test/seed-validation` a partir de `main`.
-2. Cherry-picka esse commit ou faz uma alteração trivial na branch.
-3. Abre PR contra `main`.
-4. Observa os 3 jobs rodando em ordem: `seed-test-accounts → rls-isolation → e2e`.
-
-- ✅ Testa o caminho `pull_request` de verdade.
-- ✅ Não suja o `main`.
-- ❌ Exige ~2 minutos de ação manual sua.
-
-### Opção C — Acionar o workflow via `workflow_dispatch`
-
-Adicionar `workflow_dispatch:` aos triggers do workflow para permitir que você dispare manualmente em `Actions → E2E Tests (Playwright) → Run workflow` sem precisar de PR nem commit.
-
-- ✅ Reutilizável para futuros testes manuais.
-- ✅ Não suja histórico nem exige PR.
-- ❌ Não simula o fluxo real de PR (mas como o `seed → isolation → e2e` é idêntico, valida o mesmo).
-
-## Recomendação
-
-**Opção C + Opção A combinadas**: adicionar `workflow_dispatch` ao workflow (mudança útil permanente) e, na mesma alteração, validar que o trigger funciona. Você ganha:
-- Capacidade futura de re-rodar testes manualmente sem PRs.
-- A própria mudança no YAML já dispara o `push` em `main`, validando o fluxo agora.
-
-## Alteração técnica proposta
-
-Adicionar 2 linhas no início do bloco `on:` em `.github/workflows/e2e-tests.yml`:
-
-```yaml
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:
+```text
+FASE 1 (curto prazo - agora)         FASE 2 (médio prazo)              FASE 3 (longo prazo)
+─────────────────────────────        ────────────────────────         ───────────────────────
+Comunicação completa                 Monetização + Marketplace 2.0     Operação avançada
++ IA básica + PWA                    + Contratos digitais              + App nativo
 ```
 
-Nada mais muda. Os jobs, dependências (`needs:`) e secrets continuam idênticos.
+---
 
-## Como você valida o sucesso
+## FASE 1 — Comunicação, IA e PWA (foco desta implementação)
 
-Após o sync GitHub:
-1. Vá em `Actions → E2E Tests (Playwright)`.
-2. A run mais recente deve ter 3 jobs verdes em sequência:
-   - `seed-test-accounts` (~10s, retorna HTTP 200 com `results[]` contendo os 2 motoristas).
-   - `rls-isolation` (~1-2 min, valida que A não lê arquivos de B e vice-versa).
-   - `e2e` (~5-10 min, suite completa).
-3. Se `seed-test-accounts` falhar com **401**, o secret `E2E_SEED_TOKEN` no GitHub não bate com o do Lovable.
-4. Se `rls-isolation` falhar com **"No driver row for user"**, o seed não criou o driver — verifique logs do step de seed.
+### 1.1 E-mails transacionais (Lovable Emails)
+- Configurar domínio de envio próprio (`notify.frotaappcuritiba.com.br`)
+- Templates React Email com identidade visual (Orange/Amber, Roboto):
+  - Boas-vindas (locador e motorista)
+  - Vencimento de CNH (30/15/7 dias) — substitui notificação interna por e-mail
+  - Cobrança semanal com link do recibo
+  - Solicitação de documento pendente
+  - Vistoria realizada (resumo + link)
+  - Manutenção próxima do vencimento
+- Customizar templates de auth (signup, recuperação de senha, magic link)
+- Enfileiramento via pgmq (já incluso na infra), com retry e suppression
 
-## O que faço quando aprovar
+### 1.2 WhatsApp via Twilio (connector)
+- Conectar o Twilio (connector oficial) para envio de mensagens
+- Edge function `send-whatsapp-notification` reutilizável
+- Templates aprovados:
+  - Cobrança semanal (com Pix copia-e-cola futuramente)
+  - Vencimento CNH urgente (≤ 7 dias)
+  - Solicitação de documento
+- Toggle nas preferências do locador/motorista para escolher canais (e-mail / WhatsApp / ambos)
+- Botão "Enviar lembrete por WhatsApp" em pagamentos pendentes e CNH vencendo
 
-1. Editar `.github/workflows/e2e-tests.yml` adicionando `workflow_dispatch:`.
-2. Esperar o sync com GitHub propagar (alguns segundos).
-3. Te informar onde clicar no GitHub para acompanhar a run.
+### 1.3 Chat interno motorista ↔ locador
+- Tabela `conversations` (locador_id, driver_id, last_message_at)
+- Tabela `messages` (conversation_id, sender_id, content, read_at, attachments)
+- RLS estrita: só os 2 participantes leem/escrevem
+- Realtime via Supabase Realtime (igual notificações)
+- UI:
+  - Página `/locador/mensagens` e `/motorista/mensagens` com lista de conversas
+  - Tela de conversa com bolhas, indicador de "lida", upload de imagem (bucket privado)
+  - Badge de não-lidas no sidebar
+- Notificação push (via sino + e-mail opcional se offline > 5 min)
 
+### 1.4 IA — Sugestão de preço e análise de fotos (Lovable AI)
+- **Sugestão de preço** ao cadastrar veículo:
+  - Edge function `suggest-vehicle-price` usa `google/gemini-3-flash-preview`
+  - Input: marca, modelo, ano, cidade, km, apps permitidos
+  - Compara com média do marketplace (query agregada) + heurística de IA
+  - UI: badge "💡 Sugerido: R$ X/semana" no formulário de veículo
+- **Análise de fotos de vistoria**:
+  - Edge function `analyze-inspection-photos` (modelo multimodal `google/gemini-2.5-pro`)
+  - Recebe URLs assinadas das fotos da vistoria
+  - Retorna JSON estruturado (tool calling): lista de avarias detectadas, severidade, parte do veículo
+  - UI: na tela de vistoria, botão "Analisar com IA" — mostra resultado lado a lado com checklist manual
+  - Resultado salvo em `vehicle_inspections.ai_analysis` (jsonb)
+
+### 1.5 PWA instalável
+- Manifest-only (sem service worker complexo) para evitar conflitos no preview Lovable
+- `public/manifest.json` com ícones (192/512), `display: standalone`, cor primária
+- Ícones gerados a partir do logo atual
+- Meta tags mobile no `index.html`
+- Página `/instalar` com instruções por sistema operacional (iOS/Android)
+
+### Resumo técnico Fase 1
+
+| Item | Tecnologia | Esforço |
+|---|---|---|
+| E-mail transacional | Lovable Emails + React Email | M |
+| WhatsApp | Twilio connector + edge function | M |
+| Chat interno | Postgres + Realtime + bucket | G |
+| IA preço | Lovable AI Gateway (Gemini Flash) | P |
+| IA vistoria | Lovable AI Gateway (Gemini Pro multimodal) | M |
+| PWA | manifest.json + ícones | P |
+
+Tabelas novas: `conversations`, `messages`, `notification_preferences`.
+Coluna nova: `vehicle_inspections.ai_analysis jsonb`.
+Buckets novos: `chat-attachments` (privado).
+Edge functions novas: `send-transactional-email` (auto), `send-whatsapp-notification`, `suggest-vehicle-price`, `analyze-inspection-photos`.
+Secrets necessários: nenhum manual (Twilio via connector, Lovable AI/Email automáticos).
+
+---
+
+## FASE 2 — Monetização + Marketplace 2.0 + Contratos digitais
+
+- **Planos de assinatura locador** (Free 2 veículos / Pro 10 / Enterprise ∞) via Stripe ou Paddle
+- **Página pública de pricing** com CTA
+- **Pagamentos online motorista→locador** (Pix via Mercado Pago/Stripe BR), recibo PDF
+- **Marketplace 2.0:**
+  - Sistema de reservas/leads (motorista solicita interesse → locador aprova)
+  - Avaliações com estrelas + comentários (motorista avalia locador, locador avalia motorista)
+  - SEO por cidade (`/veiculos/curitiba`, `/veiculos/sao-jose-dos-pinhais`)
+  - Favoritos
+- **Contratos digitais:**
+  - Geração de PDF do contrato com dados preenchidos (jspdf ou edge function)
+  - Assinatura digital (D4Sign ou ClickSign — connector ou API direta)
+  - Versionamento de aditivos
+
+---
+
+## FASE 3 — Operação avançada + App nativo
+
+- **Multas** (cadastro, repasse ao motorista, comprovante)
+- **Sinistros** (workflow com seguradora, fotos, status)
+- **Combustível e abastecimento** (KPI custo por km)
+- **Telemetria/GPS** (integração com rastreadores via API)
+- **Calendário visual** de manutenções e vencimentos
+- **BI avançado** — ROI por veículo, ociosidade, ticket médio, comparativos
+- **Conformidade LGPD** — exportação/exclusão de dados pessoais, 2FA opcional
+- **App nativo** via Capacitor (iOS + Android nas lojas)
+- **Modo offline** para motoristas (registrar km/foto sem internet, sync depois)
+
+---
+
+## Próximo passo
+
+Ao aprovar este roadmap, começo pela **Fase 1** na seguinte ordem (cada bloco entregável independentemente):
+
+1. **PWA + ícones** (rápido, ganho imediato de UX)
+2. **E-mails transacionais** (configurar domínio + templates principais)
+3. **IA — sugestão de preço** (entrega rápida, alto valor percebido)
+4. **WhatsApp via Twilio** (conectar e enviar lembretes)
+5. **Chat interno** (tabelas, RLS, realtime, UI)
+6. **IA — análise de fotos de vistoria** (multimodal)
+
+Posso ajustar a ordem se preferir começar por outro bloco. Confirma para eu seguir?
