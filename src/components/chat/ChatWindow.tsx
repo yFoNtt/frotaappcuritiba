@@ -38,6 +38,8 @@ export function ChatWindow({ role }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Auto-retry feedback for the user while backoff runs
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number } | null>(null);
   // Tracks the last failed send so the user can retry with the same file/text
   const [failedAttempt, setFailedAttempt] = useState<
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
@@ -81,10 +83,15 @@ export function ChatWindow({ role }: Props) {
     let attachment: AttachmentInput | null = existingAttachment;
     if (file && !attachment) {
       setUploading(true);
-      attachment = await uploadAttachment(file);
+      setRetryInfo(null);
+      attachment = await uploadAttachment(file, {
+        maxAttempts: 3,
+        onRetry: (attempt, max) => setRetryInfo({ attempt, max }),
+      });
+      setRetryInfo(null);
       setUploading(false);
       if (!attachment) {
-        // Upload failed → keep file so the user can retry the upload
+        // Upload failed after all retries → keep file so the user can retry manually
         setFailedAttempt({ file, uploadedAttachment: null, text: value });
         return;
       }
