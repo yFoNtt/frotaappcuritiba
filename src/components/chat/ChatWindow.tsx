@@ -13,6 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { MessageAttachment } from './MessageAttachment';
+import { Progress } from '@/components/ui/progress';
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/)/;
