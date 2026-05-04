@@ -87,11 +87,17 @@ export function ChatWindow({ role }: Props) {
     if (file && !attachment) {
       setUploading(true);
       setRetryInfo(null);
+      setUploadProgress(0);
       attachment = await uploadAttachment(file, {
         maxAttempts: 3,
-        onRetry: (attempt, max) => setRetryInfo({ attempt, max }),
+        onRetry: (attempt, max) => {
+          setRetryInfo({ attempt, max });
+          setUploadProgress(0);
+        },
+        onProgress: (pct) => setUploadProgress(pct),
       });
       setRetryInfo(null);
+      setUploadProgress(null);
       setUploading(false);
       if (!attachment) {
         // Upload failed after all retries → keep file so the user can retry manually
