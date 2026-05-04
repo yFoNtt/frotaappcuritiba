@@ -412,10 +412,18 @@ export function ChatWindow({ role }: Props) {
                       size="icon"
                       variant="ghost"
                       className="h-6 w-6"
-                      disabled={uploading}
+                      disabled={cancelled}
+                      title={uploading ? 'Cancelar envio' : 'Remover anexo'}
+                      aria-label={uploading ? 'Cancelar envio' : 'Remover anexo'}
                       onClick={() => {
-                        setPendingFile(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
+                        if (uploading) {
+                          // Abort the in-flight upload (and any pending backoff)
+                          setCancelled(true);
+                          uploadAbortRef.current?.abort();
+                        } else {
+                          setPendingFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }
                       }}
                     >
                       <X className="h-3.5 w-3.5" />
