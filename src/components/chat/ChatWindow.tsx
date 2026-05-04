@@ -49,6 +49,9 @@ export function ChatWindow({ role }: Props) {
     | null
   >(null);
   const [showListMobile, setShowListMobile] = useState(true);
+  // AbortController for the in-flight upload, so the user can cancel it
+  const uploadAbortRef = useRef<AbortController | null>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   // Auto-select first conversation on desktop
   useEffect(() => {
