@@ -267,7 +267,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
         const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
         const result = await uploadOnce(path);
 
-        if (result.ok) {
+        if (result.ok === true) {
           return {
             path,
             name: file.name,
@@ -276,13 +276,14 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
           };
         }
 
-        lastError = { status: result.status, message: result.message };
+        const failure = result;
+        lastError = { status: failure.status, message: failure.message };
         console.warn(
           `[useConversation] upload attempt ${attempt}/${maxAttempts} failed`,
-          result,
+          failure,
         );
 
-        if (result.fatal || attempt === maxAttempts) break;
+        if (failure.fatal || attempt === maxAttempts) break;
 
         // Exponential backoff with jitter: ~500ms, 1500ms, 3500ms
         const base = 500 * Math.pow(2, attempt - 1) + (attempt - 1) * 500;
