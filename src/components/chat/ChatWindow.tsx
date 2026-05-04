@@ -88,20 +88,36 @@ export function ChatWindow({ role }: Props) {
   ) => {
     let attachment: AttachmentInput | null = existingAttachment;
     if (file && !attachment) {
+      const controller = new AbortController();
+      uploadAbortRef.current = controller;
+      setCancelled(false);
       setUploading(true);
       setRetryInfo(null);
       setUploadProgress(0);
       attachment = await uploadAttachment(file, {
         maxAttempts: 3,
+        signal: controller.signal,
         onRetry: (attempt, max) => {
           setRetryInfo({ attempt, max });
           setUploadProgress(0);
         },
         onProgress: (pct) => setUploadProgress(pct),
       });
+      const wasCancelled = controller.signal.aborted;
+      uploadAbortRef.current = null;
       setRetryInfo(null);
       setUploadProgress(null);
       setUploading(false);
+
+      if (wasCancelled) {
+        // User cancelled → drop pending file silently, no failed-banner
+        setPendingFile(null);
+        setCancelled(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        toast.info('Envio do anexo cancelado.');
+        return;
+      }
+
       if (!attachment) {
         // Upload failed after all retries → keep file so the user can retry manually
         setFailedAttempt({ file, uploadedAttachment: null, text: value });
