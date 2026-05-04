@@ -193,59 +193,99 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
       options?: {
         maxAttempts?: number;
         onRetry?: (attempt: number, maxAttempts: number, delayMs: number) => void;
+        onProgress?: (percent: number, loaded: number, total: number) => void;
       },
     ): Promise<AttachmentInput | null> => {
       if (!conversationId || !user) return null;
       const maxAttempts = options?.maxAttempts ?? 3;
       const ext = file.name.split('.').pop() || 'bin';
       const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+      const contentType = file.type || `application/${ext}`;
 
       // Errors we should NOT retry (auth/permission/payload problems)
-      const isFatal = (err: { message?: string; statusCode?: string | number }) => {
-        const msg = (err.message || '').toLowerCase();
-        const status = String(err.statusCode ?? '');
+      const isFatalStatus = (status: number) =>
+        status === 401 || status === 403 || status === 413 || status === 415;
+      const isFatalMsg = (msg: string) => {
+        const m = msg.toLowerCase();
         return (
-          status === '401' ||
-          status === '403' ||
-          status === '413' ||
-          msg.includes('unauthorized') ||
-          msg.includes('forbidden') ||
-          msg.includes('payload too large') ||
-          msg.includes('invalid') ||
-          msg.includes('mime')
+          m.includes('unauthorized') ||
+          m.includes('forbidden') ||
+          m.includes('payload too large') ||
+          m.includes('mime')
         );
       };
 
-      let lastError: unknown = null;
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        // Use a fresh path per attempt so a partial upload doesn't block the retry
-        const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
-        const { error } = await supabase.storage
-          .from('chat-attachments')
-          .upload(path, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type || `application/${ext}`,
-          });
+      // Upload via XHR using a signed upload URL → gives us real progress events
+      const uploadOnce = (path: string): Promise<{ ok: true } | { ok: false; status: number; message: string; fatal: boolean }> =>
+        new Promise(async (resolve) => {
+          const { data: signed, error: signErr } = await supabase.storage
+            .from('chat-attachments')
+            .createSignedUploadUrl(path);
 
-        if (!error) {
+          if (signErr || !signed) {
+            const msg = signErr?.message || 'Falha ao criar URL de upload';
+            resolve({ ok: false, status: 0, message: msg, fatal: isFatalMsg(msg) });
+            return;
+          }
+
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', signed.signedUrl, true);
+          xhr.setRequestHeader('Content-Type', contentType);
+          xhr.setRequestHeader('x-upsert', 'false');
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded / e.total) * 100);
+              options?.onProgress?.(pct, e.loaded, e.total);
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              options?.onProgress?.(100, file.size, file.size);
+              resolve({ ok: true });
+            } else {
+              resolve({
+                ok: false,
+                status: xhr.status,
+                message: xhr.responseText || `HTTP ${xhr.status}`,
+                fatal: isFatalStatus(xhr.status),
+              });
+            }
+          };
+          xhr.onerror = () =>
+            resolve({ ok: false, status: 0, message: 'Erro de rede', fatal: false });
+          xhr.ontimeout = () =>
+            resolve({ ok: false, status: 0, message: 'Timeout', fatal: false });
+          xhr.send(file);
+        });
+
+      let lastError: { status: number; message: string } | null = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        // Reset progress at the start of each attempt
+        options?.onProgress?.(0, 0, file.size);
+
+        // Fresh path per attempt to avoid conflicts with partial uploads
+        const path = `${conversationId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}`;
+        const result = await uploadOnce(path);
+
+        if (result.ok === true) {
           return {
             path,
             name: file.name,
-            mime: file.type || 'application/octet-stream',
+            mime: contentType,
             size: file.size,
           };
         }
 
-        lastError = error;
+        const failure = result;
+        lastError = { status: failure.status, message: failure.message };
         console.warn(
           `[useConversation] upload attempt ${attempt}/${maxAttempts} failed`,
-          error,
+          failure,
         );
 
-        if (isFatal(error as any) || attempt === maxAttempts) break;
+        if (failure.fatal || attempt === maxAttempts) break;
 
-        // Exponential backoff with jitter: 500ms, 1500ms, 3500ms (+/- 30%)
+        // Exponential backoff with jitter: ~500ms, 1500ms, 3500ms
         const base = 500 * Math.pow(2, attempt - 1) + (attempt - 1) * 500;
         const jitter = base * 0.3 * (Math.random() * 2 - 1);
         const delayMs = Math.max(200, Math.round(base + jitter));

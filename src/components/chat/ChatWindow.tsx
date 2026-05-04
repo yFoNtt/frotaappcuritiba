@@ -13,6 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { MessageAttachment } from './MessageAttachment';
+import { Progress } from '@/components/ui/progress';
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/)/;
@@ -40,6 +41,8 @@ export function ChatWindow({ role }: Props) {
   const [uploading, setUploading] = useState(false);
   // Auto-retry feedback for the user while backoff runs
   const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number } | null>(null);
+  // Real-time upload progress (0-100), null when no upload is in flight
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   // Tracks the last failed send so the user can retry with the same file/text
   const [failedAttempt, setFailedAttempt] = useState<
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
@@ -84,11 +87,17 @@ export function ChatWindow({ role }: Props) {
     if (file && !attachment) {
       setUploading(true);
       setRetryInfo(null);
+      setUploadProgress(0);
       attachment = await uploadAttachment(file, {
         maxAttempts: 3,
-        onRetry: (attempt, max) => setRetryInfo({ attempt, max }),
+        onRetry: (attempt, max) => {
+          setRetryInfo({ attempt, max });
+          setUploadProgress(0);
+        },
+        onProgress: (pct) => setUploadProgress(pct),
       });
       setRetryInfo(null);
+      setUploadProgress(null);
       setUploading(false);
       if (!attachment) {
         // Upload failed after all retries → keep file so the user can retry manually
@@ -363,32 +372,39 @@ export function ChatWindow({ role }: Props) {
                 </div>
               )}
               {pendingFile && (
-                <div className="mb-2 flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
-                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                  <span className="flex-1 truncate">{pendingFile.name}</span>
-                  {retryInfo ? (
-                    <span className="flex items-center gap-1 text-warning">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Tentativa {retryInfo.attempt}/{retryInfo.max}
-                    </span>
-                  ) : (
-                    <span className="opacity-70">
-                      {(pendingFile.size / 1024).toFixed(0)} KB
-                    </span>
+                <div className="mb-2 space-y-1.5 rounded-md border bg-muted/40 px-2 py-1.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                    <span className="flex-1 truncate">{pendingFile.name}</span>
+                    {retryInfo ? (
+                      <span className="flex items-center gap-1 text-warning">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Tentativa {retryInfo.attempt}/{retryInfo.max}
+                      </span>
+                    ) : uploadProgress !== null ? (
+                      <span className="tabular-nums opacity-80">{uploadProgress}%</span>
+                    ) : (
+                      <span className="opacity-70">
+                        {(pendingFile.size / 1024).toFixed(0)} KB
+                      </span>
+                    )}
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      disabled={uploading}
+                      onClick={() => {
+                        setPendingFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {uploadProgress !== null && (
+                    <Progress value={uploadProgress} className="h-1" />
                   )}
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    disabled={uploading}
-                    onClick={() => {
-                      setPendingFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               )}
               <div className="flex gap-2">
