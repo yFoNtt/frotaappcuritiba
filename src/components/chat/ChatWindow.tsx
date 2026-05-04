@@ -41,6 +41,8 @@ export function ChatWindow({ role }: Props) {
   const [uploading, setUploading] = useState(false);
   // Auto-retry feedback for the user while backoff runs
   const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number } | null>(null);
+  // Real-time upload progress (0-100), null when no upload is in flight
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   // Tracks the last failed send so the user can retry with the same file/text
   const [failedAttempt, setFailedAttempt] = useState<
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
