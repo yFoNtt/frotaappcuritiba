@@ -194,6 +194,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
         maxAttempts?: number;
         onRetry?: (attempt: number, maxAttempts: number, delayMs: number) => void;
         onProgress?: (percent: number, loaded: number, total: number) => void;
+        signal?: AbortSignal;
       },
     ): Promise<AttachmentInput | null> => {
       if (!conversationId || !user) return null;
@@ -201,6 +202,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
       const ext = file.name.split('.').pop() || 'bin';
       const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
       const contentType = file.type || `application/${ext}`;
+      const signal = options?.signal;
 
       // Errors we should NOT retry (auth/permission/payload problems)
       const isFatalStatus = (status: number) =>
@@ -215,12 +217,29 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
         );
       };
 
-      // Upload via XHR using a signed upload URL → gives us real progress events
-      const uploadOnce = (path: string): Promise<{ ok: true } | { ok: false; status: number; message: string; fatal: boolean }> =>
+      // Upload via XHR using a signed upload URL → gives us real progress events.
+      // 'aborted' is a sentinel that bubbles up to stop the retry loop entirely.
+      const uploadOnce = (
+        path: string,
+      ): Promise<
+        | { ok: true }
+        | { ok: false; aborted: true }
+        | { ok: false; aborted?: false; status: number; message: string; fatal: boolean }
+      > =>
         new Promise(async (resolve) => {
+          if (signal?.aborted) {
+            resolve({ ok: false, aborted: true });
+            return;
+          }
+
           const { data: signed, error: signErr } = await supabase.storage
             .from('chat-attachments')
             .createSignedUploadUrl(path);
+
+          if (signal?.aborted) {
+            resolve({ ok: false, aborted: true });
+            return;
+          }
 
           if (signErr || !signed) {
             const msg = signErr?.message || 'Falha ao criar URL de upload';
@@ -229,6 +248,10 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
           }
 
           const xhr = new XMLHttpRequest();
+          const onAbort = () => xhr.abort();
+          signal?.addEventListener('abort', onAbort);
+          const cleanup = () => signal?.removeEventListener('abort', onAbort);
+
           xhr.open('PUT', signed.signedUrl, true);
           xhr.setRequestHeader('Content-Type', contentType);
           xhr.setRequestHeader('x-upsert', 'false');
@@ -239,6 +262,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
             }
           };
           xhr.onload = () => {
+            cleanup();
             if (xhr.status >= 200 && xhr.status < 300) {
               options?.onProgress?.(100, file.size, file.size);
               resolve({ ok: true });
@@ -251,15 +275,28 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
               });
             }
           };
-          xhr.onerror = () =>
+          xhr.onerror = () => {
+            cleanup();
             resolve({ ok: false, status: 0, message: 'Erro de rede', fatal: false });
-          xhr.ontimeout = () =>
+          };
+          xhr.ontimeout = () => {
+            cleanup();
             resolve({ ok: false, status: 0, message: 'Timeout', fatal: false });
+          };
+          xhr.onabort = () => {
+            cleanup();
+            resolve({ ok: false, aborted: true });
+          };
           xhr.send(file);
         });
 
       let lastError: { status: number; message: string } | null = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (signal?.aborted) {
+          console.info('[useConversation] upload cancelled by user');
+          return null;
+        }
+
         // Reset progress at the start of each attempt
         options?.onProgress?.(0, 0, file.size);
 
@@ -276,7 +313,12 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
           };
         }
 
-        const failure = result;
+        if ('aborted' in result && result.aborted) {
+          console.info('[useConversation] upload cancelled by user');
+          return null;
+        }
+
+        const failure = result as { status: number; message: string; fatal: boolean };
         lastError = { status: failure.status, message: failure.message };
         console.warn(
           `[useConversation] upload attempt ${attempt}/${maxAttempts} failed`,
@@ -290,7 +332,23 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
         const jitter = base * 0.3 * (Math.random() * 2 - 1);
         const delayMs = Math.max(200, Math.round(base + jitter));
         options?.onRetry?.(attempt + 1, maxAttempts, delayMs);
-        await new Promise((r) => setTimeout(r, delayMs));
+
+        // Abortable backoff sleep
+        const aborted = await new Promise<boolean>((resolve) => {
+          const t = setTimeout(() => {
+            signal?.removeEventListener('abort', onAbortDuringSleep);
+            resolve(false);
+          }, delayMs);
+          const onAbortDuringSleep = () => {
+            clearTimeout(t);
+            resolve(true);
+          };
+          signal?.addEventListener('abort', onAbortDuringSleep, { once: true });
+        });
+        if (aborted) {
+          console.info('[useConversation] upload cancelled during backoff');
+          return null;
+        }
       }
 
       console.error('[useConversation] upload failed after retries', lastError);
