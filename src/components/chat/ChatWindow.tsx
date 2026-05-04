@@ -49,6 +49,9 @@ export function ChatWindow({ role }: Props) {
     | null
   >(null);
   const [showListMobile, setShowListMobile] = useState(true);
+  // AbortController for the in-flight upload, so the user can cancel it
+  const uploadAbortRef = useRef<AbortController | null>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   // Auto-select first conversation on desktop
   useEffect(() => {
@@ -85,20 +88,36 @@ export function ChatWindow({ role }: Props) {
   ) => {
     let attachment: AttachmentInput | null = existingAttachment;
     if (file && !attachment) {
+      const controller = new AbortController();
+      uploadAbortRef.current = controller;
+      setCancelled(false);
       setUploading(true);
       setRetryInfo(null);
       setUploadProgress(0);
       attachment = await uploadAttachment(file, {
         maxAttempts: 3,
+        signal: controller.signal,
         onRetry: (attempt, max) => {
           setRetryInfo({ attempt, max });
           setUploadProgress(0);
         },
         onProgress: (pct) => setUploadProgress(pct),
       });
+      const wasCancelled = controller.signal.aborted;
+      uploadAbortRef.current = null;
       setRetryInfo(null);
       setUploadProgress(null);
       setUploading(false);
+
+      if (wasCancelled) {
+        // User cancelled → drop pending file silently, no failed-banner
+        setPendingFile(null);
+        setCancelled(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        toast.info('Envio do anexo cancelado.');
+        return;
+      }
+
       if (!attachment) {
         // Upload failed after all retries → keep file so the user can retry manually
         setFailedAttempt({ file, uploadedAttachment: null, text: value });
@@ -393,10 +412,18 @@ export function ChatWindow({ role }: Props) {
                       size="icon"
                       variant="ghost"
                       className="h-6 w-6"
-                      disabled={uploading}
+                      disabled={cancelled}
+                      title={uploading ? 'Cancelar envio' : 'Remover anexo'}
+                      aria-label={uploading ? 'Cancelar envio' : 'Remover anexo'}
                       onClick={() => {
-                        setPendingFile(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
+                        if (uploading) {
+                          // Abort the in-flight upload (and any pending backoff)
+                          setCancelled(true);
+                          uploadAbortRef.current?.abort();
+                        } else {
+                          setPendingFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }
                       }}
                     >
                       <X className="h-3.5 w-3.5" />
