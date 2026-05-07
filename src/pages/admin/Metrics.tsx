@@ -13,6 +13,11 @@ import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
 import { useAdminMetricsComputation } from '@/hooks/useAdminMetricsComputation';
+import {
+  VEHICLE_STATUS_VALUES,
+  VEHICLE_STATUS_LABELS,
+  isVehicleStatus,
+} from '@/lib/statusConstants';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { isWithinInterval, parseISO } from 'date-fns';
 import {
