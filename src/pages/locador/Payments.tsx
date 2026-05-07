@@ -103,12 +103,12 @@ const STATUS_CONFIG = {
 
 export default function LocadorPayments() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [payingPayment, setPayingPayment] = useState<Payment | null>(null);
   const [cancellingPayment, setCancellingPayment] = useState<Payment | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const { filters, setFilters, range } = useReportFilters({ preset: 'all' });
 
   const { data: payments = [], isLoading: paymentsLoading } = useLocadorPayments();
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
@@ -144,13 +144,20 @@ export default function LocadorPayments() {
   const filteredPayments = useMemo(() => {
     return processedPayments.filter(payment => {
       const driver = drivers.find(d => d.id === payment.driver_id);
-      const matchesSearch = 
+      const matchesSearch =
         driver?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.amount.toString().includes(searchTerm);
-      const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesStatus = filters.statusOrType === 'all' || payment.status === filters.statusOrType;
+      const matchesVehicle = filters.vehicleId === 'all' || payment.vehicle_id === filters.vehicleId;
+      const matchesDriver = filters.driverId === 'all' || payment.driver_id === filters.driverId;
+      let matchesRange = true;
+      if (range.start && range.end) {
+        const ref = payment.paid_at ? parseISO(payment.paid_at) : parseISO(payment.due_date);
+        matchesRange = isWithinInterval(ref, { start: range.start, end: range.end });
+      }
+      return matchesSearch && matchesStatus && matchesVehicle && matchesDriver && matchesRange;
     });
-  }, [processedPayments, drivers, searchTerm, statusFilter]);
+  }, [processedPayments, drivers, searchTerm, filters, range]);
 
   const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
   const paginatedPayments = useMemo(() => {
