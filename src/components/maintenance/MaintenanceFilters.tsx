@@ -53,15 +53,18 @@ export function MaintenanceFilters({
 }: MaintenanceFiltersProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const hasActiveFilters = 
-    filters.type !== 'all' || 
-    filters.status !== 'all' || 
-    filters.vehicleId !== 'all';
+  const hasActiveFilters =
+    filters.type !== 'all' ||
+    filters.status !== 'all' ||
+    filters.vehicleId !== 'all' ||
+    !!filters.startDate ||
+    !!filters.endDate;
 
   const activeFiltersCount = [
     filters.type !== 'all',
     filters.status !== 'all',
     filters.vehicleId !== 'all',
+    !!filters.startDate || !!filters.endDate,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -70,6 +73,8 @@ export function MaintenanceFilters({
       type: 'all',
       status: 'all',
       vehicleId: 'all',
+      startDate: null,
+      endDate: null,
     });
   };
 
@@ -165,6 +170,55 @@ export function MaintenanceFilters({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Data início</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn('w-full justify-start text-left font-normal', !filters.startDate && 'text-muted-foreground')}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filters.startDate ? format(filters.startDate, 'PPP', { locale: ptBR }) : 'Selecionar'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.startDate ?? undefined}
+                      onSelect={(d) => onFiltersChange({ ...filters, startDate: d ?? null })}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Data fim</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn('w-full justify-start text-left font-normal', !filters.endDate && 'text-muted-foreground')}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filters.endDate ? format(filters.endDate, 'PPP', { locale: ptBR }) : 'Selecionar'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.endDate ?? undefined}
+                      onSelect={(d) => onFiltersChange({ ...filters, endDate: d ?? null })}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
