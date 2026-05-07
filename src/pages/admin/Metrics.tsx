@@ -244,10 +244,15 @@ export default function AdminMetrics() {
                   {unknownVehicles > 0 && (
                     <UITooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="gap-1.5 border-warning/40 cursor-help">
+                        <button
+                          type="button"
+                          onClick={() => setInconsistencyView('vehicles')}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-background px-2.5 py-1 text-xs font-medium hover:bg-warning/10 transition-colors"
+                        >
                           <Car className="h-3.5 w-3.5" />
                           {unknownVehicles} veículo{unknownVehicles > 1 ? 's' : ''} com status desconhecido
-                        </Badge>
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         Esperado: <strong>available</strong>, <strong>rented</strong> ou{' '}
