@@ -692,7 +692,7 @@ export default function AdminMetrics() {
         )}
       </div>
 
-      <Dialog open={inconsistencyView !== null} onOpenChange={(o) => !o && setInconsistencyView(null)}>
+      <Dialog open={inconsistencyView !== null} onOpenChange={(o) => { if (!o) closeInconsistencyDialog(); }}>
         <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
