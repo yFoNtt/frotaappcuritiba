@@ -382,12 +382,12 @@ export default function AdminMetrics() {
                   </CardTitle>
                   <CardDescription>Status atual dos veículos</CardDescription>
                 </div>
-                <Badge variant="secondary" className="hidden sm:flex">{vehicles.length} veículos</Badge>
+                <Badge variant="secondary" className="hidden sm:flex">{filteredVehicles.length} veículos</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[280px] flex items-center justify-center">
-                {vehicles.length > 0 ? (
+                {filteredVehicles.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -419,7 +419,7 @@ export default function AdminMetrics() {
                   <div className="text-muted-foreground">Nenhum veículo cadastrado</div>
                 )}
               </div>
-              {vehicles.length > 0 && (
+              {filteredVehicles.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-4 mt-2">
                   {vehicleStatusData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50">
@@ -551,7 +551,7 @@ export default function AdminMetrics() {
         </div>
 
         {/* Contract Status Distribution */}
-        {contracts.length > 0 && (
+        {filteredContracts.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
