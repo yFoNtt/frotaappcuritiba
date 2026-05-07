@@ -13,6 +13,11 @@ import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
 import { useAdminMetricsComputation } from '@/hooks/useAdminMetricsComputation';
+import {
+  VEHICLE_STATUS_VALUES,
+  VEHICLE_STATUS_LABELS,
+  isVehicleStatus,
+} from '@/lib/statusConstants';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { isWithinInterval, parseISO } from 'date-fns';
 import {
@@ -102,7 +107,10 @@ export default function AdminMetrics() {
   const filteredVehicles = useMemo(
     () =>
       vehicles.filter((v) => {
-        if (filters.statusOrType !== 'all' && v.status !== filters.statusOrType) return false;
+        if (filters.statusOrType !== 'all') {
+          if (!isVehicleStatus(filters.statusOrType)) return false;
+          if (v.status !== filters.statusOrType) return false;
+        }
         return inRange(v.created_at);
       }),
     [vehicles, filters, range]
@@ -192,11 +200,10 @@ export default function AdminMetrics() {
         <ReportFilters
           filters={filters}
           onChange={setFilters}
-          statusOptions={[
-            { value: 'available', label: 'Disponíveis' },
-            { value: 'rented', label: 'Alugados' },
-            { value: 'maintenance', label: 'Em manutenção' },
-          ]}
+          statusOptions={VEHICLE_STATUS_VALUES.map((value) => ({
+            value,
+            label: VEHICLE_STATUS_LABELS[value],
+          }))}
           statusLabel="Status do veículo"
           resultCount={filteredVehicles.length + filteredContracts.length}
         />
