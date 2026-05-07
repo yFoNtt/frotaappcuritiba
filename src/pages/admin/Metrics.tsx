@@ -279,7 +279,7 @@ export default function AdminMetrics() {
               </div>
               <Progress value={contractConversionRate} className="h-2" />
               <p className="text-xs text-muted-foreground mt-2">
-                {stats?.activeContracts || 0} contratos para {stats?.totalDrivers || 0} motoristas
+                {activeContractsCount} contratos para {stats?.totalDrivers || 0} motoristas
               </p>
             </CardContent>
           </Card>
