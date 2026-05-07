@@ -382,12 +382,12 @@ export default function AdminMetrics() {
                   </CardTitle>
                   <CardDescription>Status atual dos veículos</CardDescription>
                 </div>
-                <Badge variant="secondary" className="hidden sm:flex">{vehicles.length} veículos</Badge>
+                <Badge variant="secondary" className="hidden sm:flex">{filteredVehicles.length} veículos</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[280px] flex items-center justify-center">
-                {vehicles.length > 0 ? (
+                {filteredVehicles.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
