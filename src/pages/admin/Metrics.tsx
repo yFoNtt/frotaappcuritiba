@@ -200,11 +200,10 @@ export default function AdminMetrics() {
         <ReportFilters
           filters={filters}
           onChange={setFilters}
-          statusOptions={[
-            { value: 'available', label: 'Disponíveis' },
-            { value: 'rented', label: 'Alugados' },
-            { value: 'maintenance', label: 'Em manutenção' },
-          ]}
+          statusOptions={VEHICLE_STATUS_VALUES.map((value) => ({
+            value,
+            label: VEHICLE_STATUS_LABELS[value],
+          }))}
           statusLabel="Status do veículo"
           resultCount={filteredVehicles.length + filteredContracts.length}
         />
