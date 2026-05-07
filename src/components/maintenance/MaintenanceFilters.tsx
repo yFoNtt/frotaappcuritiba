@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -10,26 +14,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Search, 
+import {
+  Search,
   Filter,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CalendarIcon,
 } from 'lucide-react';
-import { 
+import {
   MAINTENANCE_TYPES,
   MAINTENANCE_STATUS,
-  MaintenanceType,
-  MaintenanceStatus
 } from '@/hooks/useMaintenances';
 import { Vehicle } from '@/hooks/useVehicles';
+import { cn } from '@/lib/utils';
 
 export interface MaintenanceFiltersState {
   search: string;
   type: string;
   status: string;
   vehicleId: string;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 interface MaintenanceFiltersProps {
