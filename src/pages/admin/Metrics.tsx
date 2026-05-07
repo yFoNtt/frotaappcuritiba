@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/button';
 import {
   TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
   Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
-  AlertTriangle,
+  AlertTriangle, ExternalLink,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
@@ -19,7 +22,9 @@ import { useAdminMetricsComputation } from '@/hooks/useAdminMetricsComputation';
 import {
   VEHICLE_STATUS_VALUES,
   VEHICLE_STATUS_LABELS,
+  CONTRACT_STATUS_VALUES,
   isVehicleStatus,
+  isContractStatus,
 } from '@/lib/statusConstants';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { isWithinInterval, parseISO } from 'date-fns';
