@@ -148,6 +148,17 @@ export default function AdminMetrics() {
     totalDrivers: stats?.totalDrivers ?? 0,
   });
 
+  const [inconsistencyView, setInconsistencyView] = useState<null | 'vehicles' | 'contracts'>(null);
+
+  const invalidVehicles = useMemo(
+    () => vehicles.filter((v) => !isVehicleStatus(v.status)),
+    [vehicles]
+  );
+  const invalidContracts = useMemo(
+    () => contracts.filter((c) => !isContractStatus(c.status)),
+    [contracts]
+  );
+
   if (isLoading) {
     return (
       <AdminLayout>
