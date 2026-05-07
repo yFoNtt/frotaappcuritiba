@@ -770,8 +770,13 @@ export default function AdminMetrics() {
             <p className="text-xs text-muted-foreground">
               Ajustes devem ser feitos diretamente no banco (Lovable Cloud).
             </p>
-            <Button variant="outline" size="sm" onClick={() => setInconsistencyView(null)}>
-              Fechar
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={closeInconsistencyDialog}
+              disabled={isLoggingReview}
+            >
+              {isLoggingReview ? 'Registrando…' : 'Marcar como revisado e fechar'}
             </Button>
           </DialogFooter>
         </DialogContent>
