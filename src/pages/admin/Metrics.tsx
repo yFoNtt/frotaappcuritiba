@@ -236,15 +236,15 @@ export default function AdminMetrics() {
           />
           <MetricCard
             title="Frota Total"
-            value={stats?.totalVehicles || 0}
-            subtitle={`${stats?.availableVehicles || 0} disponíveis`}
+            value={totalVehicles}
+            subtitle={`${availableCount} disponíveis`}
             icon={<Car className="h-6 w-6" />}
             variant="success"
           />
           <MetricCard
             title="Contratos Ativos"
-            value={stats?.activeContracts || 0}
-            subtitle={`de ${stats?.totalContracts || 0} totais`}
+            value={activeContractsCount}
+            subtitle={`de ${totalContracts} totais`}
             icon={<FileText className="h-6 w-6" />}
             variant="warning"
           />
