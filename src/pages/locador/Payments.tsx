@@ -60,7 +60,9 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react';
-import { format, parseISO, startOfWeek, addDays, isBefore } from 'date-fns';
+import { format, parseISO, startOfWeek, addDays, isBefore, isWithinInterval } from 'date-fns';
+import { useReportFilters } from '@/hooks/useReportFilters';
+import { ReportFilters } from '@/components/reports/ReportFilters';
 import { ptBR } from 'date-fns/locale';
 import { 
   useLocadorPayments, 
@@ -101,12 +103,12 @@ const STATUS_CONFIG = {
 
 export default function LocadorPayments() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [payingPayment, setPayingPayment] = useState<Payment | null>(null);
   const [cancellingPayment, setCancellingPayment] = useState<Payment | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const { filters, setFilters, range } = useReportFilters({ preset: 'all' });
 
   const { data: payments = [], isLoading: paymentsLoading } = useLocadorPayments();
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
@@ -142,13 +144,20 @@ export default function LocadorPayments() {
   const filteredPayments = useMemo(() => {
     return processedPayments.filter(payment => {
       const driver = drivers.find(d => d.id === payment.driver_id);
-      const matchesSearch = 
+      const matchesSearch =
         driver?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.amount.toString().includes(searchTerm);
-      const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesStatus = filters.statusOrType === 'all' || payment.status === filters.statusOrType;
+      const matchesVehicle = filters.vehicleId === 'all' || payment.vehicle_id === filters.vehicleId;
+      const matchesDriver = filters.driverId === 'all' || payment.driver_id === filters.driverId;
+      let matchesRange = true;
+      if (range.start && range.end) {
+        const ref = payment.paid_at ? parseISO(payment.paid_at) : parseISO(payment.due_date);
+        matchesRange = isWithinInterval(ref, { start: range.start, end: range.end });
+      }
+      return matchesSearch && matchesStatus && matchesVehicle && matchesDriver && matchesRange;
     });
-  }, [processedPayments, drivers, searchTerm, statusFilter]);
+  }, [processedPayments, drivers, searchTerm, filters, range]);
 
   const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
   const paginatedPayments = useMemo(() => {
@@ -356,30 +365,30 @@ export default function LocadorPayments() {
         </div>
 
         {/* Filters */}
+        <ReportFilters
+          filters={filters}
+          onChange={(f) => { setFilters(f); setCurrentPage(1); }}
+          vehicles={vehicles.map((v) => ({ value: v.id, label: `${v.brand} ${v.model} - ${v.plate}` }))}
+          drivers={drivers.map((d) => ({ value: d.id, label: d.name }))}
+          statusOptions={[
+            { value: 'pending', label: 'Pendente' },
+            { value: 'paid', label: 'Pago' },
+            { value: 'overdue', label: 'Atrasado' },
+            { value: 'cancelled', label: 'Cancelado' },
+          ]}
+          statusLabel="Status do pagamento"
+          resultCount={filteredPayments.length}
+        />
         <Card>
           <CardContent className="p-4">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por motorista ou valor..."
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="overdue">Atrasado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por motorista ou valor..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-9"
+              />
             </div>
           </CardContent>
         </Card>

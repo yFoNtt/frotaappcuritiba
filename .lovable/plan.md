@@ -1,130 +1,89 @@
-# Roadmap FrotaApp Curitiba — 3 Fases
 
-## Visão geral
+## Objetivo
 
-```text
-FASE 1 (curto prazo - agora)         FASE 2 (médio prazo)              FASE 3 (longo prazo)
-─────────────────────────────        ────────────────────────         ───────────────────────
-Comunicação completa                 Monetização + Marketplace 2.0     Operação avançada
-+ IA básica + PWA                    + Contratos digitais              + App nativo
+Permitir filtrar todos os relatórios do sistema por período, veículo, motorista e status/tipo. PDF e Excel passam a exportar somente os dados filtrados.
+
+## Escopo
+
+1. **Locador → Relatórios** (`src/pages/locador/Reports.tsx`)
+2. **Locador → Pagamentos** (`src/pages/locador/Payments.tsx` — relatório/histórico)
+3. **Locador → Manutenções** (`src/pages/locador/Maintenance.tsx` — já tem busca/tipo/status, falta período + veículo unificado + export filtrado)
+4. **Admin → Indicadores** (`src/pages/admin/Metrics.tsx`)
+
+## Componente compartilhado
+
+Criar `src/components/reports/ReportFilters.tsx` reutilizável:
+
+- **Período**: presets (`7d`, `30d`, `3m`, `6m`, `12m`, `Personalizado`) + datepicker início/fim quando custom
+- **Veículo**: Select com "Todos" + lista
+- **Motorista**: Select com "Todos" + lista (admin: todos da plataforma; locador: somente seus)
+- **Status/Tipo**: Select contextual por tela (status pagamento / tipo manutenção / status veículo)
+- Badge com contador de filtros ativos + botão "Limpar"
+- Layout colapsável em mobile (mesmo padrão de `MaintenanceFilters`)
+
+Estado tipado:
+```ts
+interface ReportFiltersState {
+  startDate: Date | null;
+  endDate: Date | null;
+  preset: '7d'|'30d'|'3m'|'6m'|'12m'|'custom';
+  vehicleId: string;   // 'all' | uuid
+  driverId: string;    // 'all' | uuid
+  statusOrType: string;// 'all' | enum
+}
 ```
 
----
+## Mudanças por tela
 
-## FASE 1 — Comunicação, IA e PWA (foco desta implementação)
+### Locador → Relatórios
+- Substituir período fixo "últimos 6 meses" por filtro dinâmico
+- Filtrar `payments`, `maintenances`, `vehicles` antes dos `useMemo` de KPIs/charts
+- Passar dataset filtrado para `useReportExport` (PDF + Excel já refletem filtros automaticamente)
+- Atualizar título dos cards para refletir o intervalo selecionado
 
-### 1.1 E-mails transacionais (Lovable Emails)
-- Configurar domínio de envio próprio (`notify.frotaappcuritiba.com.br`)
-- Templates React Email com identidade visual (Orange/Amber, Roboto):
-  - Boas-vindas (locador e motorista)
-  - Vencimento de CNH (30/15/7 dias) — substitui notificação interna por e-mail
-  - Cobrança semanal com link do recibo
-  - Solicitação de documento pendente
-  - Vistoria realizada (resumo + link)
-  - Manutenção próxima do vencimento
-- Customizar templates de auth (signup, recuperação de senha, magic link)
-- Enfileiramento via pgmq (já incluso na infra), com retry e suppression
+### Locador → Pagamentos
+- Adicionar `ReportFilters` no topo do histórico
+- Filtros: período (data due/paid), veículo, motorista, status (`pending|paid|overdue|cancelled`)
+- Exportação CSV/PDF (se já existir) usa lista filtrada
 
-### 1.2 WhatsApp via Twilio (connector)
-- Conectar o Twilio (connector oficial) para envio de mensagens
-- Edge function `send-whatsapp-notification` reutilizável
-- Templates aprovados:
-  - Cobrança semanal (com Pix copia-e-cola futuramente)
-  - Vencimento CNH urgente (≤ 7 dias)
-  - Solicitação de documento
-- Toggle nas preferências do locador/motorista para escolher canais (e-mail / WhatsApp / ambos)
-- Botão "Enviar lembrete por WhatsApp" em pagamentos pendentes e CNH vencendo
+### Locador → Manutenções
+- Estender `MaintenanceFilters` com período (datepicker início/fim) e remover veículo do antigo se ficar duplicado, OU substituir pelo novo `ReportFilters`
+- Decisão: manter `MaintenanceFilters` atual e adicionar somente o range de datas (menor disrupção)
+- Botão de exportar passa a exportar somente o filtrado
 
-### 1.3 Chat interno motorista ↔ locador
-- Tabela `conversations` (locador_id, driver_id, last_message_at)
-- Tabela `messages` (conversation_id, sender_id, content, read_at, attachments)
-- RLS estrita: só os 2 participantes leem/escrevem
-- Realtime via Supabase Realtime (igual notificações)
-- UI:
-  - Página `/locador/mensagens` e `/motorista/mensagens` com lista de conversas
-  - Tela de conversa com bolhas, indicador de "lida", upload de imagem (bucket privado)
-  - Badge de não-lidas no sidebar
-- Notificação push (via sino + e-mail opcional se offline > 5 min)
+### Admin → Indicadores
+- Adicionar filtros: período, locador (extra para admin), status veículo
+- `useMetricsExport` recebe dados já filtrados
 
-### 1.4 IA — Sugestão de preço e análise de fotos (Lovable AI)
-- **Sugestão de preço** ao cadastrar veículo:
-  - Edge function `suggest-vehicle-price` usa `google/gemini-3-flash-preview`
-  - Input: marca, modelo, ano, cidade, km, apps permitidos
-  - Compara com média do marketplace (query agregada) + heurística de IA
-  - UI: badge "💡 Sugerido: R$ X/semana" no formulário de veículo
-- **Análise de fotos de vistoria**:
-  - Edge function `analyze-inspection-photos` (modelo multimodal `google/gemini-2.5-pro`)
-  - Recebe URLs assinadas das fotos da vistoria
-  - Retorna JSON estruturado (tool calling): lista de avarias detectadas, severidade, parte do veículo
-  - UI: na tela de vistoria, botão "Analisar com IA" — mostra resultado lado a lado com checklist manual
-  - Resultado salvo em `vehicle_inspections.ai_analysis` (jsonb)
+## Hooks de exportação
 
-### 1.5 PWA instalável
-- Manifest-only (sem service worker complexo) para evitar conflitos no preview Lovable
-- `public/manifest.json` com ícones (192/512), `display: standalone`, cor primária
-- Ícones gerados a partir do logo atual
-- Meta tags mobile no `index.html`
-- Página `/instalar` com instruções por sistema operacional (iOS/Android)
+Sem mudanças estruturais — eles já recebem `data` pronta. Apenas garantir que cada tela passe o conjunto filtrado em `monthlyData`, `vehicleComparison`, etc.
 
-### Resumo técnico Fase 1
+## UI/UX
 
-| Item | Tecnologia | Esforço |
-|---|---|---|
-| E-mail transacional | Lovable Emails + React Email | M |
-| WhatsApp | Twilio connector + edge function | M |
-| Chat interno | Postgres + Realtime + bucket | G |
-| IA preço | Lovable AI Gateway (Gemini Flash) | P |
-| IA vistoria | Lovable AI Gateway (Gemini Pro multimodal) | M |
-| PWA | manifest.json + ícones | P |
+- `ReportFilters` segue `MaintenanceFilters` (Card colapsável, badge contador, botão limpar)
+- Datepickers com `pointer-events-auto` no `Calendar`
+- Indicador visual no topo: "Mostrando dados de DD/MM/AAAA até DD/MM/AAAA"
+- Tokens semânticos (sem cores hardcoded)
 
-Tabelas novas: `conversations`, `messages`, `notification_preferences`.
-Coluna nova: `vehicle_inspections.ai_analysis jsonb`.
-Buckets novos: `chat-attachments` (privado).
-Edge functions novas: `send-transactional-email` (auto), `send-whatsapp-notification`, `suggest-vehicle-price`, `analyze-inspection-photos`.
-Secrets necessários: nenhum manual (Twilio via connector, Lovable AI/Email automáticos).
+## Sem mudanças no banco
 
----
+Tudo é filtragem client-side sobre dados já retornados pelos hooks (`useLocadorVehicles`, `useLocadorPayments`, `useLocadorMaintenances`, `useAdminData`). RLS continua intocado.
 
-## FASE 2 — Monetização + Marketplace 2.0 + Contratos digitais
+## Arquivos a criar/editar
 
-- **Planos de assinatura locador** (Free 2 veículos / Pro 10 / Enterprise ∞) via Stripe ou Paddle
-- **Página pública de pricing** com CTA
-- **Pagamentos online motorista→locador** (Pix via Mercado Pago/Stripe BR), recibo PDF
-- **Marketplace 2.0:**
-  - Sistema de reservas/leads (motorista solicita interesse → locador aprova)
-  - Avaliações com estrelas + comentários (motorista avalia locador, locador avalia motorista)
-  - SEO por cidade (`/veiculos/curitiba`, `/veiculos/sao-jose-dos-pinhais`)
-  - Favoritos
-- **Contratos digitais:**
-  - Geração de PDF do contrato com dados preenchidos (jspdf ou edge function)
-  - Assinatura digital (D4Sign ou ClickSign — connector ou API direta)
-  - Versionamento de aditivos
+**Criar:**
+- `src/components/reports/ReportFilters.tsx`
+- `src/hooks/useReportFilters.ts` (lógica de presets + computação de start/end)
 
----
+**Editar:**
+- `src/pages/locador/Reports.tsx`
+- `src/pages/locador/Payments.tsx`
+- `src/pages/locador/Maintenance.tsx` (+ `MaintenanceFilters.tsx` para incluir período)
+- `src/pages/admin/Metrics.tsx`
 
-## FASE 3 — Operação avançada + App nativo
+## Validação
 
-- **Multas** (cadastro, repasse ao motorista, comprovante)
-- **Sinistros** (workflow com seguradora, fotos, status)
-- **Combustível e abastecimento** (KPI custo por km)
-- **Telemetria/GPS** (integração com rastreadores via API)
-- **Calendário visual** de manutenções e vencimentos
-- **BI avançado** — ROI por veículo, ociosidade, ticket médio, comparativos
-- **Conformidade LGPD** — exportação/exclusão de dados pessoais, 2FA opcional
-- **App nativo** via Capacitor (iOS + Android nas lojas)
-- **Modo offline** para motoristas (registrar km/foto sem internet, sync depois)
-
----
-
-## Próximo passo
-
-Ao aprovar este roadmap, começo pela **Fase 1** na seguinte ordem (cada bloco entregável independentemente):
-
-1. **PWA + ícones** (rápido, ganho imediato de UX)
-2. **E-mails transacionais** (configurar domínio + templates principais)
-3. **IA — sugestão de preço** (entrega rápida, alto valor percebido)
-4. **WhatsApp via Twilio** (conectar e enviar lembretes)
-5. **Chat interno** (tabelas, RLS, realtime, UI)
-6. **IA — análise de fotos de vistoria** (multimodal)
-
-Posso ajustar a ordem se preferir começar por outro bloco. Confirma para eu seguir?
+- Conferir KPIs com filtro = "12m" batendo com valores atuais ("6m" hardcoded)
+- Exportar PDF e Excel após aplicar filtro e validar que linhas/totais refletem somente o subconjunto
+- Testar em mobile (390px) — colapso e datepickers funcionando

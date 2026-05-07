@@ -45,6 +45,8 @@ export default function LocadorMaintenance() {
     type: 'all',
     status: 'all',
     vehicleId: 'all',
+    startDate: null,
+    endDate: null,
   });
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingMaintenance, setEditingMaintenance] = useState<Maintenance | null>(null);
@@ -74,7 +76,7 @@ export default function LocadorMaintenance() {
   const filteredMaintenances = useMemo(() => {
     return maintenances.filter(m => {
       const vehicle = vehicles.find(v => v.id === m.vehicle_id);
-      const matchesSearch = 
+      const matchesSearch =
         m.description.toLowerCase().includes(filters.search.toLowerCase()) ||
         vehicle?.model.toLowerCase().includes(filters.search.toLowerCase()) ||
         vehicle?.brand.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -82,7 +84,13 @@ export default function LocadorMaintenance() {
       const matchesType = filters.type === 'all' || m.type === filters.type;
       const matchesStatus = filters.status === 'all' || m.status === filters.status;
       const matchesVehicle = filters.vehicleId === 'all' || m.vehicle_id === filters.vehicleId;
-      return matchesSearch && matchesType && matchesStatus && matchesVehicle;
+      let matchesRange = true;
+      if (filters.startDate || filters.endDate) {
+        const d = parseISO(m.performed_at);
+        if (filters.startDate && d < filters.startDate) matchesRange = false;
+        if (filters.endDate && d > filters.endDate) matchesRange = false;
+      }
+      return matchesSearch && matchesType && matchesStatus && matchesVehicle && matchesRange;
     });
   }, [maintenances, vehicles, filters]);
 

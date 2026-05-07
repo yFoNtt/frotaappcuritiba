@@ -5,24 +5,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
-  Users, 
-  Car, 
-  FileText,
-  Activity,
-  Building2,
-  UserCheck,
-  Gauge,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Zap,
-  Download
+import {
+  TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
+  Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
 } from 'lucide-react';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
+import { useReportFilters } from '@/hooks/useReportFilters';
+import { ReportFilters } from '@/components/reports/ReportFilters';
+import { isWithinInterval, parseISO } from 'date-fns';
 import {
   AreaChart,
   Area,
@@ -97,44 +88,62 @@ export default function AdminMetrics() {
   const { data: monthlyData = [], isLoading: monthlyLoading } = useAdminMonthlyData();
   const { data: contracts = [], isLoading: contractsLoading } = useAdminContracts();
   const { exportToPDF } = useMetricsExport();
+  const { filters, setFilters, range } = useReportFilters({ preset: 'all' });
 
   const isLoading = statsLoading || vehiclesLoading || monthlyLoading || contractsLoading;
 
-  const vehicleStatusData = useMemo(() => {
-    const available = vehicles.filter(v => v.status === 'available').length;
-    const rented = vehicles.filter(v => v.status === 'rented').length;
-    const maintenance = vehicles.filter(v => v.status === 'maintenance').length;
+  const inRange = (dateStr?: string | null) => {
+    if (!range.start || !range.end) return true;
+    if (!dateStr) return false;
+    return isWithinInterval(parseISO(dateStr), { start: range.start, end: range.end });
+  };
 
+  const filteredVehicles = useMemo(
+    () =>
+      vehicles.filter((v) => {
+        if (filters.statusOrType !== 'all' && v.status !== filters.statusOrType) return false;
+        return inRange(v.created_at);
+      }),
+    [vehicles, filters, range]
+  );
+
+  const filteredContracts = useMemo(
+    () => contracts.filter((c) => inRange(c.created_at)),
+    [contracts, range]
+  );
+
+  const vehicleStatusData = useMemo(() => {
+    const available = filteredVehicles.filter(v => v.status === 'available').length;
+    const rented = filteredVehicles.filter(v => v.status === 'rented').length;
+    const maintenance = filteredVehicles.filter(v => v.status === 'maintenance').length;
     return [
       { name: 'Disponíveis', value: available, color: 'hsl(var(--success))' },
       { name: 'Alugados', value: rented, color: 'hsl(var(--primary))' },
       { name: 'Manutenção', value: maintenance, color: 'hsl(var(--warning))' },
     ];
-  }, [vehicles]);
+  }, [filteredVehicles]);
 
-  const occupancyRate = stats && stats.totalVehicles > 0 
-    ? Math.round((stats.rentedVehicles / stats.totalVehicles) * 100) 
-    : 0;
+  const totalVehicles = filteredVehicles.length;
+  const rentedCount = filteredVehicles.filter(v => v.status === 'rented').length;
+  const activeContractsCount = filteredContracts.filter(c => c.status === 'active').length;
 
+  const occupancyRate = totalVehicles > 0 ? Math.round((rentedCount / totalVehicles) * 100) : 0;
   const contractConversionRate = stats && stats.totalDrivers > 0
-    ? Math.round((stats.activeContracts / stats.totalDrivers) * 100)
-    : 0;
-
-  const vehicleUtilization = stats && stats.totalVehicles > 0
-    ? Math.round(((stats.rentedVehicles + vehicles.filter(v => v.status === 'maintenance').length) / stats.totalVehicles) * 100)
+    ? Math.round((activeContractsCount / stats.totalDrivers) * 100) : 0;
+  const vehicleUtilization = totalVehicles > 0
+    ? Math.round(((rentedCount + filteredVehicles.filter(v => v.status === 'maintenance').length) / totalVehicles) * 100)
     : 0;
 
   const contractStatusData = useMemo(() => {
-    const active = contracts.filter(c => c.status === 'active').length;
-    const completed = contracts.filter(c => c.status === 'completed').length;
-    const cancelled = contracts.filter(c => c.status === 'cancelled').length;
-
+    const active = filteredContracts.filter(c => c.status === 'active').length;
+    const completed = filteredContracts.filter(c => c.status === 'completed').length;
+    const cancelled = filteredContracts.filter(c => c.status === 'cancelled').length;
     return [
       { name: 'Ativos', value: active, color: 'hsl(var(--success))' },
       { name: 'Finalizados', value: completed, color: 'hsl(var(--muted-foreground))' },
       { name: 'Cancelados', value: cancelled, color: 'hsl(var(--destructive))' },
     ];
-  }, [contracts]);
+  }, [filteredContracts]);
 
   if (isLoading) {
     return (
@@ -194,6 +203,18 @@ export default function AdminMetrics() {
             </Button>
           </div>
         </div>
+
+        <ReportFilters
+          filters={filters}
+          onChange={setFilters}
+          statusOptions={[
+            { value: 'available', label: 'Disponíveis' },
+            { value: 'rented', label: 'Alugados' },
+            { value: 'maintenance', label: 'Em manutenção' },
+          ]}
+          statusLabel="Status do veículo"
+          resultCount={filteredVehicles.length + filteredContracts.length}
+        />
 
         {/* Primary KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
