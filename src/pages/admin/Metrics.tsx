@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/button';
 import {
   TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
   Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
-  AlertTriangle,
+  AlertTriangle, ExternalLink,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
@@ -19,7 +22,9 @@ import { useAdminMetricsComputation } from '@/hooks/useAdminMetricsComputation';
 import {
   VEHICLE_STATUS_VALUES,
   VEHICLE_STATUS_LABELS,
+  CONTRACT_STATUS_VALUES,
   isVehicleStatus,
+  isContractStatus,
 } from '@/lib/statusConstants';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { isWithinInterval, parseISO } from 'date-fns';
@@ -143,6 +148,17 @@ export default function AdminMetrics() {
     totalDrivers: stats?.totalDrivers ?? 0,
   });
 
+  const [inconsistencyView, setInconsistencyView] = useState<null | 'vehicles' | 'contracts'>(null);
+
+  const invalidVehicles = useMemo(
+    () => vehicles.filter((v) => !isVehicleStatus(v.status)),
+    [vehicles]
+  );
+  const invalidContracts = useMemo(
+    () => contracts.filter((c) => !isContractStatus(c.status)),
+    [contracts]
+  );
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -228,10 +244,15 @@ export default function AdminMetrics() {
                   {unknownVehicles > 0 && (
                     <UITooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="gap-1.5 border-warning/40 cursor-help">
+                        <button
+                          type="button"
+                          onClick={() => setInconsistencyView('vehicles')}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-background px-2.5 py-1 text-xs font-medium hover:bg-warning/10 transition-colors"
+                        >
                           <Car className="h-3.5 w-3.5" />
                           {unknownVehicles} veículo{unknownVehicles > 1 ? 's' : ''} com status desconhecido
-                        </Badge>
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         Esperado: <strong>available</strong>, <strong>rented</strong> ou{' '}
@@ -243,10 +264,15 @@ export default function AdminMetrics() {
                   {unknownContracts > 0 && (
                     <UITooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="gap-1.5 border-warning/40 cursor-help">
+                        <button
+                          type="button"
+                          onClick={() => setInconsistencyView('contracts')}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 bg-background px-2.5 py-1 text-xs font-medium hover:bg-warning/10 transition-colors"
+                        >
                           <FileText className="h-3.5 w-3.5" />
                           {unknownContracts} contrato{unknownContracts > 1 ? 's' : ''} com status desconhecido
-                        </Badge>
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         Esperado: <strong>active</strong>, <strong>completed</strong>,{' '}
@@ -624,6 +650,91 @@ export default function AdminMetrics() {
           </Card>
         )}
       </div>
+
+      <Dialog open={inconsistencyView !== null} onOpenChange={(o) => !o && setInconsistencyView(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              {inconsistencyView === 'vehicles'
+                ? 'Veículos com status desconhecido'
+                : 'Contratos com status desconhecido'}
+            </DialogTitle>
+            <DialogDescription>
+              {inconsistencyView === 'vehicles'
+                ? `Esperado: ${VEHICLE_STATUS_VALUES.join(', ')}.`
+                : `Esperado: ${CONTRACT_STATUS_VALUES.join(', ')}.`}{' '}
+              Estes registros são ignorados nos contadores e gráficos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-y-auto flex-1 -mx-6 px-6">
+            {inconsistencyView === 'vehicles' && (
+              <div className="space-y-2">
+                {invalidVehicles.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">
+                    Nenhum veículo inconsistente.
+                  </p>
+                ) : (
+                  invalidVehicles.map((v: any) => (
+                    <div key={v.id} className="rounded-lg border p-3 text-sm flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          {v.brand} {v.model} • {v.plate}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          ID: {v.id}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-warning/40 text-warning shrink-0">
+                        {String(v.status ?? 'null')}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {inconsistencyView === 'contracts' && (
+              <div className="space-y-2">
+                {invalidContracts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">
+                    Nenhum contrato inconsistente.
+                  </p>
+                ) : (
+                  invalidContracts.map((c: any) => (
+                    <div key={c.id} className="rounded-lg border p-3 text-sm flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          Contrato {String(c.id).slice(0, 8)}…
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Veículo: {c.vehicle_id?.slice(0, 8)}… • Locador: {c.locador_id?.slice(0, 8)}…
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Início: {c.start_date ?? '—'}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-warning/40 text-warning shrink-0">
+                        {String(c.status ?? 'null')}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-row sm:justify-between gap-2 items-center border-t pt-3">
+            <p className="text-xs text-muted-foreground">
+              Ajustes devem ser feitos diretamente no banco (Lovable Cloud).
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setInconsistencyView(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
