@@ -132,6 +132,8 @@ export default function AdminMetrics() {
     vehicleUtilization,
     vehicleStatusData,
     contractStatusData,
+    unknownVehicles,
+    unknownContracts,
   } = useAdminMetricsComputation({
     filteredVehicles,
     filteredContracts,
