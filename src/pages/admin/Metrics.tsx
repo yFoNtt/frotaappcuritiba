@@ -419,7 +419,7 @@ export default function AdminMetrics() {
                   <div className="text-muted-foreground">Nenhum veículo cadastrado</div>
                 )}
               </div>
-              {vehicles.length > 0 && (
+              {filteredVehicles.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-4 mt-2">
                   {vehicleStatusData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50">
