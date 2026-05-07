@@ -1,4 +1,13 @@
 import { useMemo } from 'react';
+import {
+  VEHICLE_STATUS,
+  VEHICLE_STATUS_VALUES,
+  VEHICLE_STATUS_LABELS,
+  CONTRACT_STATUS,
+  CONTRACT_STATUS_VALUES,
+  CONTRACT_STATUS_LABELS,
+  countByStatus,
+} from '@/lib/statusConstants';
 
 interface VehicleLike {
   status?: string | null;
@@ -19,6 +28,8 @@ interface Options {
 /**
  * Centralizes all derived counters, rates and chart datasets for the
  * Admin → Indicadores page so cards and charts can never diverge.
+ * Uses canonical status constants + validation to avoid silently
+ * miscounting rows with unknown/legacy status values.
  */
 export function useAdminMetricsComputation({
   filteredVehicles,
@@ -26,15 +37,19 @@ export function useAdminMetricsComputation({
   totalDrivers = 0,
 }: Options) {
   return useMemo(() => {
+    const vCounts = countByStatus(filteredVehicles, VEHICLE_STATUS_VALUES);
+    const cCounts = countByStatus(filteredContracts, CONTRACT_STATUS_VALUES);
+
     const totalVehicles = filteredVehicles.length;
-    const availableCount = filteredVehicles.filter(v => v.status === 'available').length;
-    const rentedCount = filteredVehicles.filter(v => v.status === 'rented').length;
-    const maintenanceCount = filteredVehicles.filter(v => v.status === 'maintenance').length;
+    const availableCount = vCounts[VEHICLE_STATUS.AVAILABLE];
+    const rentedCount = vCounts[VEHICLE_STATUS.RENTED];
+    const maintenanceCount = vCounts[VEHICLE_STATUS.MAINTENANCE];
 
     const totalContracts = filteredContracts.length;
-    const activeContractsCount = filteredContracts.filter(c => c.status === 'active').length;
-    const completedContractsCount = filteredContracts.filter(c => c.status === 'completed').length;
-    const cancelledContractsCount = filteredContracts.filter(c => c.status === 'cancelled').length;
+    const activeContractsCount = cCounts[CONTRACT_STATUS.ACTIVE];
+    const completedContractsCount = cCounts[CONTRACT_STATUS.COMPLETED];
+    const cancelledContractsCount = cCounts[CONTRACT_STATUS.CANCELLED];
+    const pendingContractsCount = cCounts[CONTRACT_STATUS.PENDING];
 
     const occupancyRate = totalVehicles > 0
       ? Math.round((rentedCount / totalVehicles) * 100)
@@ -47,15 +62,15 @@ export function useAdminMetricsComputation({
       : 0;
 
     const vehicleStatusData = [
-      { name: 'Disponíveis', value: availableCount, color: 'hsl(var(--success))' },
-      { name: 'Alugados', value: rentedCount, color: 'hsl(var(--primary))' },
-      { name: 'Manutenção', value: maintenanceCount, color: 'hsl(var(--warning))' },
+      { name: VEHICLE_STATUS_LABELS.available, value: availableCount, color: 'hsl(var(--success))' },
+      { name: VEHICLE_STATUS_LABELS.rented, value: rentedCount, color: 'hsl(var(--primary))' },
+      { name: VEHICLE_STATUS_LABELS.maintenance, value: maintenanceCount, color: 'hsl(var(--warning))' },
     ];
 
     const contractStatusData = [
-      { name: 'Ativos', value: activeContractsCount, color: 'hsl(var(--success))' },
-      { name: 'Finalizados', value: completedContractsCount, color: 'hsl(var(--muted-foreground))' },
-      { name: 'Cancelados', value: cancelledContractsCount, color: 'hsl(var(--destructive))' },
+      { name: CONTRACT_STATUS_LABELS.active, value: activeContractsCount, color: 'hsl(var(--success))' },
+      { name: CONTRACT_STATUS_LABELS.completed, value: completedContractsCount, color: 'hsl(var(--muted-foreground))' },
+      { name: CONTRACT_STATUS_LABELS.cancelled, value: cancelledContractsCount, color: 'hsl(var(--destructive))' },
     ];
 
     return {
@@ -67,6 +82,9 @@ export function useAdminMetricsComputation({
       activeContractsCount,
       completedContractsCount,
       cancelledContractsCount,
+      pendingContractsCount,
+      unknownVehicles: vCounts.__unknown,
+      unknownContracts: cCounts.__unknown,
       occupancyRate,
       contractConversionRate,
       vehicleUtilization,
