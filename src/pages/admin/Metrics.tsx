@@ -28,6 +28,8 @@ import {
 } from '@/lib/statusConstants';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { isWithinInterval, parseISO } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   AreaChart,
   Area,
