@@ -551,7 +551,7 @@ export default function AdminMetrics() {
         </div>
 
         {/* Contract Status Distribution */}
-        {contracts.length > 0 && (
+        {filteredContracts.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
