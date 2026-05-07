@@ -107,7 +107,10 @@ export default function AdminMetrics() {
   const filteredVehicles = useMemo(
     () =>
       vehicles.filter((v) => {
-        if (filters.statusOrType !== 'all' && v.status !== filters.statusOrType) return false;
+        if (filters.statusOrType !== 'all') {
+          if (!isVehicleStatus(filters.statusOrType)) return false;
+          if (v.status !== filters.statusOrType) return false;
+        }
         return inRange(v.created_at);
       }),
     [vehicles, filters, range]
