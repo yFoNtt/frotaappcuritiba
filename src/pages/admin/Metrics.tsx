@@ -650,6 +650,91 @@ export default function AdminMetrics() {
           </Card>
         )}
       </div>
+
+      <Dialog open={inconsistencyView !== null} onOpenChange={(o) => !o && setInconsistencyView(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              {inconsistencyView === 'vehicles'
+                ? 'Veículos com status desconhecido'
+                : 'Contratos com status desconhecido'}
+            </DialogTitle>
+            <DialogDescription>
+              {inconsistencyView === 'vehicles'
+                ? `Esperado: ${VEHICLE_STATUS_VALUES.join(', ')}.`
+                : `Esperado: ${CONTRACT_STATUS_VALUES.join(', ')}.`}{' '}
+              Estes registros são ignorados nos contadores e gráficos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-y-auto flex-1 -mx-6 px-6">
+            {inconsistencyView === 'vehicles' && (
+              <div className="space-y-2">
+                {invalidVehicles.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">
+                    Nenhum veículo inconsistente.
+                  </p>
+                ) : (
+                  invalidVehicles.map((v: any) => (
+                    <div key={v.id} className="rounded-lg border p-3 text-sm flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          {v.brand} {v.model} • {v.plate}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          ID: {v.id}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-warning/40 text-warning shrink-0">
+                        {String(v.status ?? 'null')}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {inconsistencyView === 'contracts' && (
+              <div className="space-y-2">
+                {invalidContracts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">
+                    Nenhum contrato inconsistente.
+                  </p>
+                ) : (
+                  invalidContracts.map((c: any) => (
+                    <div key={c.id} className="rounded-lg border p-3 text-sm flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">
+                          Contrato {String(c.id).slice(0, 8)}…
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Veículo: {c.vehicle_id?.slice(0, 8)}… • Locador: {c.locador_id?.slice(0, 8)}…
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Início: {c.start_date ?? '—'}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-warning/40 text-warning shrink-0">
+                        {String(c.status ?? 'null')}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-row sm:justify-between gap-2 items-center border-t pt-3">
+            <p className="text-xs text-muted-foreground">
+              Ajustes devem ser feitos diretamente no banco (Lovable Cloud).
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setInconsistencyView(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
