@@ -263,7 +263,7 @@ export default function AdminMetrics() {
               </div>
               <Progress value={occupancyRate} className="h-2" />
               <p className="text-xs text-muted-foreground mt-2">
-                {stats?.rentedVehicles || 0} de {stats?.totalVehicles || 0} veículos em uso
+                {rentedCount} de {totalVehicles} veículos em uso
               </p>
             </CardContent>
           </Card>
