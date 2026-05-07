@@ -528,8 +528,8 @@ export default function AdminMetrics() {
                     <span className="text-sm font-medium">Contratos</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold">{stats?.totalContracts || 0}</span>
-                    <p className="text-xs text-muted-foreground">{stats?.activeContracts || 0} ativos</p>
+                    <span className="text-xl font-bold">{totalContracts}</span>
+                    <p className="text-xs text-muted-foreground">{activeContractsCount} ativos</p>
                   </div>
                 </div>
               </div>
@@ -543,8 +543,8 @@ export default function AdminMetrics() {
                     <span className="text-sm font-medium">Frota</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold">{stats?.totalVehicles || 0}</span>
-                    <p className="text-xs text-muted-foreground">{stats?.availableVehicles || 0} disponíveis</p>
+                    <span className="text-xl font-bold">{totalVehicles}</span>
+                    <p className="text-xs text-muted-foreground">{availableCount} disponíveis</p>
                   </div>
                 </div>
               </div>
