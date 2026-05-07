@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import {
   TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
   Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
+  AlertTriangle,
 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
@@ -132,6 +135,8 @@ export default function AdminMetrics() {
     vehicleUtilization,
     vehicleStatusData,
     contractStatusData,
+    unknownVehicles,
+    unknownContracts,
   } = useAdminMetricsComputation({
     filteredVehicles,
     filteredContracts,
@@ -207,6 +212,54 @@ export default function AdminMetrics() {
           statusLabel="Status do veículo"
           resultCount={filteredVehicles.length + filteredContracts.length}
         />
+
+        {(unknownVehicles > 0 || unknownContracts > 0) && (
+          <Alert variant="destructive" className="border-warning/40 bg-warning/10 text-foreground">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertTitle className="text-warning">Dados inconsistentes detectados</AlertTitle>
+            <AlertDescription className="mt-2 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Os registros abaixo possuem status fora do conjunto esperado e foram
+                ignorados nos contadores e gráficos. Revise no banco para garantir
+                consistência dos relatórios.
+              </p>
+              <TooltipProvider delayDuration={150}>
+                <div className="flex flex-wrap gap-2">
+                  {unknownVehicles > 0 && (
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="gap-1.5 border-warning/40 cursor-help">
+                          <Car className="h-3.5 w-3.5" />
+                          {unknownVehicles} veículo{unknownVehicles > 1 ? 's' : ''} com status desconhecido
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Esperado: <strong>available</strong>, <strong>rented</strong> ou{' '}
+                        <strong>maintenance</strong>. Veículos com qualquer outro valor não
+                        entram em "Frota Total", "Taxa de Ocupação" nem na pizza.
+                      </TooltipContent>
+                    </UITooltip>
+                  )}
+                  {unknownContracts > 0 && (
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="gap-1.5 border-warning/40 cursor-help">
+                          <FileText className="h-3.5 w-3.5" />
+                          {unknownContracts} contrato{unknownContracts > 1 ? 's' : ''} com status desconhecido
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Esperado: <strong>active</strong>, <strong>completed</strong>,{' '}
+                        <strong>cancelled</strong> ou <strong>pending</strong>. Demais valores
+                        não são contabilizados em "Contratos Ativos" ou na distribuição.
+                      </TooltipContent>
+                    </UITooltip>
+                  )}
+                </div>
+              </TooltipProvider>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Primary KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
