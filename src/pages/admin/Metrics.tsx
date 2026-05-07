@@ -204,6 +204,18 @@ export default function AdminMetrics() {
           </div>
         </div>
 
+        <ReportFilters
+          filters={filters}
+          onChange={setFilters}
+          statusOptions={[
+            { value: 'available', label: 'Disponíveis' },
+            { value: 'rented', label: 'Alugados' },
+            { value: 'maintenance', label: 'Em manutenção' },
+          ]}
+          statusLabel="Status do veículo"
+          resultCount={filteredVehicles.length + filteredContracts.length}
+        />
+
         {/* Primary KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
