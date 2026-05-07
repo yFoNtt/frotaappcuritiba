@@ -365,30 +365,30 @@ export default function LocadorPayments() {
         </div>
 
         {/* Filters */}
+        <ReportFilters
+          filters={filters}
+          onChange={(f) => { setFilters(f); setCurrentPage(1); }}
+          vehicles={vehicles.map((v) => ({ value: v.id, label: `${v.brand} ${v.model} - ${v.plate}` }))}
+          drivers={drivers.map((d) => ({ value: d.id, label: d.name }))}
+          statusOptions={[
+            { value: 'pending', label: 'Pendente' },
+            { value: 'paid', label: 'Pago' },
+            { value: 'overdue', label: 'Atrasado' },
+            { value: 'cancelled', label: 'Cancelado' },
+          ]}
+          statusLabel="Status do pagamento"
+          resultCount={filteredPayments.length}
+        />
         <Card>
           <CardContent className="p-4">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por motorista ou valor..."
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="overdue">Atrasado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por motorista ou valor..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-9"
+              />
             </div>
           </CardContent>
         </Card>
