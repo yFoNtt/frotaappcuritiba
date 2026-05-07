@@ -5,24 +5,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  TrendingUp, 
-  Users, 
-  Car, 
-  FileText,
-  Activity,
-  Building2,
-  UserCheck,
-  Gauge,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Zap,
-  Download
+import {
+  TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
+  Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
 } from 'lucide-react';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
+import { useReportFilters } from '@/hooks/useReportFilters';
+import { ReportFilters } from '@/components/reports/ReportFilters';
+import { isWithinInterval, parseISO } from 'date-fns';
 import {
   AreaChart,
   Area,
