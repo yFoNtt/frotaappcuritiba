@@ -161,6 +161,45 @@ export default function AdminMetrics() {
     [contracts]
   );
 
+  const [isLoggingReview, setIsLoggingReview] = useState(false);
+
+  const closeInconsistencyDialog = async () => {
+    const scope = inconsistencyView;
+    if (!scope) return;
+
+    const items: any[] = scope === 'vehicles' ? invalidVehicles : invalidContracts;
+
+    if (items.length === 0) {
+      setInconsistencyView(null);
+      return;
+    }
+
+    setIsLoggingReview(true);
+    try {
+      const reviewedIds = items.map((i) => i.id).filter(Boolean);
+      const unknownStatuses = Array.from(
+        new Set(items.map((i) => String(i.status ?? 'null')))
+      );
+
+      const { error } = await supabase.functions.invoke('log-inconsistency-review', {
+        body: {
+          scope,
+          unknownCount: items.length,
+          reviewedIds,
+          unknownStatuses,
+        },
+      });
+
+      if (error) throw error;
+      toast.success('Revisão registrada nos logs de auditoria.');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Falha ao registrar a revisão. Tente novamente.');
+    } finally {
+      setIsLoggingReview(false);
+      setInconsistencyView(null);
+    }
+  };
   if (isLoading) {
     return (
       <AdminLayout>
