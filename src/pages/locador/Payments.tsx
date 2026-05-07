@@ -60,7 +60,9 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react';
-import { format, parseISO, startOfWeek, addDays, isBefore } from 'date-fns';
+import { format, parseISO, startOfWeek, addDays, isBefore, isWithinInterval } from 'date-fns';
+import { useReportFilters } from '@/hooks/useReportFilters';
+import { ReportFilters } from '@/components/reports/ReportFilters';
 import { ptBR } from 'date-fns/locale';
 import { 
   useLocadorPayments, 
