@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import {
   TrendingUp, Users, Car, FileText, Activity, Building2, UserCheck,
   Gauge, Calendar, ArrowUpRight, ArrowDownRight, Target, Zap, Download,
+  AlertTriangle,
 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMetricsExport } from '@/hooks/useMetricsExport';
 import { useAdminStats, useAdminVehicles, useAdminMonthlyData, useAdminContracts } from '@/hooks/useAdminData';
 import { useReportFilters } from '@/hooks/useReportFilters';
