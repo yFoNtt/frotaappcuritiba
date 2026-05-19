@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, ArrowLeft, Paperclip, X, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useConversation, useConversations, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
+import { useConversation, useConversations, ensureMotoristaConversation, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
