@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
