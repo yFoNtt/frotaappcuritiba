@@ -399,8 +399,18 @@ export default function VehicleDetails() {
                       WhatsApp
                     </a>
                   </Button>
-                  <Button size="lg" variant="outline" className="w-full">
-                    <MessageCircle className="mr-2 h-4 w-4" />
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleOpenChat}
+                    disabled={openingChat}
+                  >
+                    {openingChat ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                    )}
                     Chat Interno
                   </Button>
                 </div>
