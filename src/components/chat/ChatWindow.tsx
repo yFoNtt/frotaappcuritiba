@@ -60,6 +60,23 @@ export function ChatWindow({ role }: Props) {
     }
   }, [conversations, activeId]);
 
+  // Motorista: auto-create conversation with their locador if none exists
+  const creatingRef = useRef(false);
+  useEffect(() => {
+    if (role !== 'motorista') return;
+    if (loadingList) return;
+    if (conversations.length > 0) return;
+    if (!user || creatingRef.current) return;
+    creatingRef.current = true;
+    ensureMotoristaConversation(user.id).then((id) => {
+      creatingRef.current = false;
+      if (id) {
+        setActiveId(id);
+        reloadConvs();
+      }
+    });
+  }, [role, loadingList, conversations.length, user, reloadConvs]);
+
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
