@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -23,6 +25,7 @@ import {
   Car,
   FileText,
   Palette,
+  Loader2,
 } from 'lucide-react';
 
 const statusLabels: Record<string, string> = {
