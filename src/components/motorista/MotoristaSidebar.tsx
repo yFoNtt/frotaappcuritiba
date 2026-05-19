@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -100,15 +100,9 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userEmail }:
               </motion.div>
             );
           })}
-          <motion.div
-            initial={onClose ? { opacity: 0, x: -20 } : false}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: menuItems.length * 0.05, duration: 0.25, ease: "easeOut" }}
-          >
-            <NotificationBell collapsed={collapsed} />
-          </motion.div>
         </nav>
       </ScrollArea>
+
 
       {/* User section */}
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">

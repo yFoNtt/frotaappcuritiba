@@ -120,9 +120,15 @@ function NotificationItem({
 
 interface NotificationBellProps {
   collapsed?: boolean;
+  variant?: 'sidebar' | 'header';
+  viewAllPath?: string;
 }
 
-export function NotificationBell({ collapsed = false }: NotificationBellProps) {
+export function NotificationBell({
+  collapsed = false,
+  variant = 'sidebar',
+  viewAllPath = '/locador/notificacoes',
+}: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
@@ -135,30 +141,48 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
     navigate(route);
   };
 
+  const isHeader = variant === 'header';
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          className={cn(
-            'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-            'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-            collapsed && 'justify-center'
-          )}
-        >
-          <div className="relative flex-shrink-0">
+        {isHeader ? (
+          <button
+            type="button"
+            aria-label="Notificações"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+          >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
-          </div>
-          {!collapsed && <span>Notificações</span>}
-        </button>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={cn(
+              'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+              'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              collapsed && 'justify-center'
+            )}
+          >
+            <div className="relative flex-shrink-0">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </div>
+            {!collapsed && <span>Notificações</span>}
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
-        side="right"
-        align="start"
+        side={isHeader ? 'bottom' : 'right'}
+        align={isHeader ? 'end' : 'start'}
         className="w-80 p-0"
         sideOffset={8}
       >
@@ -207,12 +231,13 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
             variant="ghost"
             size="sm"
             className="w-full text-xs"
-            onClick={() => { setOpen(false); navigate('/locador/notificacoes'); }}
+            onClick={() => { setOpen(false); navigate(viewAllPath); }}
           >
-            Ver todas as notificações
+            Visualizar tudo
           </Button>
         </div>
       </PopoverContent>
     </Popover>
   );
 }
+
