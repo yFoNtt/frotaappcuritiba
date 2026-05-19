@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { MotoristaSidebar } from './MotoristaSidebar';
 import { CnhAlertsBadge } from './CnhAlertsBadge';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn } from '@/lib/utils';
 
 interface MotoristaLayoutProps {
@@ -17,9 +18,10 @@ export function MotoristaLayout({ children }: MotoristaLayoutProps) {
         "min-h-screen transition-all duration-300 pt-16 md:pt-0",
         collapsed ? "md:ml-[70px]" : "md:ml-64"
       )}>
-        {/* Top bar with alerts */}
-        <div className="flex h-14 items-center justify-end border-b bg-background px-6">
+        {/* Top bar with alerts + notifications */}
+        <div className="flex h-14 items-center justify-end gap-2 border-b bg-background px-6">
           <CnhAlertsBadge />
+          <NotificationBell variant="header" viewAllPath="/motorista" />
         </div>
         <div className="p-4 md:p-6">
           {children}
