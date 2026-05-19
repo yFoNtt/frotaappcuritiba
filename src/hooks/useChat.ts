@@ -111,6 +111,49 @@ export function useConversations(role: ChatRole) {
 }
 
 /**
+ * For motoristas: ensures a conversation exists with their locador.
+ * Returns the conversation id, or null if the driver has no locador linked.
+ */
+export async function ensureMotoristaConversation(userId: string): Promise<string | null> {
+  // Find the driver record linked to this user
+  const { data: driver, error: driverErr } = await supabase
+    .from('drivers')
+    .select('id, locador_id')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (driverErr || !driver) {
+    console.warn('[ensureMotoristaConversation] no active driver record', driverErr);
+    return null;
+  }
+
+  // Check if conversation already exists
+  const { data: existing } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('driver_id', driver.id)
+    .eq('locador_id', driver.locador_id)
+    .maybeSingle();
+
+  if (existing) return existing.id;
+
+  // Create it
+  const { data: created, error: insertErr } = await supabase
+    .from('conversations')
+    .insert({ driver_id: driver.id, locador_id: driver.locador_id })
+    .select('id')
+    .single();
+
+  if (insertErr || !created) {
+    console.error('[ensureMotoristaConversation] insert error', insertErr);
+    toast.error('Não foi possível iniciar a conversa.');
+    return null;
+  }
+  return created.id;
+}
+
+/**
  * Manages messages of a single conversation: load, send, mark as read, realtime.
  */
 export function useConversation(conversationId: string | null, role: ChatRole) {
