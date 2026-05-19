@@ -115,15 +115,9 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
               </motion.div>
             );
           })}
-          <motion.div
-            initial={onClose ? { opacity: 0, x: -20 } : false}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: menuItems.length * 0.05, duration: 0.25, ease: "easeOut" }}
-          >
-            <NotificationBell collapsed={collapsed} />
-          </motion.div>
         </nav>
       </ScrollArea>
+
 
       {/* User section - Fixed at bottom */}
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">
