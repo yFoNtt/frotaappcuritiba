@@ -97,8 +97,9 @@ export default function VehicleDetails() {
 
   const handleOpenChat = async () => {
     if (!user) {
-      toast.info('Faça login para conversar com o locador.');
-      navigate('/auth');
+      toast.info('Faça login ou crie sua conta para conversar com o locador.');
+      const redirect = encodeURIComponent(`/veiculos/${id}`);
+      navigate(`/cadastro?redirect=${redirect}`);
       return;
     }
     if (isOwner) {

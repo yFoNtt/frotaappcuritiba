@@ -24,13 +24,19 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && role && !authLoading) {
-      const redirectPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : '/motorista';
+      const params = new URLSearchParams(location.search);
+      const redirectParam = params.get('redirect');
+      const defaultPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : '/motorista';
+      // Only allow same-origin relative redirects
+      const safeRedirect = redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+        ? redirectParam
+        : defaultPath;
       const timer = setTimeout(() => {
-        navigate(redirectPath, { replace: true });
+        navigate(safeRedirect, { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading, navigate, location.search]);
 
   if (authLoading) {
     return (
