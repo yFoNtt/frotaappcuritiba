@@ -81,6 +81,8 @@ function VehicleDetailsSkeleton() {
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [openingChat, setOpeningChat] = useState(false);
 
   // Use full vehicle data for authenticated users, public RPC for anonymous
   const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
@@ -92,6 +94,60 @@ export default function VehicleDetails() {
   // Check if the current user is the owner of the vehicle
   const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
   const plate = privateVehicle?.plate;
+
+  const handleOpenChat = async () => {
+    if (!user) {
+      toast.info('Faça login para conversar com o locador.');
+      navigate('/auth');
+      return;
+    }
+    if (isOwner) {
+      navigate('/locador/mensagens');
+      return;
+    }
+    const locadorId = privateVehicle?.locador_id;
+    if (!locadorId) {
+      toast.error('Não foi possível identificar o locador.');
+      return;
+    }
+    setOpeningChat(true);
+    try {
+      const { data: driver, error: driverErr } = await supabase
+        .from('drivers')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('locador_id', locadorId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (driverErr) throw driverErr;
+      if (!driver) {
+        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat.');
+        return;
+      }
+
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('driver_id', driver.id)
+        .eq('locador_id', locadorId)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error: insertErr } = await supabase
+          .from('conversations')
+          .insert({ driver_id: driver.id, locador_id: locadorId });
+        if (insertErr) throw insertErr;
+      }
+
+      navigate('/motorista/mensagens');
+    } catch (err) {
+      console.error('[VehicleDetails] open chat error', err);
+      toast.error('Não foi possível abrir o chat.');
+    } finally {
+      setOpeningChat(false);
+    }
+  };
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
