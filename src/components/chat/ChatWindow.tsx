@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, ArrowLeft, Paperclip, X, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useConversation, useConversations, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
+import { useConversation, useConversations, ensureMotoristaConversation, type ChatRole, type AttachmentInput } from '@/hooks/useChat';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ function formatDay(iso: string) {
 
 export function ChatWindow({ role }: Props) {
   const { user } = useAuth();
-  const { conversations, loading: loadingList } = useConversations(role);
+  const { conversations, loading: loadingList, reload: reloadConvs } = useConversations(role);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
   const [text, setText] = useState('');
@@ -59,6 +59,23 @@ export function ChatWindow({ role }: Props) {
       setActiveId(conversations[0].id);
     }
   }, [conversations, activeId]);
+
+  // Motorista: auto-create conversation with their locador if none exists
+  const creatingRef = useRef(false);
+  useEffect(() => {
+    if (role !== 'motorista') return;
+    if (loadingList) return;
+    if (conversations.length > 0) return;
+    if (!user || creatingRef.current) return;
+    creatingRef.current = true;
+    ensureMotoristaConversation(user.id).then((id) => {
+      creatingRef.current = false;
+      if (id) {
+        setActiveId(id);
+        reloadConvs();
+      }
+    });
+  }, [role, loadingList, conversations.length, user, reloadConvs]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
