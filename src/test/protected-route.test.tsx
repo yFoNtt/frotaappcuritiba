@@ -109,4 +109,14 @@ describe('ProtectedRoute', () => {
     renderWithRouter('/protected', ['locador']);
     expect(screen.getByTestId('login-page')).toBeInTheDocument();
   });
+
+  it('renders children when admin accesses an admin-allowed route', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: '1', email: 'admin@test.com' },
+      role: 'admin',
+      loading: false,
+    });
+    renderWithRouter('/protected', ['admin']);
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+  });
 });
