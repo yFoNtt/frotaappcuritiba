@@ -31,7 +31,7 @@ function formatDay(iso: string) {
 
 export function ChatWindow({ role }: Props) {
   const { user } = useAuth();
-  const { conversations, loading: loadingList } = useConversations(role);
+  const { conversations, loading: loadingList, reload: reloadConvs } = useConversations(role);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
   const [text, setText] = useState('');
