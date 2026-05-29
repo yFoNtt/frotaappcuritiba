@@ -22,7 +22,15 @@ export function HeroSection() {
     <section className="relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img src={heroImage} alt="" className="h-full w-full object-cover" />
+        <img
+          src={heroImage}
+          alt=""
+          width={1920}
+          height={1080}
+          fetchPriority="high"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
