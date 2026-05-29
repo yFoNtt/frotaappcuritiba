@@ -96,7 +96,7 @@ export default function HowItWorks() {
                   </div>
                 </div>
 
-                <h3 className="mb-2 text-lg font-semibold text-foreground">{step.title}</h3>
+                <h2 className="mb-2 text-lg font-semibold text-foreground">{step.title}</h2>
                 <p className="text-muted-foreground">{step.description}</p>
               </div>
             ))}
