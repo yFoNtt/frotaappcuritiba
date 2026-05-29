@@ -198,7 +198,7 @@ export default function Vehicles() {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Car className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-foreground">
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
               Nenhum veículo encontrado
             </h3>
             <p className="max-w-md text-muted-foreground">
