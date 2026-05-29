@@ -200,7 +200,7 @@ export default function Vehicles() {
             </div>
             <h2 className="mb-2 text-lg font-semibold text-foreground">
               Nenhum veículo encontrado
-            </h3>
+            </h2>
             <p className="max-w-md text-muted-foreground">
               {hasActiveFilters
                 ? 'Tente ajustar os filtros para encontrar mais opções de veículos.'
