@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from "react";
-import { Sparkles, Send, Loader2, X, Trash2, Bot, User as UserIcon } from "lucide-react";
+import { Sparkles, Send, Loader2, Trash2, Bot, User as UserIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
