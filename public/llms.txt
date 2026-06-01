@@ -1,0 +1,16 @@
+# FrotaApp
+
+> Marketplace de locação de veículos para motoristas de aplicativo (Uber, 99 e outros) e plataforma de gestão de frota para locadores.
+
+FrotaApp conecta motoristas que buscam veículos para trabalhar com apps de transporte a locadores que oferecem carros em sistema de aluguel. Para locadores, oferece um sistema completo de gestão de frota: veículos, motoristas, contratos, pagamentos, manutenções e quilometragem.
+
+## Pages
+
+- [Início](/): Marketplace com veículos em destaque e visão geral da plataforma.
+- [Veículos](/veiculos): Busca pública de veículos disponíveis para locação, com filtros por cidade, preço e categoria.
+- [Como Funciona](/como-funciona): Processo em 4 passos para alugar um veículo e começar a rodar em apps.
+- [Para Locadores](/para-locadores): Recursos, planos e preços da plataforma de gestão de frota.
+
+## Optional
+
+- [Entrar ou Cadastrar](/auth): Acesso para motoristas e locadores.
