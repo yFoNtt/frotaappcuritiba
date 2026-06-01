@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { LocadorAssistant } from '@/components/locador/LocadorAssistant';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -25,6 +26,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </div>
       </main>
+      <LocadorAssistant />
     </div>
   );
 }
