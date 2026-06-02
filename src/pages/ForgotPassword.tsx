@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Car, Mail, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 
 export default function ForgotPassword() {
@@ -40,6 +41,12 @@ export default function ForgotPassword() {
 
   return (
     <PublicLayout>
+      <SEO
+        title="Recuperar senha — Receba um link por email"
+        description="Esqueceu sua senha do FrotaApp? Digite seu email e receba um link seguro para redefinir e voltar a acessar sua conta."
+        canonical="/esqueci-senha"
+        noindex
+      />
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">

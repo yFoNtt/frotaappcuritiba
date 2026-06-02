@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Car, Loader2, CheckCircle2 } from 'lucide-react';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
 
 export default function ResetPassword() {
@@ -112,6 +113,12 @@ export default function ResetPassword() {
 
   return (
     <PublicLayout>
+      <SEO
+        title="Definir nova senha — Conclua a recuperação"
+        description="Crie uma nova senha forte para sua conta FrotaApp e volte a acessar a plataforma de locação de veículos para motoristas de aplicativo."
+        canonical="/redefinir-senha"
+        noindex
+      />
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
