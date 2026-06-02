@@ -11,8 +11,15 @@ interface SEOProps {
 }
 
 const SITE_NAME = 'FrotaApp';
-const DEFAULT_OG_IMAGE = '/og-image.png';
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+const SITE_URL = 'https://frotaappcuritiba.lovable.app';
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : SITE_URL;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+
+function toAbsolute(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+}
 
 export function SEO({
   title,
@@ -51,10 +58,11 @@ export function SEO({
     }
 
     // Open Graph
+    const absoluteOgImage = toAbsolute(ogImage) || DEFAULT_OG_IMAGE;
     setMeta('property', 'og:title', fullTitle);
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', ogType);
-    setMeta('property', 'og:image', ogImage || DEFAULT_OG_IMAGE);
+    setMeta('property', 'og:image', absoluteOgImage);
     setMeta('property', 'og:site_name', SITE_NAME);
     if (canonical) {
       setMeta('property', 'og:url', canonical.startsWith('http') ? canonical : `${BASE_URL}${canonical}`);
@@ -64,7 +72,7 @@ export function SEO({
     setMeta('name', 'twitter:card', 'summary_large_image');
     setMeta('name', 'twitter:title', fullTitle);
     setMeta('name', 'twitter:description', description);
-    setMeta('name', 'twitter:image', ogImage || DEFAULT_OG_IMAGE);
+    setMeta('name', 'twitter:image', absoluteOgImage);
 
     // Canonical link
     if (canonical) {

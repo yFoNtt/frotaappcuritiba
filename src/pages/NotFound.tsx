@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { SEO } from "@/components/SEO";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,15 +10,22 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <>
+      <SEO
+        title="Página não encontrada (404)"
+        description="A página que você tentou acessar não existe ou foi movida. Volte para o início e continue navegando pelos veículos disponíveis no FrotaApp."
+        noindex
+      />
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <div className="text-center">
+          <h1 className="mb-4 text-4xl font-bold text-foreground">404</h1>
+          <p className="mb-4 text-xl text-muted-foreground">Oops! Página não encontrada</p>
+          <a href="/" className="text-primary underline hover:text-primary/90">
+            Voltar para o início
+          </a>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

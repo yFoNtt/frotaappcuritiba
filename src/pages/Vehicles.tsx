@@ -160,6 +160,7 @@ export default function Vehicles() {
 
         {filteredVehicles.length > 0 ? (
           <>
+            <h2 className="sr-only">Lista de veículos disponíveis para locação</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle.id} vehicle={vehicle} />

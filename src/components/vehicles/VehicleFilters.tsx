@@ -111,11 +111,16 @@ export function VehicleFilters({
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
+        <label htmlFor="vehicle-search" className="sr-only">
+          Buscar veículos por marca ou modelo
+        </label>
         <Input
+          id="vehicle-search"
+          aria-label="Buscar veículos por marca ou modelo"
           placeholder="Buscar por marca ou modelo..."
           value={filters.search}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-          className="h-12 rounded-xl border-border/60 bg-muted/40 pl-11 text-base placeholder:text-muted-foreground/60 focus-visible:bg-background focus-visible:ring-primary/30"
+          className="h-12 rounded-xl border-border/60 bg-muted/40 pl-11 text-base placeholder:text-muted-foreground focus-visible:bg-background focus-visible:ring-primary/30"
         />
       </div>
 

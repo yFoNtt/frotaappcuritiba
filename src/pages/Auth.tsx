@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { OAuthRoleSelection } from '@/components/auth/OAuthRoleSelection';
+import { SEO } from '@/components/SEO';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function Auth() {
@@ -59,6 +60,16 @@ export default function Auth() {
 
   return (
     <PublicLayout>
+      <SEO
+        title={mode === 'register' ? 'Criar conta — Cadastro de motorista ou locador' : 'Entrar na sua conta'}
+        description={
+          mode === 'register'
+            ? 'Crie sua conta no FrotaApp para alugar veículos ou cadastrar sua frota. Cadastro rápido para motoristas de Uber, 99 e locadores.'
+            : 'Acesse sua conta FrotaApp para gerenciar aluguéis, veículos, motoristas e pagamentos da sua frota.'
+        }
+        canonical={mode === 'register' ? '/cadastro' : '/login'}
+        noindex
+      />
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.97 }}
