@@ -11,6 +11,8 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const HowItWorks = lazy(() => import("@/pages/HowItWorks"));
 const ForRenters = lazy(() => import("@/pages/ForRenters"));
 const Install = lazy(() => import("@/pages/Install"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Terms = lazy(() => import("@/pages/Terms"));
 
 export const publicRoutes = (
   <>
