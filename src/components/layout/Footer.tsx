@@ -91,7 +91,16 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 sm:mt-12 border-t border-border pt-4 sm:pt-6">
+        <div className="mt-6 sm:mt-12 border-t border-border pt-4 sm:pt-6 flex flex-col items-center gap-2">
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs sm:text-sm">
+            <Link to="/privacidade" className="text-muted-foreground hover:text-primary transition-colors">
+              Política de Privacidade
+            </Link>
+            <span className="text-muted-foreground/40" aria-hidden>·</span>
+            <Link to="/termos" className="text-muted-foreground hover:text-primary transition-colors">
+              Termos de Uso
+            </Link>
+          </nav>
           <p className="text-center text-xs sm:text-sm text-muted-foreground">
             © {new Date().getFullYear()} FrotaApp. Todos os direitos reservados.
           </p>
