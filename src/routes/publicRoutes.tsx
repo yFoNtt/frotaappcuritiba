@@ -11,6 +11,8 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const HowItWorks = lazy(() => import("@/pages/HowItWorks"));
 const ForRenters = lazy(() => import("@/pages/ForRenters"));
 const Install = lazy(() => import("@/pages/Install"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Terms = lazy(() => import("@/pages/Terms"));
 
 export const publicRoutes = (
   <>
@@ -24,5 +26,7 @@ export const publicRoutes = (
     <Route path="/como-funciona" element={<Lazy><HowItWorks /></Lazy>} />
     <Route path="/para-locadores" element={<Lazy><ForRenters /></Lazy>} />
     <Route path="/instalar" element={<Lazy><Install /></Lazy>} />
+    <Route path="/privacidade" element={<Lazy><Privacy /></Lazy>} />
+    <Route path="/termos" element={<Lazy><Terms /></Lazy>} />
   </>
 );
