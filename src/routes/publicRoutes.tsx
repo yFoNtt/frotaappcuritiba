@@ -26,5 +26,7 @@ export const publicRoutes = (
     <Route path="/como-funciona" element={<Lazy><HowItWorks /></Lazy>} />
     <Route path="/para-locadores" element={<Lazy><ForRenters /></Lazy>} />
     <Route path="/instalar" element={<Lazy><Install /></Lazy>} />
+    <Route path="/privacidade" element={<Lazy><Privacy /></Lazy>} />
+    <Route path="/termos" element={<Lazy><Terms /></Lazy>} />
   </>
 );
