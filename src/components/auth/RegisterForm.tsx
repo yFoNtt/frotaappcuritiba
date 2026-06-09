@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { EmailField } from './EmailField';
 import { PasswordField } from './PasswordField';
 import { DocumentFields } from './DocumentFields';
@@ -28,6 +30,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [passwordWarning, setPasswordWarning] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -74,6 +77,12 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!acceptedTerms) {
+      toast.error('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
+      return;
+    }
+
     setLoading(true);
 
     // Validate document
@@ -236,7 +245,27 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
           passwordWarning={passwordWarning}
           loading={loading}
         />
-        <Button type="submit" className="w-full" disabled={loading}>
+        <div className="flex items-start gap-2 pt-1">
+          <Checkbox
+            id="accept-terms"
+            checked={acceptedTerms}
+            onCheckedChange={(v) => setAcceptedTerms(v === true)}
+            disabled={loading}
+            className="mt-0.5"
+          />
+          <Label htmlFor="accept-terms" className="text-sm font-normal leading-snug text-muted-foreground">
+            Li e aceito os{' '}
+            <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Termos de Uso
+            </a>{' '}
+            e a{' '}
+            <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Política de Privacidade
+            </a>
+            .
+          </Label>
+        </div>
+        <Button type="submit" className="w-full" disabled={loading || !acceptedTerms}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

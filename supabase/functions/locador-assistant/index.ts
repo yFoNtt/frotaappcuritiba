@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { maskPIIDeep, newStats } from "../_shared/maskPII.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
         .limit(80),
     ]);
 
-    const snapshot = {
+    const rawSnapshot = {
       today: todayISO,
       counts: {
         vehicles: vehiclesR.data?.length ?? 0,
@@ -157,6 +158,13 @@ Deno.serve(async (req) => {
       payments: paymentsR.data ?? [],
       maintenances: maintR.data ?? [],
     };
+
+    // LGPD: mascarar PII (CPF/CNPJ/CNH/telefone/e-mail) antes de enviar ao LLM.
+    const piiStats = newStats();
+    const snapshot = maskPIIDeep(rawSnapshot, piiStats);
+    if (Deno.env.get("ENVIRONMENT") !== "production") {
+      console.log("[locador-assistant] PII mascarada:", JSON.stringify(piiStats));
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {

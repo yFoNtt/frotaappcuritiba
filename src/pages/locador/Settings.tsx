@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChecklistTemplateEditor } from '@/components/inspections/ChecklistTemplateEditor';
+import { PrivacySection } from '@/components/settings/PrivacySection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
@@ -327,6 +328,10 @@ export default function LocadorSettings() {
                 </CardContent>
               </Card>
             </div>
+
+            <PrivacySection />
+
+
 
             {/* Save Button */}
             <div className="flex justify-end">
