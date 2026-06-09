@@ -14,8 +14,6 @@ import { validateDocument, validateCNHDocument } from '@/lib/documentValidation'
 import { isAfter, startOfDay } from 'date-fns';
 import { getWeakPasswordMessage } from './utils';
 import { lovable } from '@/integrations/lovable/index';
-import { supabase } from '@/integrations/supabase/client';
-import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/consentVersions';
 
 type AppRole = 'locador' | 'motorista';
 
