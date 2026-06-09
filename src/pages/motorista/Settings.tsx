@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { PrivacySection } from '@/components/settings/PrivacySection';
 
 export default function MotoristaSettings() {
   const { user } = useAuth();
