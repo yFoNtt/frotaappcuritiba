@@ -225,6 +225,8 @@ export default function MotoristaSettings() {
             </div>
           </CardContent>
         </Card>
+
+        <PrivacySection />
       </div>
     </MotoristaLayout>
   );
