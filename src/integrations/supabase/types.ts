@@ -1008,6 +1008,7 @@ export type Database = {
     }
     Functions: {
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
+      delete_own_account: { Args: never; Returns: undefined }
       get_public_vehicle: {
         Args: { _vehicle_id: string }
         Returns: {
