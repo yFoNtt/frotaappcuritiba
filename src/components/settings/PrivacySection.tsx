@@ -1,0 +1,210 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Download, Trash2, ShieldCheck, ExternalLink, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useLatestConsent } from '@/hooks/useConsents';
+
+export function PrivacySection() {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { data: consent, isLoading: loadingConsent } = useLatestConsent();
+  const [exporting, setExporting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('export-user-data');
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'meus-dados-frotaapp.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Seus dados foram exportados com sucesso.');
+    } catch (err) {
+      console.error('Erro ao exportar dados:', err);
+      toast.error('Não foi possível exportar seus dados. Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.rpc('delete_own_account' as never);
+      if (error) throw error;
+      toast.success('Conta excluída. Você será desconectado.');
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error('Erro ao excluir conta:', err);
+      toast.error('Não foi possível excluir sua conta. Tente novamente.');
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5" />
+          Privacidade e seus dados
+        </CardTitle>
+        <CardDescription>
+          Em conformidade com a LGPD, você pode consultar seu consentimento,
+          exportar seus dados ou excluir sua conta.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Consentimento ativo */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Consentimento ativo</Label>
+          {loadingConsent ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : consent ? (
+            <div className="rounded-md border bg-muted/30 p-3 text-sm">
+              <p>
+                Termos de Uso <span className="font-medium">v{consent.terms_version}</span> e
+                Política de Privacidade <span className="font-medium">v{consent.privacy_version}</span>
+              </p>
+              <p className="text-muted-foreground">
+                Aceito em{' '}
+                {format(new Date(consent.accepted_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+            </div>
+          ) : (
+            <p className="rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+              Confirme seu aceite atualizando seu perfil ou revisando os documentos abaixo.
+            </p>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Exportar dados */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Exportar meus dados</Label>
+          <p className="text-sm text-muted-foreground">
+            Baixe um arquivo JSON com todos os dados que mantemos sobre você.
+          </p>
+          <Button onClick={handleExport} disabled={exporting} variant="outline">
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Exportar meus dados
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Links rápidos */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Documentos legais</Label>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="/privacidade"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              Política de Privacidade <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="/termos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              Termos de Uso <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Excluir conta */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-destructive">Excluir minha conta</Label>
+          <p className="text-sm text-muted-foreground">
+            Remove seus dados pessoais. Dados operacionais (contratos, pagamentos)
+            são anonimizados para fins contábeis e legais.
+          </p>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setConfirmText('');
+              setDeleteOpen(true);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir minha conta
+          </Button>
+        </div>
+      </CardContent>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. Todos os seus dados pessoais serão removidos.
+              Dados operacionais (contratos, pagamentos) serão anonimizados para fins contábeis.
+              Para confirmar, digite <span className="font-semibold">EXCLUIR</span> abaixo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Digite EXCLUIR"
+              autoFocus
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={confirmText !== 'EXCLUIR' || deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
+  );
+}
