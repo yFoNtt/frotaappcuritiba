@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { EmailField } from './EmailField';
 import { PasswordField } from './PasswordField';
 import { DocumentFields } from './DocumentFields';
@@ -12,6 +14,8 @@ import { validateDocument, validateCNHDocument } from '@/lib/documentValidation'
 import { isAfter, startOfDay } from 'date-fns';
 import { getWeakPasswordMessage } from './utils';
 import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '@/integrations/supabase/client';
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/consentVersions';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -28,6 +32,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [passwordWarning, setPasswordWarning] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -74,6 +79,12 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!acceptedTerms) {
+      toast.error('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
+      return;
+    }
+
     setLoading(true);
 
     // Validate document
@@ -150,7 +161,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       cnhExpiry: selectedRole === 'motorista' ? cnhExpiry : undefined,
     };
 
-    const { error } = await signUp(email, password, selectedRole, profileData);
+    const { error, data: signUpData } = await signUp(email, password, selectedRole, profileData);
 
     if (error) {
       const weakMsg = getWeakPasswordMessage(error);
@@ -161,6 +172,20 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
         toast.error(error.message);
       }
     } else {
+      // Registrar consentimento LGPD (best-effort, não bloqueia o cadastro)
+      try {
+        const userId = (signUpData as { user?: { id?: string } } | null | undefined)?.user?.id;
+        if (userId) {
+          await supabase.from('consents' as never).insert({
+            user_id: userId,
+            terms_version: TERMS_VERSION,
+            privacy_version: PRIVACY_VERSION,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+          } as never);
+        }
+      } catch (consentErr) {
+        console.warn('Falha ao registrar consentimento:', consentErr);
+      }
       toast.success('Conta criada com sucesso! Faça login para continuar.');
       onRegistered();
     }
