@@ -162,7 +162,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('Error creating profile:', profileError);
           }
         }
-        
+
+        // LGPD: registrar consentimento enquanto a sessão ainda está ativa
+        try {
+          const { TERMS_VERSION, PRIVACY_VERSION } = await import('@/lib/consentVersions');
+          await supabase.from('consents' as never).insert({
+            user_id: data.user.id,
+            terms_version: TERMS_VERSION,
+            privacy_version: PRIVACY_VERSION,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+          } as never);
+        } catch (consentErr) {
+          console.warn('Falha ao registrar consentimento:', consentErr);
+        }
+
         // Sign out immediately after signup so user needs to login manually
         await supabase.auth.signOut();
         setUser(null);

@@ -161,7 +161,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       cnhExpiry: selectedRole === 'motorista' ? cnhExpiry : undefined,
     };
 
-    const { error, data: signUpData } = await signUp(email, password, selectedRole, profileData);
+    const { error } = await signUp(email, password, selectedRole, profileData);
 
     if (error) {
       const weakMsg = getWeakPasswordMessage(error);
@@ -172,20 +172,6 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
         toast.error(error.message);
       }
     } else {
-      // Registrar consentimento LGPD (best-effort, não bloqueia o cadastro)
-      try {
-        const userId = (signUpData as { user?: { id?: string } } | null | undefined)?.user?.id;
-        if (userId) {
-          await supabase.from('consents' as never).insert({
-            user_id: userId,
-            terms_version: TERMS_VERSION,
-            privacy_version: PRIVACY_VERSION,
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-          } as never);
-        }
-      } catch (consentErr) {
-        console.warn('Falha ao registrar consentimento:', consentErr);
-      }
       toast.success('Conta criada com sucesso! Faça login para continuar.');
       onRegistered();
     }
