@@ -296,6 +296,33 @@ export function PrivacySection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revogar consentimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao revogar, registramos a data e hora da revogação. Sem um consentimento válido
+              aos Termos de Uso e à Política de Privacidade, sua experiência na plataforma fica
+              limitada — você poderá aceitar novamente a qualquer momento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={revokeConsent.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleRevoke();
+              }}
+              disabled={revokeConsent.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revokeConsent.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Revogar consentimento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
