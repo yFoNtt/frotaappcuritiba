@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useConsentStatus } from '@/hooks/useConsentStatus';
 import { Loader2 } from 'lucide-react';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
@@ -11,6 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
+  const { status: consentStatus, isLoading: consentLoading } = useConsentStatus();
   const location = useLocation();
 
   if (loading) {
@@ -33,5 +35,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
   }
 
+  // LGPD gate — admins ficam isentos para evitar lockout em manutenção.
+  if (role !== 'admin' && !consentLoading && consentStatus !== 'valid') {
+    return <Navigate to="/consent-required" replace />;
+  }
+
   return <>{children}</>;
 }
+

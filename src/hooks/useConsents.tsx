@@ -40,19 +40,23 @@ export function useRecordConsent() {
   return useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Usuário não autenticado');
-      const { error } = await supabase.from('consents' as never).insert({
-        user_id: user.id,
-        terms_version: TERMS_VERSION,
-        privacy_version: PRIVACY_VERSION,
-        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      } as never);
+      const { data, error } = await supabase.functions.invoke('record-consent', {
+        body: {
+          terms_version: TERMS_VERSION,
+          privacy_version: PRIVACY_VERSION,
+        },
+      });
       if (error) throw error;
+      if (data && (data as { error?: string }).error) {
+        throw new Error((data as { error: string }).error);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['consents'] });
     },
   });
 }
+
 
 export function useRevokeConsent() {
   const { user } = useAuth();

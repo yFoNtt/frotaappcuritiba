@@ -1,87 +1,66 @@
-# Plano LGPD — FrotaApp
+## Plano — Reforço LGPD (3 itens)
 
-Implementação aditiva (sem alterar lógica existente). Os arquivos de configurações no projeto chamam-se `Settings.tsx` (não `Configuracoes.tsx`) — usarei os existentes: `src/pages/locador/Settings.tsx` e `src/pages/motorista/Settings.tsx`.
+### 1. Bloquear acesso quando consentimento está revogado ou desatualizado
 
-## Entrega 1 — Mascaramento de PII em `locador-assistant`
+Criar um "gate" de re-aceite que intercepta usuários autenticados sem consentimento válido e os força a aceitar antes de continuar usando a plataforma.
 
-- Criar `supabase/functions/_shared/maskPII.ts` exportando `maskPII(text)` e `maskPIIDeep(value)` (recursivo em objetos/arrays).
-- Regex: CPF, CNPJ, CNH (9 dígitos isolados — observação: o snapshot atual usa CNH brasileira de 11 dígitos; aplicarei também variante 11 dígitos para cobrir o caso real), telefones BR (com/sem DDI), e-mail.
-- Em `supabase/functions/locador-assistant/index.ts`: aplicar `maskPIIDeep(snapshot)` antes de serializar para o LLM. Manter datas, valores, status, placa, marca/modelo, cidade (não são PII direta).
-- Log de auditoria contando substituições quando `Deno.env.get("ENVIRONMENT") !== "production"`.
+- **Hook `useConsentStatus`** (novo, `src/hooks/useConsentStatus.tsx`): reaproveita `useLatestConsent` e retorna `{ status: 'valid' | 'missing' | 'revoked' | 'outdated', consent, isLoading }` comparando contra `TERMS_VERSION`/`PRIVACY_VERSION`.
+- **Página `ConsentGate`** (novo, `src/pages/ConsentGate.tsx`): tela full-screen, fora dos layouts de role, com:
+  - Mensagem explicando por que o acesso está bloqueado (revogado / nova versão / nunca aceito).
+  - Resumo dos Termos e Política com links para `/termos` e `/privacidade`.
+  - Checkbox "Li e aceito" + botão "Aceitar e continuar" (chama `useRecordConsent`).
+  - Botão secundário "Sair" (chama `signOut`).
+- **Integração em `ProtectedRoute.tsx`**: depois de validar `user` e `role`, se `useConsentStatus()` retornar diferente de `valid` e a rota atual não for `/consent-required`, redireciona para `/consent-required`. Admin fica isento (pode operar mesmo sem aceite, evita lockout).
+- **Rota** registrada em `src/routes/publicRoutes.tsx` (ou um arquivo de rotas protegidas neutro) como `/consent-required`, sem layout de role.
+- **PrivacySection**: após revogar, mostrar aviso "Você será redirecionado para reaceitar os termos ao navegar".
 
-## Entrega 2 — Tabela `consents` + checkbox no cadastro
+### 2. Captura de `ip_address` via Edge Function
 
-Migration (idempotente com `if not exists` / `do $$`):
+A coluna `consents.ip_address` existe mas hoje só `user_agent` é preenchido. Mover a inserção para uma Edge Function que lê o IP do cabeçalho da requisição.
 
-- `create table if not exists public.consents (...)` conforme spec.
-- `grant select, insert on public.consents to authenticated; grant all to service_role;`
-- `alter table ... enable row level security;`
-- Policies `select` (own) e `insert` (`with check auth.uid()=user_id`) criadas via bloco `do $$ if not exists`.
+- **Nova Edge Function `record-consent`** (`supabase/functions/record-consent/index.ts`):
+  - Valida JWT (`supabase.auth.getUser()` com header Authorization).
+  - Extrai IP de `x-forwarded-for` (primeiro valor) → fallback `cf-connecting-ip` → `null`.
+  - Lê `user_agent` do header `user-agent`.
+  - Insere em `consents` com `user_id`, `terms_version`, `privacy_version` (recebidos no body, validados com Zod contra as constantes esperadas), `ip_address`, `user_agent`.
+  - `verify_jwt = true` em `supabase/config.toml`.
+- **Atualizar `useRecordConsent`**: trocar `supabase.from('consents').insert(...)` por `supabase.functions.invoke('record-consent', { body: { terms_version, privacy_version } })`.
+- **Atualizar `useAuth.signUp`**: trocar o insert pós-signup pela mesma função (ou manter o insert direto somente como fallback, já que pode rodar antes da sessão estar totalmente pronta — usaremos a Edge Function após o login efetivo, ou seja, no `ConsentGate` e no `RegisterForm` chamada após autenticação).
+- **Sem alteração de RLS**: a função usa o cliente com JWT do usuário, então a policy de INSERT existente continua valendo.
 
-Frontend:
+### 3. Teste E2E do fluxo LGPD
 
-- Novo arquivo `src/lib/consentVersions.ts` com `TERMS_VERSION='1.0'`, `PRIVACY_VERSION='1.0'`.
-- `src/components/auth/RegisterForm.tsx`: adicionar `Checkbox` shadcn obrigatório com links para `/termos` e `/privacidade` (target=`_blank`, `rel="noopener"`). Botão "Criar conta" desabilitado até marcar. Validação local (não há schema Zod hoje no form — manterei o padrão atual com guard `if (!acceptedTerms) toast.error(...)`).
-- Após `signUp` bem-sucedido: `supabase.from('consents').insert({ user_id, terms_version, privacy_version, user_agent: navigator.userAgent })`. Aguardar `user` retornar antes do insert; se o insert falhar, não bloquear o cadastro (log silencioso).
+Criar `e2e/lgpd-flow.spec.ts` cobrindo o ciclo completo, usando contas de teste já disponíveis (`TEST_ACCOUNTS`).
 
-## Entrega 3 — Edge Function `export-user-data`
+Cenários:
+- **Cadastro com checkbox obrigatório**: submit bloqueado quando checkbox não marcado; toast de erro visível.
+- **Exportar dados**: login → Settings → clicar "Exportar meus dados" → aguardar download de `meus-dados-frotaapp.json` e validar que é JSON válido com chave `profile`.
+- **Revogar consentimento → ConsentGate**: login → Settings → "Revogar consentimento" → confirmar → navegar para `/locador` → esperar redirecionamento para `/consent-required` → reaceitar → voltar ao dashboard normal.
+- **Excluir conta**: usa uma conta seed dedicada (criada via Edge Function `seed-test-motoristas` ou similar), exclui, confirma que login subsequente falha.
 
-- `supabase/functions/export-user-data/index.ts` com CORS, JWT validation in-code, `verify_jwt = true` em `supabase/config.toml`.
-- Cliente Supabase criado com `Authorization` header do usuário → RLS aplica-se naturalmente.
-- Coletar em paralelo: `profiles`, `drivers`, `contracts`, `payments`, `maintenances`, `mileage_records`, `vehicle_inspections`, `documents`, `document_requests`, `conversations`, `messages`, `notifications`, `cnh_alerts`, `consents` filtrados pelo `user_id`/`locador_id`/`driver_id` conforme a tabela; `audit_logs` filtrado por `changed_by = user_id` (usar service client só para audit_logs, pois RLS pode bloquear leitura ampla — manter escopo `changed_by = userId`).
-- Retornar JSON com `Content-Disposition: attachment; filename="meus-dados-frotaapp.json"`.
+A spec usa `test.describe.serial` para garantir ordem na conta de teste descartável e `test.skip` quando `E2E_SEED_TOKEN` não estiver disponível.
 
-## Entrega 4 — RPC `delete_own_account` + UI
+### Arquivos
 
-- Migration cria função `SECURITY DEFINER` conforme spec (com `grant execute ... to authenticated`).
-- Observação importante: o `update auth.users` da spec só funciona com FKs `ON DELETE CASCADE` (Entrega 5) ou via anonimização explícita. Implementarei conforme escrito; profiles é apagado e a conta de auth é "tombada" (email renomeado + metadata `{deleted:true}`).
-- Após Entrega 5, a remoção do profile/cascade limpa relações.
+**Criar**
+- `src/hooks/useConsentStatus.tsx`
+- `src/pages/ConsentGate.tsx`
+- `supabase/functions/record-consent/index.ts`
+- `e2e/lgpd-flow.spec.ts`
 
-UI (nas duas Settings):
+**Editar**
+- `src/components/auth/ProtectedRoute.tsx` — gate de consentimento
+- `src/routes/publicRoutes.tsx` (ou equivalente) — rota `/consent-required`
+- `src/hooks/useConsents.tsx` — `useRecordConsent` chama Edge Function
+- `src/hooks/useAuth.tsx` — registro pós-signup via Edge Function
+- `supabase/config.toml` — registrar `record-consent` com `verify_jwt = true`
 
-- `AlertDialog` shadcn com aviso, campo `Input` exigindo digitar `EXCLUIR` para habilitar botão destrutivo.
-- Ao confirmar: `supabase.rpc('delete_own_account')` → `supabase.auth.signOut()` → `navigate('/')` → toast.
+**Sem alteração**
+- RLS da tabela `consents` (a função usa JWT do usuário, policy existente cobre)
+- Migrations já aplicadas
 
-## Entrega 5 — Foreign keys físicas
+### Pontos de atenção
 
-Migration idempotente (verifica `pg_constraint` antes de criar). Já existem várias FKs (ver investigação):
-
-- Existem: `profiles_user_id_fkey`, `user_roles_user_id_fkey`, `cnh_alerts_user_id_fkey`, `vehicles_locador_id_fkey`, `drivers_vehicle_id_fkey`, `drivers_user_id_fkey`, `contracts_driver_id_fkey`, `contracts_vehicle_id_fkey`, `payments_*_fkey`, `maintenances_vehicle_id_fkey`, `mileage_records_*`, `documents_*` (parciais), `vehicle_inspections_*`, `messages_conversation_id_fkey`.
-- Faltam (vou adicionar): `drivers.locador_id → auth.users(cascade)`, `documents.locador_id → auth.users(cascade)`, `notifications.user_id → auth.users(cascade)`, `payments.contract_id ON DELETE CASCADE` (existe sem cascade — vou recriar com cascade), `maintenances.vehicle_id ON DELETE CASCADE` (idem), `mileage_records.vehicle_id`, `vehicle_inspections.vehicle_id`, `contracts.driver_id ON DELETE SET NULL` (alterar nullable se necessário — atualmente NOT NULL, então manterei FK existente sem mudar comportamento e adicionarei nota; alternativa segura: deixar FK atual, não converter para SET NULL para não violar NOT NULL).
-- Estratégia: para FKs existentes sem cascade desejado, `alter table drop constraint ... ; add constraint ... on delete cascade`. Para colunas `NOT NULL` onde a spec pede `SET NULL`, manter `CASCADE` (e documentar) para não quebrar schema.
-
-## Entrega 6 — Seção "Privacidade e seus dados"
-
-Criar componente reutilizável `src/components/settings/PrivacySection.tsx` usando tokens semânticos (`text-foreground`, `text-muted-foreground`, `bg-card`, `text-destructive`):
-
-- Consentimento ativo: hook `useLatestConsent()` (TanStack Query v5) lê `consents` mais recente do usuário; mostra versão + data formatada `dd 'de' MMMM 'de' yyyy` (date-fns/locale pt-BR). Fallback: aviso "Confirme seu aceite atualizando seu perfil".
-- Botão "Exportar meus dados" → chama `supabase.functions.invoke('export-user-data')`, recebe JSON, dispara download via `Blob` + `a[download]`, toast.
-- Botão "Excluir minha conta" (variant=`destructive`) → AlertDialog conforme Entrega 4.
-- Links rápidos para `/privacidade` e `/termos` (`target="_blank"`).
-
-Importar `<PrivacySection />` em `src/pages/locador/Settings.tsx` e `src/pages/motorista/Settings.tsx`.
-
-## Detalhes técnicos
-
-- Stack: TanStack Query v5, sonner, shadcn (`Card`, `Button`, `AlertDialog`, `Checkbox`, `Input`, `Label`).
-- Migrations: 3 arquivos (consents, delete_own_account, fks) — todas idempotentes.
-- Edge Functions: 1 nova (`export-user-data`, `verify_jwt = true`) + alteração em `locador-assistant`.
-- Sem alteração de RLS existente; apenas novas policies para `consents`.
-- Respeitar CI guard de cores: somente tokens semânticos.
-
-## Arquivos a criar
-
-- `supabase/functions/_shared/maskPII.ts`
-- `supabase/functions/export-user-data/index.ts`
-- `src/lib/consentVersions.ts`
-- `src/hooks/useConsents.tsx`
-- `src/components/settings/PrivacySection.tsx`
-- 3 migrations Supabase
-
-## Arquivos a editar
-
-- `supabase/functions/locador-assistant/index.ts`
-- `supabase/config.toml` (adicionar `export-user-data`)
-- `src/components/auth/RegisterForm.tsx`
-- `src/pages/locador/Settings.tsx`
-- `src/pages/motorista/Settings.tsx`
+- Admin fica fora do gate para evitar lockout em manutenção.
+- A página `/consent-required` precisa estar acessível mesmo com consentimento inválido (não pode entrar em loop).
+- A Edge Function `record-consent` valida que `terms_version`/`privacy_version` enviados batem com os esperados pelo servidor (constantes hardcoded na função), evitando que o cliente "aceite" uma versão arbitrária.

@@ -14,3 +14,7 @@ verify_jwt = false
 
 [functions.export-user-data]
 verify_jwt = true
+
+[functions.record-consent]
+verify_jwt = true
+

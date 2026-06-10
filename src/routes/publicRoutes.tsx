@@ -13,6 +13,7 @@ const ForRenters = lazy(() => import("@/pages/ForRenters"));
 const Install = lazy(() => import("@/pages/Install"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Terms = lazy(() => import("@/pages/Terms"));
+const ConsentGate = lazy(() => import("@/pages/ConsentGate"));
 
 export const publicRoutes = (
   <>
@@ -28,5 +29,7 @@ export const publicRoutes = (
     <Route path="/instalar" element={<Lazy><Install /></Lazy>} />
     <Route path="/privacidade" element={<Lazy><Privacy /></Lazy>} />
     <Route path="/termos" element={<Lazy><Terms /></Lazy>} />
+    <Route path="/consent-required" element={<Lazy><ConsentGate /></Lazy>} />
   </>
 );
+

@@ -163,18 +163,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // LGPD: registrar consentimento enquanto a sessão ainda está ativa
+        // LGPD: registrar consentimento via Edge Function (captura IP + UA)
         try {
           const { TERMS_VERSION, PRIVACY_VERSION } = await import('@/lib/consentVersions');
-          await supabase.from('consents' as never).insert({
-            user_id: data.user.id,
-            terms_version: TERMS_VERSION,
-            privacy_version: PRIVACY_VERSION,
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-          } as never);
+          await supabase.functions.invoke('record-consent', {
+            body: {
+              terms_version: TERMS_VERSION,
+              privacy_version: PRIVACY_VERSION,
+            },
+          });
         } catch (consentErr) {
           console.warn('Falha ao registrar consentimento:', consentErr);
         }
+
 
         // Sign out immediately after signup so user needs to login manually
         await supabase.auth.signOut();
