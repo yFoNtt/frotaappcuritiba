@@ -121,20 +121,79 @@ export function PrivacySection() {
           {loadingConsent ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : consent ? (
-            <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              <p>
-                Termos de Uso <span className="font-medium">v{consent.terms_version}</span> e
-                Política de Privacidade <span className="font-medium">v{consent.privacy_version}</span>
-              </p>
-              <p className="text-muted-foreground">
-                Aceito em{' '}
-                {format(new Date(consent.accepted_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
+            <div className="space-y-3">
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <p>
+                  Termos de Uso <span className="font-medium">v{consent.terms_version}</span> e
+                  Política de Privacidade <span className="font-medium">v{consent.privacy_version}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  Aceito em{' '}
+                  {format(new Date(consent.accepted_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+                {isRevoked && (
+                  <p className="mt-2 text-destructive">
+                    Revogado em{' '}
+                    {format(new Date(consent.revoked_at!), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                )}
+                {isOutdated && (
+                  <p className="mt-2 text-warning-soft-foreground">
+                    Há novas versões disponíveis (Termos v{TERMS_VERSION} / Privacidade v{PRIVACY_VERSION}).
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(isRevoked || isOutdated) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleReaccept}
+                    disabled={recordConsent.isPending}
+                  >
+                    {recordConsent.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    {isRevoked ? 'Aceitar novamente' : 'Atualizar consentimento'}
+                  </Button>
+                )}
+                {!isRevoked && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRevokeOpen(true)}
+                    disabled={revokeConsent.isPending}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Revogar consentimento
+                  </Button>
+                )}
+              </div>
+              {isRevoked && (
+                <p className="text-xs text-muted-foreground">
+                  Sem consentimento válido, o uso da plataforma fica limitado. Aceite novamente para
+                  continuar ou exclua sua conta abaixo.
+                </p>
+              )}
             </div>
           ) : (
-            <p className="rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
-              Confirme seu aceite atualizando seu perfil ou revisando os documentos abaixo.
-            </p>
+            <div className="space-y-2">
+              <p className="rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+                Nenhum consentimento registrado. Aceite os Termos de Uso e a Política de Privacidade
+                para regularizar sua conta.
+              </p>
+              <Button size="sm" variant="outline" onClick={handleReaccept} disabled={recordConsent.isPending}>
+                {recordConsent.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Registrar consentimento
+              </Button>
+            </div>
           )}
         </div>
 
