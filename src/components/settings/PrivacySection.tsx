@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, Trash2, ShieldCheck, ExternalLink, Loader2 } from 'lucide-react';
+import { Download, Trash2, ShieldCheck, ExternalLink, Loader2, RefreshCw, Ban } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,16 +21,48 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useLatestConsent } from '@/hooks/useConsents';
+import { useLatestConsent, useRecordConsent, useRevokeConsent } from '@/hooks/useConsents';
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/consentVersions';
 
 export function PrivacySection() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: consent, isLoading: loadingConsent } = useLatestConsent();
+  const recordConsent = useRecordConsent();
+  const revokeConsent = useRevokeConsent();
   const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  const isRevoked = !!consent?.revoked_at;
+  const isOutdated =
+    !!consent &&
+    !consent.revoked_at &&
+    (consent.terms_version !== TERMS_VERSION || consent.privacy_version !== PRIVACY_VERSION);
+
+  const handleRevoke = async () => {
+    if (!consent) return;
+    try {
+      await revokeConsent.mutateAsync(consent.id);
+      toast.success('Consentimento revogado. Para continuar usando o serviço, aceite novamente os termos.');
+      setRevokeOpen(false);
+    } catch (err) {
+      console.error('Erro ao revogar consentimento:', err);
+      toast.error('Não foi possível revogar seu consentimento. Tente novamente.');
+    }
+  };
+
+  const handleReaccept = async () => {
+    try {
+      await recordConsent.mutateAsync();
+      toast.success('Consentimento atualizado com sucesso.');
+    } catch (err) {
+      console.error('Erro ao registrar consentimento:', err);
+      toast.error('Não foi possível registrar seu consentimento. Tente novamente.');
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -89,20 +121,79 @@ export function PrivacySection() {
           {loadingConsent ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : consent ? (
-            <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              <p>
-                Termos de Uso <span className="font-medium">v{consent.terms_version}</span> e
-                Política de Privacidade <span className="font-medium">v{consent.privacy_version}</span>
-              </p>
-              <p className="text-muted-foreground">
-                Aceito em{' '}
-                {format(new Date(consent.accepted_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
+            <div className="space-y-3">
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <p>
+                  Termos de Uso <span className="font-medium">v{consent.terms_version}</span> e
+                  Política de Privacidade <span className="font-medium">v{consent.privacy_version}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  Aceito em{' '}
+                  {format(new Date(consent.accepted_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+                {isRevoked && (
+                  <p className="mt-2 text-destructive">
+                    Revogado em{' '}
+                    {format(new Date(consent.revoked_at!), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                )}
+                {isOutdated && (
+                  <p className="mt-2 text-warning-soft-foreground">
+                    Há novas versões disponíveis (Termos v{TERMS_VERSION} / Privacidade v{PRIVACY_VERSION}).
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(isRevoked || isOutdated) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleReaccept}
+                    disabled={recordConsent.isPending}
+                  >
+                    {recordConsent.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    {isRevoked ? 'Aceitar novamente' : 'Atualizar consentimento'}
+                  </Button>
+                )}
+                {!isRevoked && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRevokeOpen(true)}
+                    disabled={revokeConsent.isPending}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Revogar consentimento
+                  </Button>
+                )}
+              </div>
+              {isRevoked && (
+                <p className="text-xs text-muted-foreground">
+                  Sem consentimento válido, o uso da plataforma fica limitado. Aceite novamente para
+                  continuar ou exclua sua conta abaixo.
+                </p>
+              )}
             </div>
           ) : (
-            <p className="rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
-              Confirme seu aceite atualizando seu perfil ou revisando os documentos abaixo.
-            </p>
+            <div className="space-y-2">
+              <p className="rounded-md border border-warning/40 bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+                Nenhum consentimento registrado. Aceite os Termos de Uso e a Política de Privacidade
+                para regularizar sua conta.
+              </p>
+              <Button size="sm" variant="outline" onClick={handleReaccept} disabled={recordConsent.isPending}>
+                {recordConsent.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Registrar consentimento
+              </Button>
+            </div>
           )}
         </div>
 
@@ -201,6 +292,33 @@ export function PrivacySection() {
             >
               {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revogar consentimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao revogar, registramos a data e hora da revogação. Sem um consentimento válido
+              aos Termos de Uso e à Política de Privacidade, sua experiência na plataforma fica
+              limitada — você poderá aceitar novamente a qualquer momento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={revokeConsent.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleRevoke();
+              }}
+              disabled={revokeConsent.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revokeConsent.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Revogar consentimento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
