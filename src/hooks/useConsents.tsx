@@ -53,3 +53,24 @@ export function useRecordConsent() {
     },
   });
 }
+
+export function useRevokeConsent() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (consentId: string) => {
+      if (!user) throw new Error('Usuário não autenticado');
+      const { error } = await supabase
+        .from('consents' as never)
+        .update({ revoked_at: new Date().toISOString() } as never)
+        .eq('id', consentId)
+        .eq('user_id', user.id)
+        .is('revoked_at', null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['consents'] });
+    },
+  });
+}
+
