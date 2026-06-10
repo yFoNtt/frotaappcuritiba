@@ -21,7 +21,8 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useLatestConsent } from '@/hooks/useConsents';
+import { useLatestConsent, useRecordConsent, useRevokeConsent } from '@/hooks/useConsents';
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/consentVersions';
 
 export function PrivacySection() {
   const navigate = useNavigate();
