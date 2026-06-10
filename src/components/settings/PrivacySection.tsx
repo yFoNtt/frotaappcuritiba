@@ -28,10 +28,41 @@ export function PrivacySection() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { data: consent, isLoading: loadingConsent } = useLatestConsent();
+  const recordConsent = useRecordConsent();
+  const revokeConsent = useRevokeConsent();
   const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+
+  const isRevoked = !!consent?.revoked_at;
+  const isOutdated =
+    !!consent &&
+    !consent.revoked_at &&
+    (consent.terms_version !== TERMS_VERSION || consent.privacy_version !== PRIVACY_VERSION);
+
+  const handleRevoke = async () => {
+    if (!consent) return;
+    try {
+      await revokeConsent.mutateAsync(consent.id);
+      toast.success('Consentimento revogado. Para continuar usando o serviço, aceite novamente os termos.');
+      setRevokeOpen(false);
+    } catch (err) {
+      console.error('Erro ao revogar consentimento:', err);
+      toast.error('Não foi possível revogar seu consentimento. Tente novamente.');
+    }
+  };
+
+  const handleReaccept = async () => {
+    try {
+      await recordConsent.mutateAsync();
+      toast.success('Consentimento atualizado com sucesso.');
+    } catch (err) {
+      console.error('Erro ao registrar consentimento:', err);
+      toast.error('Não foi possível registrar seu consentimento. Tente novamente.');
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
