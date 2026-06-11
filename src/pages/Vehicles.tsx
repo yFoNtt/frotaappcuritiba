@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
-import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
-import { Car, Loader2 } from 'lucide-react';
+import { useAvailableVehiclesInfinite, useAvailableVehicles, usePublicVehiclesByLocador } from '@/hooks/useVehicles';
+import { useAuth } from '@/hooks/useAuth';
+import { Car, Loader2, ArrowLeft, Plus, X } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 
@@ -23,24 +25,36 @@ const initialFilters: VehicleFiltersState = {
 export default function Vehicles() {
   const [filters, setFilters] = useState<VehicleFiltersState>(initialFilters);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  
-  // Infinite query for paginated vehicles
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, role } = useAuth();
+  const locadorFilter = searchParams.get('locador');
+  const isOwnVitrine = !!locadorFilter && user?.id === locadorFilter;
+
+  // Infinite query for paginated vehicles (default marketplace)
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isLoadingInfinite,
     error,
   } = useAvailableVehiclesInfinite();
+
+  // Locador-filtered query (Minha Vitrine)
+  const { data: locadorVehicles = [], isLoading: isLoadingLocador } =
+    usePublicVehiclesByLocador(locadorFilter);
 
   // Regular query for filter options (gets all vehicles for extracting unique values)
   const { data: allVehicles = [] } = useAvailableVehicles();
 
-  // Flatten all pages into a single array
+  const isLoading = locadorFilter ? isLoadingLocador : isLoadingInfinite;
+
+  // Flatten all pages into a single array, or use locador-filtered list
   const allLoadedVehicles = useMemo(() => {
+    if (locadorFilter) return locadorVehicles;
     return data?.pages.flatMap((page) => page.vehicles) ?? [];
-  }, [data]);
+  }, [data, locadorFilter, locadorVehicles]);
 
   // Apply client-side filters
   const filteredVehicles = useMemo(() => {
@@ -143,6 +157,47 @@ export default function Vehicles() {
       </div>
 
       <div className="container py-8">
+        {/* Contextual banner for authenticated locador */}
+        {role === 'locador' && (
+          <div className="mb-4 flex flex-col gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/locador/veiculos')}>
+              <ArrowLeft className="h-4 w-4" /> Voltar para Gestão
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/locador/veiculos')}>
+              <Plus className="h-4 w-4" /> Cadastrar Novo Veículo
+            </Button>
+          </div>
+        )}
+
+        {/* Contextual banner for authenticated motorista */}
+        {role === 'motorista' && (
+          <div className="mb-4 flex items-center rounded-lg border border-border bg-muted/50 px-4 py-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/motorista')}>
+              <ArrowLeft className="h-4 w-4" /> Voltar para Minha Área
+            </Button>
+          </div>
+        )}
+
+        {/* Minha Vitrine filter chip */}
+        {locadorFilter && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
+            <span className="text-foreground">
+              {isOwnVitrine ? 'Mostrando sua vitrine pública' : 'Filtrando por locador'}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('locador');
+                setSearchParams(next);
+              }}
+            >
+              <X className="h-4 w-4" /> Limpar
+            </Button>
+          </div>
+        )}
+
         {/* Results count */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
@@ -168,7 +223,7 @@ export default function Vehicles() {
             </div>
 
             {/* Load more trigger */}
-            {!hasActiveFilters && hasNextPage && (
+            {!hasActiveFilters && !locadorFilter && hasNextPage && (
               <div ref={loadMoreRef} className="mt-8 flex justify-center">
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-2 text-muted-foreground">

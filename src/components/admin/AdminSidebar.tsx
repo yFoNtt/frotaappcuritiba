@@ -14,6 +14,7 @@ import {
   Menu,
   Shield,
   History,
+  Store,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ const menuItems = [
   { icon: Users, label: 'Usuários', path: '/admin/usuarios' },
   { icon: Building2, label: 'Locadores', path: '/admin/locadores' },
   { icon: Car, label: 'Veículos', path: '/admin/veiculos' },
+  { icon: Store, label: 'Ver Marketplace', path: '/veiculos' },
   { icon: CreditCard, label: 'Planos', path: '/admin/planos' },
   { icon: BarChart3, label: 'Métricas', path: '/admin/metricas' },
   { icon: History, label: 'Auditoria', path: '/admin/auditoria' },

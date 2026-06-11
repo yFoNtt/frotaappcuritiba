@@ -95,6 +95,25 @@ export function useAvailableVehicles() {
   });
 }
 
+// Fetch public available vehicles filtered by locador (for "Minha Vitrine")
+export function usePublicVehiclesByLocador(locadorId: string | undefined | null) {
+  return useQuery({
+    queryKey: ['vehicles', 'public', 'by-locador', locadorId],
+    queryFn: async () => {
+      if (!locadorId) return [];
+      const { data, error } = await supabase.rpc('get_public_vehicles_by_locador', {
+        _locador_id: locadorId,
+      });
+      if (error) {
+        console.error('Error fetching vehicles by locador:', error);
+        throw error;
+      }
+      return (data ?? []) as PublicVehicle[];
+    },
+    enabled: !!locadorId,
+  });
+}
+
 // Fetch all vehicles for the locador (owner) - includes all statuses
 export function useLocadorVehicles() {
   const { user } = useAuth();
