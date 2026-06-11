@@ -223,7 +223,7 @@ export default function Vehicles() {
             </div>
 
             {/* Load more trigger */}
-            {!hasActiveFilters && hasNextPage && (
+            {!hasActiveFilters && !locadorFilter && hasNextPage && (
               <div ref={loadMoreRef} className="mt-8 flex justify-center">
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
