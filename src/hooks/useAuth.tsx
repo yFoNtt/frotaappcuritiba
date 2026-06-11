@@ -138,9 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // If signup successful and user exists, assign role and create profile
       if (data.user) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: selectedRole });
+        const { error: roleError } = await supabase.rpc('assign_initial_role', {
+          _role: selectedRole,
+        });
 
         if (roleError) {
           console.error('Error assigning role:', roleError);

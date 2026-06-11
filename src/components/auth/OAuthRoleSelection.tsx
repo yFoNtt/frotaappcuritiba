@@ -32,13 +32,13 @@ export function OAuthRoleSelection() {
         .maybeSingle();
 
       if (!existingRole) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: user.id, role: selectedRole });
+        const { error: roleError } = await supabase.rpc('assign_initial_role', {
+          _role: selectedRole,
+        });
 
         if (roleError) {
           console.error('Error assigning role:', roleError);
-          const msg = roleError.code === '23505'
+          const msg = roleError.message?.includes('já possui')
             ? 'Sua conta já possui um tipo definido. Recarregue a página.'
             : 'Erro ao definir tipo de conta. Tente novamente.';
           setErrorMessage(msg);
