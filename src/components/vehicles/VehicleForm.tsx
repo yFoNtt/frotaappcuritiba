@@ -75,6 +75,7 @@ const appOptions = [
 
 export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
