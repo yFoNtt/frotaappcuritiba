@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -259,7 +260,10 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
           .eq('id', vehicle.id);
 
         if (updateError) throw updateError;
-        toast.success('Veículo atualizado com sucesso!');
+        toast.success('Veículo atualizado com sucesso!', {
+          action: { label: 'Ver no Marketplace', onClick: () => navigate('/veiculos') },
+          duration: 6000,
+        });
       } else {
         // Create new vehicle
         const { error: insertError } = await supabase.from('vehicles').insert({
@@ -283,7 +287,10 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
         });
 
         if (insertError) throw insertError;
-        toast.success('Veículo cadastrado com sucesso!');
+        toast.success('Veículo cadastrado com sucesso!', {
+          action: { label: 'Ver no Marketplace', onClick: () => navigate('/veiculos') },
+          duration: 6000,
+        });
       }
 
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
