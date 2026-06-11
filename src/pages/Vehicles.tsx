@@ -157,6 +157,47 @@ export default function Vehicles() {
       </div>
 
       <div className="container py-8">
+        {/* Contextual banner for authenticated locador */}
+        {role === 'locador' && (
+          <div className="mb-4 flex flex-col gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/locador/veiculos')}>
+              <ArrowLeft className="h-4 w-4" /> Voltar para Gestão
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/locador/veiculos')}>
+              <Plus className="h-4 w-4" /> Cadastrar Novo Veículo
+            </Button>
+          </div>
+        )}
+
+        {/* Contextual banner for authenticated motorista */}
+        {role === 'motorista' && (
+          <div className="mb-4 flex items-center rounded-lg border border-border bg-muted/50 px-4 py-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/motorista')}>
+              <ArrowLeft className="h-4 w-4" /> Voltar para Minha Área
+            </Button>
+          </div>
+        )}
+
+        {/* Minha Vitrine filter chip */}
+        {locadorFilter && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
+            <span className="text-foreground">
+              {isOwnVitrine ? 'Mostrando sua vitrine pública' : 'Filtrando por locador'}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('locador');
+                setSearchParams(next);
+              }}
+            >
+              <X className="h-4 w-4" /> Limpar
+            </Button>
+          </div>
+        )}
+
         {/* Results count */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
