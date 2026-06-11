@@ -34,6 +34,24 @@ export function useLatestConsent() {
   });
 }
 
+export function useConsentHistory() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['consents', 'history', user?.id],
+    queryFn: async (): Promise<Consent[]> => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('consents' as never)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('accepted_at', { ascending: false });
+      if (error) throw error;
+      return (data as unknown as Consent[]) ?? [];
+    },
+    enabled: !!user,
+  });
+}
+
 export function useRecordConsent() {
   const { user } = useAuth();
   const qc = useQueryClient();
