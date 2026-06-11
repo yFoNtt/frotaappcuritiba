@@ -13,6 +13,7 @@ import {
   Truck,
   FolderOpen,
   MessageSquare,
+  Store,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/motorista' },
   { icon: Car, label: 'Meu Veículo', path: '/motorista/veiculo' },
+  { icon: Store, label: 'Buscar Veículos', path: '/veiculos' },
   { icon: CreditCard, label: 'Pagamentos', path: '/motorista/pagamentos' },
   { icon: MessageSquare, label: 'Mensagens', path: '/motorista/mensagens' },
   { icon: FolderOpen, label: 'Documentos', path: '/motorista/documentos' },

@@ -21,7 +21,9 @@ import {
   X,
   ClipboardCheck,
   History,
-  MessageSquare
+  MessageSquare,
+  Store,
+  Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -53,13 +55,18 @@ const menuItems = [
 ];
 
 
-function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: { 
+function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId }: { 
   collapsed: boolean; 
   onCollapse?: () => void;
   onClose?: () => void;
   onLogout: () => void;
+  userId?: string;
 }) {
   const location = useLocation();
+  const marketplaceItems = [
+    { icon: Store, label: 'Ver Marketplace', path: '/veiculos' },
+    { icon: Eye, label: 'Minha Vitrine', path: userId ? `/veiculos?locador=${userId}` : '/veiculos' },
+  ];
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -115,6 +122,26 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout }: {
               </motion.div>
             );
           })}
+
+          {/* Marketplace section */}
+          <div className="mt-4 pt-4 border-t border-sidebar-border space-y-1">
+            {!collapsed && (
+              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+                Marketplace
+              </p>
+            )}
+            {marketplaceItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.path}
+                onClick={onClose}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            ))}
+          </div>
         </nav>
       </ScrollArea>
 
@@ -159,7 +186,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { unreadCount } = useNotifications();
 
   // Close mobile menu on route change
@@ -194,6 +221,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               collapsed={false} 
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
+              userId={user?.id}
             />
           </SheetContent>
         </Sheet>
@@ -212,6 +240,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
           collapsed={collapsed} 
           onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
+          userId={user?.id}
         />
       </aside>
     </>
