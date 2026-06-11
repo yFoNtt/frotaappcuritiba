@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, Trash2, ShieldCheck, ExternalLink, Loader2, RefreshCw, Ban } from 'lucide-react';
+import { Download, Trash2, ShieldCheck, ExternalLink, Loader2, RefreshCw, Ban, History } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useLatestConsent, useRecordConsent, useRevokeConsent } from '@/hooks/useConsents';
+import { useLatestConsent, useRecordConsent, useRevokeConsent, useConsentHistory } from '@/hooks/useConsents';
 import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/consentVersions';
 
 export function PrivacySection() {
@@ -30,6 +31,7 @@ export function PrivacySection() {
   const { data: consent, isLoading: loadingConsent } = useLatestConsent();
   const recordConsent = useRecordConsent();
   const revokeConsent = useRevokeConsent();
+  const { data: history = [], isLoading: loadingHistory } = useConsentHistory();
   const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [revokeOpen, setRevokeOpen] = useState(false);
@@ -194,6 +196,61 @@ export function PrivacySection() {
                 Registrar consentimento
               </Button>
             </div>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Histórico de consentimentos */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <History className="h-4 w-4" />
+            Histórico de consentimentos
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Registro auditável de todos os aceites, atualizações e revogações da sua conta.
+          </p>
+          {loadingHistory ? (
+            <p className="text-sm text-muted-foreground">Carregando histórico…</p>
+          ) : history.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum registro encontrado.</p>
+          ) : (
+            <ul className="divide-y rounded-md border">
+              {history.map((item) => {
+                const revoked = !!item.revoked_at;
+                return (
+                  <li key={item.id} className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-0.5">
+                      <p className="font-medium">
+                        Termos v{item.terms_version} · Privacidade v{item.privacy_version}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Aceito em {format(new Date(item.accepted_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        {revoked && (
+                          <>
+                            {' · '}Revogado em{' '}
+                            {format(new Date(item.revoked_at!), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </>
+                        )}
+                      </p>
+                      {item.ip_address && (
+                        <p className="text-xs text-muted-foreground">IP: {item.ip_address}</p>
+                      )}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        revoked
+                          ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                          : 'border-success/40 bg-success-soft text-success-soft-foreground'
+                      }
+                    >
+                      {revoked ? 'Revogado' : 'Ativo'}
+                    </Badge>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
