@@ -210,11 +210,9 @@ export default function VehicleDetails() {
       />
       <div className="container py-8">
         {/* Back button */}
-        <Button variant="ghost" asChild className="mb-6">
-          <Link to="/veiculos">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para veículos
-          </Link>
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
         </Button>
 
         <div className="grid gap-8 lg:grid-cols-3">
