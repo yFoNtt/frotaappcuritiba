@@ -1059,6 +1059,29 @@ export type Database = {
           year: number
         }[]
       }
+      get_public_vehicles_by_locador: {
+        Args: { _locador_id: string }
+        Returns: {
+          allowed_apps: string[]
+          brand: string
+          city: string
+          color: string
+          created_at: string
+          current_km: number
+          deposit: number
+          description: string
+          excess_km_fee: number
+          fuel_type: string
+          id: string
+          images: string[]
+          km_limit: number
+          model: string
+          state: string
+          status: string
+          weekly_price: number
+          year: number
+        }[]
+      }
       get_user_emails_for_admin: {
         Args: never
         Returns: {
