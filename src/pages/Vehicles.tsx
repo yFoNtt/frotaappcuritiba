@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { VehicleCardSkeleton } from '@/components/vehicles/VehicleCardSkeleton';
 import { VehicleFilters, VehicleFiltersState } from '@/components/vehicles/VehicleFilters';
-import { useAvailableVehiclesInfinite, useAvailableVehicles } from '@/hooks/useVehicles';
-import { Car, Loader2 } from 'lucide-react';
+import { useAvailableVehiclesInfinite, useAvailableVehicles, usePublicVehiclesByLocador } from '@/hooks/useVehicles';
+import { useAuth } from '@/hooks/useAuth';
+import { Car, Loader2, ArrowLeft, Plus, X } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 
@@ -23,24 +25,36 @@ const initialFilters: VehicleFiltersState = {
 export default function Vehicles() {
   const [filters, setFilters] = useState<VehicleFiltersState>(initialFilters);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  
-  // Infinite query for paginated vehicles
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, role } = useAuth();
+  const locadorFilter = searchParams.get('locador');
+  const isOwnVitrine = !!locadorFilter && user?.id === locadorFilter;
+
+  // Infinite query for paginated vehicles (default marketplace)
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isLoadingInfinite,
     error,
   } = useAvailableVehiclesInfinite();
+
+  // Locador-filtered query (Minha Vitrine)
+  const { data: locadorVehicles = [], isLoading: isLoadingLocador } =
+    usePublicVehiclesByLocador(locadorFilter);
 
   // Regular query for filter options (gets all vehicles for extracting unique values)
   const { data: allVehicles = [] } = useAvailableVehicles();
 
-  // Flatten all pages into a single array
+  const isLoading = locadorFilter ? isLoadingLocador : isLoadingInfinite;
+
+  // Flatten all pages into a single array, or use locador-filtered list
   const allLoadedVehicles = useMemo(() => {
+    if (locadorFilter) return locadorVehicles;
     return data?.pages.flatMap((page) => page.vehicles) ?? [];
-  }, [data]);
+  }, [data, locadorFilter, locadorVehicles]);
 
   // Apply client-side filters
   const filteredVehicles = useMemo(() => {
