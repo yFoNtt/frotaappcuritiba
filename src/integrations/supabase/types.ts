@@ -1007,6 +1007,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_initial_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
       delete_own_account: { Args: never; Returns: undefined }
       get_public_vehicle: {
