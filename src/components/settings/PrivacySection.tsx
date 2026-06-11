@@ -31,6 +31,7 @@ export function PrivacySection() {
   const { data: consent, isLoading: loadingConsent } = useLatestConsent();
   const recordConsent = useRecordConsent();
   const revokeConsent = useRevokeConsent();
+  const { data: history = [], isLoading: loadingHistory } = useConsentHistory();
   const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [revokeOpen, setRevokeOpen] = useState(false);
