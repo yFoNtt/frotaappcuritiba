@@ -88,6 +88,11 @@ export function useAvailableVehicles() {
       if (error) {
         console.error('Error fetching available vehicles:', error);
         throw error;
+      }
+
+      return (data ?? []) as PublicVehicle[];
+    },
+  });
 }
 
 // Fetch public available vehicles filtered by locador (for "Minha Vitrine")
@@ -106,10 +111,6 @@ export function usePublicVehiclesByLocador(locadorId: string | undefined | null)
       return (data ?? []) as PublicVehicle[];
     },
     enabled: !!locadorId,
-  });
-
-      return (data ?? []) as PublicVehicle[];
-    },
   });
 }
 
