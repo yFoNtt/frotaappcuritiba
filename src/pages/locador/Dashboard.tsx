@@ -130,6 +130,14 @@ export default function LocadorDashboard() {
           </p>
         </div>
 
+        {/* Onboarding (auto-hides when complete or dismissed) */}
+        <OnboardingChecklist />
+
+        {/* Insights */}
+        <LocadorInsights />
+
+
+
         {/* Stats Grid */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <StatsCard
