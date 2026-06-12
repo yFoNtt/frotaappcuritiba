@@ -7,6 +7,7 @@ export interface MaskStats {
   cnh: number;
   phone: number;
   email: number;
+  plate: number;
 }
 
 const PATTERNS = {
@@ -22,7 +23,10 @@ const PATTERNS = {
   // CNH brasileira tem 11 dígitos; também cobrimos 9 dígitos isolados conforme spec
   cnh11: /\b\d{11}\b/g,
   cnh9: /\b\d{9}\b/g,
+  // Placa BR: legado (AAA-1234 / AAA1234) ou Mercosul (AAA1A23), com hífen opcional
+  plate: /\b[A-Z]{3}-?\d[A-Z0-9]\d{2}\b/g,
 };
+
 
 export function maskPII(input: string, stats?: MaskStats): string {
   if (!input) return input;
@@ -52,12 +56,17 @@ export function maskPII(input: string, stats?: MaskStats): string {
     if (stats) stats.phone++;
     return "[TELEFONE OMITIDO]";
   });
+  out = out.replace(PATTERNS.plate, () => {
+    if (stats) stats.plate++;
+    return "[PLACA OMITIDA]";
+  });
   return out;
 }
 
 export function newStats(): MaskStats {
-  return { cpf: 0, cnpj: 0, cnh: 0, phone: 0, email: 0 };
+  return { cpf: 0, cnpj: 0, cnh: 0, phone: 0, email: 0, plate: 0 };
 }
+
 
 // Recursivamente aplica maskPII a strings dentro de objetos/arrays.
 // Não toca em chaves, números, booleanos, nulls — apenas valores string.

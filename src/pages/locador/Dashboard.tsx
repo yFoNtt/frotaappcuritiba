@@ -24,6 +24,9 @@ import { useLocadorDrivers } from '@/hooks/useDrivers';
 import { useLocadorPayments } from '@/hooks/usePayments';
 import { useLocadorMaintenances, MAINTENANCE_TYPES } from '@/hooks/useMaintenances';
 import { useMemo } from 'react';
+import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
+import { LocadorInsights } from '@/components/locador/LocadorInsights';
+
 
 export default function LocadorDashboard() {
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
@@ -126,6 +129,14 @@ export default function LocadorDashboard() {
             Bem-vindo de volta! Aqui está um resumo da sua frota.
           </p>
         </div>
+
+        {/* Onboarding (auto-hides when complete or dismissed) */}
+        <OnboardingChecklist />
+
+        {/* Insights */}
+        <LocadorInsights />
+
+
 
         {/* Stats Grid */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">

@@ -78,6 +78,30 @@ export default function Vehicles() {
     });
   }, [allLoadedVehicles, filters]);
 
+  // Urgency per vehicle: 'last' when this is the only unit of brand+model in the
+  // currently loaded marketplace; 'new' when created in the last 7 days.
+  const urgencyMap = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of allLoadedVehicles) {
+      const k = `${v.brand}|${v.model}`.toLowerCase();
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const map = new Map<string, 'last' | 'new' | null>();
+    for (const v of allLoadedVehicles) {
+      const k = `${v.brand}|${v.model}`.toLowerCase();
+      if ((counts.get(k) ?? 0) === 1) {
+        map.set(v.id, 'last');
+      } else if (new Date(v.created_at).getTime() > sevenDaysAgo) {
+        map.set(v.id, 'new');
+      } else {
+        map.set(v.id, null);
+      }
+    }
+    return map;
+  }, [allLoadedVehicles]);
+
+
   // Intersection Observer for infinite scroll
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -218,7 +242,7 @@ export default function Vehicles() {
             <h2 className="sr-only">Lista de veículos disponíveis para locação</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredVehicles.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                <VehicleCard key={vehicle.id} vehicle={vehicle} urgency={urgencyMap.get(vehicle.id) ?? null} />
               ))}
             </div>
 

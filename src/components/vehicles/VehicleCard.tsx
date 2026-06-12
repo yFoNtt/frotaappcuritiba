@@ -22,7 +22,9 @@ interface VehicleCardVehicle {
 
 interface VehicleCardProps {
   vehicle: VehicleCardVehicle;
+  urgency?: 'last' | 'new' | null;
 }
+
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
@@ -47,7 +49,7 @@ const appLabels: Record<string, string> = {
   other: 'Outro'
 };
 
-export function VehicleCard({ vehicle }: VehicleCardProps) {
+export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
   return (
     <Card className="group overflow-hidden rounded-2xl border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/20">
       {/* Image */}
@@ -69,6 +71,22 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             {statusLabels[vehicle.status] || vehicle.status}
           </Badge>
         </div>
+
+        {/* Urgency badge */}
+        {urgency && (
+          <div className="absolute right-3 top-3">
+            {urgency === 'last' ? (
+              <span className="rounded-full bg-destructive-soft px-2.5 py-1 text-[11px] font-semibold text-destructive-soft-foreground shadow-lg backdrop-blur-sm">
+                ⚡ Última unidade
+              </span>
+            ) : (
+              <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-soft-foreground shadow-lg backdrop-blur-sm">
+                🆕 Novo
+              </span>
+            )}
+          </div>
+        )}
+
 
         {/* Price overlay on hover */}
         <div className="absolute bottom-3 right-3 opacity-0 transition-all duration-300 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
