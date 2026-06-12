@@ -22,7 +22,9 @@ interface VehicleCardVehicle {
 
 interface VehicleCardProps {
   vehicle: VehicleCardVehicle;
+  urgency?: 'last' | 'new' | null;
 }
+
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
