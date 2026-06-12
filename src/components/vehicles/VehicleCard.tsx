@@ -72,6 +72,22 @@ export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
           </Badge>
         </div>
 
+        {/* Urgency badge */}
+        {urgency && (
+          <div className="absolute right-3 top-3">
+            {urgency === 'last' ? (
+              <span className="rounded-full bg-destructive-soft px-2.5 py-1 text-[11px] font-semibold text-destructive-soft-foreground shadow-lg backdrop-blur-sm">
+                ⚡ Última unidade
+              </span>
+            ) : (
+              <span className="rounded-full bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success-soft-foreground shadow-lg backdrop-blur-sm">
+                🆕 Novo
+              </span>
+            )}
+          </div>
+        )}
+
+
         {/* Price overlay on hover */}
         <div className="absolute bottom-3 right-3 opacity-0 transition-all duration-300 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
           <Button size="sm" asChild className="rounded-full shadow-lg">
