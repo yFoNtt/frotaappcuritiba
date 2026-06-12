@@ -72,6 +72,32 @@ export function HeroSection() {
               ))}
             </motion.ul>
 
+            {/* Stats row — social proof */}
+            <motion.div
+              variants={item}
+              className="mt-8 flex flex-wrap gap-x-8 gap-y-3 border-l-2 border-primary/40 pl-4"
+            >
+              <div>
+                <div className="text-2xl font-extrabold text-white leading-none">1.000+</div>
+                <div className="text-[11px] uppercase tracking-wider text-white/60 mt-1">
+                  Motoristas
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-white leading-none">4.8★</div>
+                <div className="text-[11px] uppercase tracking-wider text-white/60 mt-1">
+                  Avaliação
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-white leading-none">10min</div>
+                <div className="text-[11px] uppercase tracking-wider text-white/60 mt-1">
+                  Para começar
+                </div>
+              </div>
+            </motion.div>
+
+
             {/* CTA */}
             <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Button size="lg" asChild className="bg-primary hover:brightness-110 active:brightness-95 text-primary-foreground shadow-lg shadow-primary/30 text-base px-7 h-12">
