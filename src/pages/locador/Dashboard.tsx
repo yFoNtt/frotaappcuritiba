@@ -24,6 +24,9 @@ import { useLocadorDrivers } from '@/hooks/useDrivers';
 import { useLocadorPayments } from '@/hooks/usePayments';
 import { useLocadorMaintenances, MAINTENANCE_TYPES } from '@/hooks/useMaintenances';
 import { useMemo } from 'react';
+import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
+import { LocadorInsights } from '@/components/locador/LocadorInsights';
+
 
 export default function LocadorDashboard() {
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
