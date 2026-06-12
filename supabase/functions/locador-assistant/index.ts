@@ -1,5 +1,9 @@
+// LGPD: PII (CPF/CNPJ/CNH/telefone/email/placa) é pseudonimizada antes do envio
+// ao LLM via maskPIIDeep (ver _shared/maskPII.ts). Dados originais permanecem
+// na resposta ao frontend; apenas o payload externo é mascarado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { maskPIIDeep, newStats } from "../_shared/maskPII.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
