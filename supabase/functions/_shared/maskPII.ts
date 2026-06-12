@@ -56,12 +56,17 @@ export function maskPII(input: string, stats?: MaskStats): string {
     if (stats) stats.phone++;
     return "[TELEFONE OMITIDO]";
   });
+  out = out.replace(PATTERNS.plate, () => {
+    if (stats) stats.plate++;
+    return "[PLACA OMITIDA]";
+  });
   return out;
 }
 
 export function newStats(): MaskStats {
-  return { cpf: 0, cnpj: 0, cnh: 0, phone: 0, email: 0 };
+  return { cpf: 0, cnpj: 0, cnh: 0, phone: 0, email: 0, plate: 0 };
 }
+
 
 // Recursivamente aplica maskPII a strings dentro de objetos/arrays.
 // Não toca em chaves, números, booleanos, nulls — apenas valores string.
