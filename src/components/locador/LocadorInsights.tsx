@@ -26,7 +26,7 @@ export function LocadorInsights() {
       (c) =>
         c.start_date <= sevenDaysAgoStr &&
         (!c.end_date || c.end_date >= sevenDaysAgoStr) &&
-        c.status !== 'canceled',
+        c.status !== 'cancelled',
     ).length;
     const prevOccupation = total > 0 ? (rentedLastWeek / total) * 100 : 0;
     const occupationDelta = currentOccupation - prevOccupation;
