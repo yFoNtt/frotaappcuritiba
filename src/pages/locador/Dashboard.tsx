@@ -14,7 +14,10 @@ import {
   AlertTriangle,
   Calendar,
   ArrowRight,
-  Wrench
+  Wrench,
+  Sparkles,
+  FileText,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
@@ -26,6 +29,36 @@ import { useLocadorMaintenances, MAINTENANCE_TYPES } from '@/hooks/useMaintenanc
 import { useMemo } from 'react';
 import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
 import { LocadorInsights } from '@/components/locador/LocadorInsights';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+
+const LOCADOR_TOUR_STEPS = [
+  {
+    icon: Sparkles,
+    title: 'Bem-vindo ao FrotaApp',
+    description: 'Esta é sua central de gestão. Aqui você vê KPIs, receita e ocupação da frota em tempo real.',
+  },
+  {
+    icon: Car,
+    title: 'Cadastre seu primeiro veículo',
+    description: "Acesse 'Veículos' no menu lateral para adicionar seu primeiro carro. O assistente de IA sugere o preço ideal.",
+  },
+  {
+    icon: Users,
+    title: 'Adicione um motorista',
+    description: "Em 'Motoristas', cadastre os dados e a CNH. O sistema valida automaticamente.",
+  },
+  {
+    icon: FileText,
+    title: 'Crie um contrato',
+    description: "Com veículo e motorista cadastrados, vá em 'Contratos' para formalizar o vínculo.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'Acompanhe tudo pelo dashboard',
+    description: 'Pagamentos, alertas e notificações chegam aqui. Você está pronto!',
+  },
+];
+
 
 
 export default function LocadorDashboard() {
@@ -443,6 +476,8 @@ export default function LocadorDashboard() {
           </Card>
         </div>
       </div>
+      <OnboardingTour steps={LOCADOR_TOUR_STEPS} storageKey="frotaapp_tour_seen_v1" />
     </DashboardLayout>
   );
 }
+

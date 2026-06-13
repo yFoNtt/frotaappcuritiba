@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from "react";
-import { Sparkles, Send, Loader2, Trash2, Bot, User as UserIcon } from "lucide-react";
+import { Sparkles, Send, Loader2, Trash2, Bot, User as UserIcon, ShieldCheck } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -269,8 +269,9 @@ export function LocadorAssistant() {
 
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 border-t bg-background p-3"
+            className="flex flex-col gap-2 border-t bg-background p-3"
           >
+           <div className="flex items-center gap-2">
             <Input
               ref={inputRef}
               value={input}
@@ -292,6 +293,11 @@ export function LocadorAssistant() {
                 <Send className="h-4 w-4" />
               )}
             </Button>
+            </div>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              Dados sensíveis são mascarados automaticamente antes de serem processados.
+            </p>
           </form>
         </SheetContent>
       </Sheet>

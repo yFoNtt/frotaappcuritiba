@@ -53,11 +53,14 @@ export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
   return (
     <Card className="group overflow-hidden rounded-2xl border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/20">
       {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted p-2">
         <img
           src={vehicle.images[0] || '/placeholder.svg'}
           alt={`${vehicle.brand} ${vehicle.model}`}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
+          }}
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
