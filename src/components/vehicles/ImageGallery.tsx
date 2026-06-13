@@ -50,7 +50,10 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
           <img
             src={validImages[selectedIndex]}
             alt={`${alt} - Foto ${selectedIndex + 1}`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder.svg';
+            }}
+            className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
           />
           
           {/* Fullscreen button overlay */}
@@ -114,7 +117,10 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 <img
                   src={img}
                   alt={`${alt} - Miniatura ${idx + 1}`}
-                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                  className="h-full w-full object-contain p-1"
                 />
               </button>
             ))}
