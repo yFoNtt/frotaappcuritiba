@@ -476,6 +476,8 @@ export default function LocadorDashboard() {
           </Card>
         </div>
       </div>
+      <OnboardingTour steps={LOCADOR_TOUR_STEPS} storageKey="frotaapp_tour_seen_v1" />
     </DashboardLayout>
   );
 }
+
