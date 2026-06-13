@@ -1,91 +1,55 @@
+# Plano — Correções Visuais, Conteúdo e Segurança
 
-# Plano — Melhorias FrotaApp (Sprints 1 + 2)
+5 frentes em uma só entrega. Sem mudanças de schema, RLS ou rotas.
 
-Escopo aprovado: itens **1, 2, 3, 6, 10**. Itens 4 (mapa), 5 (FKs), 7 (billing), 8 (push), 9 (E2E) **fora** deste plano.
+## 1) `src/pages/ForRenters.tsx` — Reescrita completa
+Substituir o conteúdo atual (planos com preços fictícios) pelas seções pedidas, mantendo `PublicLayout` + `SEO`:
+- **Hero**: headline "Transforme sua frota em renda garantida", subheadline focada em Curitiba, dois CTAs (`/cadastro` e scroll para `#beneficios`). Background com `bg-gradient-to-b from-background to-muted/30`.
+- **Benefícios** (3 cards `bg-card border rounded-xl p-6 shadow-sm`): Contratos digitais, Pagamentos automáticos, Gestão completa. Ícones Lucide (`FileSignature`, `Wallet`, `LayoutDashboard`).
+- **Como funciona** (4 steps numerados em grid, ícones `Car`, `Users`, `BarChart3`, `Bell`).
+- **Planos** (3 cards): Básico (até 3 veículos — grátis, CTA ativo `/cadastro?tipo=locador`), Profissional (até 15 — badge "Em breve", botão `disabled`), Enterprise (ilimitado — badge "Em breve", botão `disabled`). Coerente com o knowledge atual (billing não implementado).
+- **CTA final**: "Pronto para começar?" + botão `/cadastro`.
+- Animações com `framer-motion` (`initial={{ opacity:0, y:20 }}` + `whileInView`).
+- 100% tokens semânticos (`bg-card`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-primary-foreground`).
 
----
+## 2) `src/pages/HowItWorks.tsx` — Enriquecimento
+- Manter Hero + FAQ existentes.
+- Substituir a seção única "Steps" por **Tabs shadcn** ("Para Motoristas" | "Para Locadores"), cada uma com 4 steps numerados com ícones Lucide próprios.
+  - Motorista: `Search` → `MessageCircle` → `Car` → `CheckCircle` (mantém o atual).
+  - Locador: `UserPlus` → `Car` → `FileSignature` → `BarChart3`.
+- CTA final dividido em dois botões lado a lado: "É locador? Cadastre-se" (`/cadastro?tipo=locador`) e "É motorista? Encontre um veículo" (`/veiculos`).
+- Validar responsividade (grid colapsa para 1 coluna em `<md`).
 
-## 1. PII no Assistente IA (estender o existente)
+## 3) `src/components/onboarding/OnboardingTour.tsx` — Novo
+- Modal centralizado via shadcn `Dialog` (não tooltip).
+- Props: `steps: { title, description, icon }[]`, `storageKey: string`, `autoOpen?: boolean`.
+- `useEffect` lê `localStorage[storageKey]` no mount; abre se ausente e `autoOpen`.
+- Estado: `currentStep`. Botões "Anterior", "Próximo", "Concluir" e "Pular tour" (canto sup. direito).
+- Progress dots inferiores (bolinhas com `bg-primary` no atual, `bg-muted` nos demais).
+- `framer-motion` `AnimatePresence` + `motion.div` (fade + slide).
+- Ao concluir/pular: grava `localStorage[storageKey] = '1'`.
+- Estilo: `max-w-md bg-card rounded-2xl shadow-2xl`, backdrop blur via overlay padrão do Dialog.
+- Conteúdo dos 5 steps do Locador definido em `src/pages/locador/Dashboard.tsx` e passado via prop (storageKey = `frotaapp_tour_seen_v1`). Ícones: `Sparkles`, `Car`, `Users`, `FileText`, `LayoutDashboard`.
+- Renderização condicional client-only garantida pelo `useEffect`.
 
-O `locador-assistant` já mascara via `supabase/functions/_shared/maskPII.ts` antes de chamar o Gemini. Vou **estender**, não substituir.
+## 4) Imagens de veículos
+- **`VehicleCard.tsx`**: trocar `object-cover` da imagem principal por `object-contain` em fundo `bg-muted` com `p-2`. Manter `aspect-[16/10]`. Adicionar `onError` para fallback `/placeholder.svg` (já existente no projeto). Remover `group-hover:scale-110` que distorce; trocar por `scale-105` suave.
+- **`ImageGallery.tsx`** (usado por `/veiculos/:id`):
+  - Imagem principal: `object-contain` (atualmente `object-cover`) com `bg-muted`.
+  - Thumbnails: `object-contain bg-muted` com `border-2`.
+  - Lightbox (Dialog): já está com `object-contain` e teclado (`Esc`, setas) — manter; ajustar fechar ao clicar no overlay (`onClick` no wrapper, `e.stopPropagation()` na imagem).
+  - Sem alterações em upload/Storage.
 
-- **Frontend** — criar `src/lib/piiSanitizer.ts` com `maskCPF`, `maskCNH`, `maskPhone`, `maskEmail`, `maskPlate` (formato do prompt do usuário). Uso opcional pelo frontend; nenhuma página é alterada agora.
-- **Edge function** — em `_shared/maskPII.ts`, adicionar suporte a **placa** (regex `^[A-Z]{3}-?\d[A-Z0-9]\d{2}$`, com e sem Mercosul) no `maskPIIDeep`, mascarando como `XXX-****`. Atualizar `newStats()` para incluir `plates`.
-- Adicionar comentário no topo do `locador-assistant/index.ts`: *"LGPD: PII (CPF/CNPJ/CNH/telefone/email/placa) pseudonimizada antes do envio ao LLM via maskPIIDeep."*
-- Adicionar teste unitário `src/test/piiSanitizer.test.ts` cobrindo as 5 funções.
-
-## 2. Onboarding Checklist do Locador
-
-Novo componente `src/components/locador/OnboardingChecklist.tsx` exibido no topo de `src/pages/locador/Dashboard.tsx`.
-
-5 passos com link para a respectiva rota:
-1. Perfil completo — derivado de `profile.company_name` (ou `full_name`).
-2. Primeiro veículo — `useVehicles().length > 0` → `/locador/veiculos`.
-3. Primeiro motorista — `useDrivers().length > 0` → `/locador/motoristas`.
-4. Primeiro contrato — `useContracts().length > 0` → `/locador/contratos` (desabilitado até ter ≥1 veículo **e** ≥1 motorista).
-5. Template de inspeção — `useChecklistTemplates().length > 0` → `/locador/vistorias`.
-
-Comportamento:
-- Barra de progresso "{n} de 5 completo".
-- Botão **X** para fechar; estado em `localStorage` (`onboarding_dismissed_{userId}`).
-- Auto-oculta quando todos os 5 passos estiverem `true`.
-- Reabre se o usuário ainda tiver pendências e limpar o storage (não vamos forçar reabrir; "uma vez dispensado, fica dispensado" para evitar irritar).
-- Reutiliza tokens semânticos (`bg-card`, `text-success` para feitos, `text-muted-foreground` para pendentes, ícones `CheckCircle2` / `Circle` do `lucide-react`).
-
-## 3. Hero + Social Proof na Home
-
-Atualizar componentes existentes em `src/components/home/` (não criar duplicações):
-
-- **`HeroSection.tsx`** — reforçar headline ("Dirija para Uber/99 **sem comprar carro**" com palavra-chave em `text-primary`), adicionar **stats row** (1.000+ motoristas, 4.8★, "Comece em 10 min") logo abaixo da subheadline; manter CTAs atuais.
-- **`TestimonialsSection.tsx`** — já existe; substituir avatares por **iniciais** (já são iniciais) e adicionar um quarto card opcional? Manter 3 atuais — só ajustar copy para perfis brasileiros (Uber/99) e adicionar um chip "Verificado" sutil.
-- **`FeaturesSection.tsx`** (exportado por `HeroSection.tsx`) — confirmar que existem 4 features (⚡ Rápido, 🔒 Seguro, 💰 Preço Justo, 🚗 Qualidade); ajustar se faltar alguma.
-
-Todos os números/depoimentos serão marcados como *ilustrativos* no `mem://` para evitar problemas de honestidade. Sem alterar tema/cores globais.
-
-## 6. Badges de Urgência no Marketplace
-
-Atualizar `src/components/vehicles/VehicleCard.tsx`:
-
-- Como **não há "slots"** no modelo de dados (um veículo é um único bem físico), vou redefinir como:
-  - Se `status = 'available'` e `created_at` < 7 dias atrás → badge **"🆕 Novo"** (verde-soft).
-  - Se `status = 'available'` e o locador tem ≥ 3 veículos disponíveis → nada extra.
-  - Se for a **única** unidade disponível daquele `brand+model` em `Vehicles.tsx` (calculado no nível da listagem) → badge **"⚡ Última unidade"** (`bg-destructive-soft text-destructive-soft-foreground`).
-- A passagem do flag será via nova prop opcional `urgency?: 'last' | 'new' | null` calculada em `Vehicles.tsx` antes de renderizar os cards (sem queries extras).
-
-## 10. Insights na Dashboard do Locador
-
-Adicionar uma nova seção `LocadorInsights` em `src/pages/locador/Dashboard.tsx`:
-
-- **Trend de ocupação** — comparar `(veículos alugados / total)` da semana atual vs anterior usando `contracts` já carregados; mostrar % e seta (`TrendingUp`/`TrendingDown` com `text-success`/`text-destructive`).
-- **Insight de preço** — comparar `weekly_price` médio da frota do locador vs média de **todos os veículos disponíveis** (via `get_public_vehicles()`). Mostrar "Seus preços estão R$ X abaixo/acima da média do marketplace" com CTA "Ajustar preços" → `/locador/veiculos`.
-- **Sugestão de ação** — se houver veículos `available` há > 14 dias sem contrato, sugerir "Você tem N veículo(s) parado(s). Considere revisar preço ou divulgar mais." com CTA para o veículo.
-
-Sem chamada de IA — tudo cálculo local com hooks existentes. Componente novo: `src/components/locador/LocadorInsights.tsx`.
-
----
+## 5) PII no Assistente
+- `supabase/functions/locador-assistant/index.ts` **já** usa `maskPIIDeep` (ver linha 1-5). Ação:
+  - Garantir que o payload enviado ao Gemini passe por `maskPIIDeep` em **todos** os campos de contexto (drivers, profile, observações). Auditar o ponto de montagem do prompt e envolver com `maskPIIDeep(context)` se ainda não estiver.
+  - Não duplicar a função `maskPII` local — reusar `_shared/maskPII.ts` (regra do projeto, já decidida).
+- **Frontend `src/components/locador/LocadorAssistant.tsx`**: adicionar aviso discreto abaixo do input:
+  `<p className="text-xs text-muted-foreground flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Dados sensíveis são mascarados automaticamente antes de serem processados.</p>`
 
 ## Arquivos
+**Criar**: `src/components/onboarding/OnboardingTour.tsx`
+**Editar**: `src/pages/ForRenters.tsx`, `src/pages/HowItWorks.tsx`, `src/pages/locador/Dashboard.tsx`, `src/components/vehicles/VehicleCard.tsx`, `src/components/vehicles/ImageGallery.tsx`, `src/components/locador/LocadorAssistant.tsx`, `supabase/functions/locador-assistant/index.ts` (apenas se faltar mascaramento em algum campo)
 
-**Criar:**
-- `src/lib/piiSanitizer.ts`
-- `src/test/piiSanitizer.test.ts`
-- `src/components/locador/OnboardingChecklist.tsx`
-- `src/components/locador/LocadorInsights.tsx`
-
-**Editar:**
-- `supabase/functions/_shared/maskPII.ts` (suporte a placa)
-- `supabase/functions/locador-assistant/index.ts` (comentário LGPD)
-- `src/components/home/HeroSection.tsx` (stats row + reforço de copy)
-- `src/components/home/TestimonialsSection.tsx` (copy/chip "verificado")
-- `src/components/vehicles/VehicleCard.tsx` (badge de urgência opcional)
-- `src/pages/Vehicles.tsx` (computar `urgency` por card)
-- `src/pages/locador/Dashboard.tsx` (montar `OnboardingChecklist` + `LocadorInsights`)
-
-**Não tocar:** rotas, RLS, schema, billing, push, mapa, FKs, E2E.
-
-## Pontos de atenção
-- Stats e depoimentos do hero serão **conteúdo ilustrativo**; vou registrar isso em `mem://` para revisitar.
-- Onboarding usa apenas dados já carregados pelos hooks do Dashboard — sem queries adicionais.
-- Insight de preço chama `get_public_vehicles` que já é RPC pública existente, sem nova migration.
-
-Aprovação para implementar?
+## Fora de escopo
+- Billing real, integração de pagamento, push notifications, mapas, FKs, novas migrations, alterações de RLS/roles.
