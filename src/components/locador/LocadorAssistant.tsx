@@ -293,6 +293,11 @@ export function LocadorAssistant() {
                 <Send className="h-4 w-4" />
               )}
             </Button>
+            </div>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              Dados sensíveis são mascarados automaticamente antes de serem processados.
+            </p>
           </form>
         </SheetContent>
       </Sheet>
