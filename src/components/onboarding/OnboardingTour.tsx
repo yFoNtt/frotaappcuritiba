@@ -1,7 +1,7 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -50,18 +50,8 @@ export function OnboardingTour({ steps, storageKey, autoOpen = true }: Onboardin
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : finish())}>
-      <DialogContent
-        className="max-w-md gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-2xl"
-        hideClose
-      >
-        <button
-          type="button"
-          onClick={finish}
-          className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Pular tour"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-2xl">
+
 
         <AnimatePresence mode="wait">
           <motion.div
