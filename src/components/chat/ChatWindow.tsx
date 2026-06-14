@@ -51,7 +51,7 @@ export function ChatWindow({ role, initialConversationId }: Props) {
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
     | null
   >(null);
-  const [showListMobile, setShowListMobile] = useState(true);
+  const [showListMobile, setShowListMobile] = useState(!initialConversationId);
   // AbortController for the in-flight upload, so the user can cancel it
   const uploadAbortRef = useRef<AbortController | null>(null);
   const [cancelled, setCancelled] = useState(false);
