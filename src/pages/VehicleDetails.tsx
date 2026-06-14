@@ -411,27 +411,46 @@ export default function VehicleDetails() {
 
                 {/* CTA Buttons */}
                 <div className="space-y-3">
-                  <Button size="lg" variant="whatsapp" className="w-full" asChild>
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                      <Phone className="mr-2 h-4 w-4" />
-                      WhatsApp
-                    </a>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleOpenChat}
-                    disabled={openingChat}
-                  >
-                    {openingChat ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                    )}
-                    Chat Interno
-                  </Button>
+                  {hasWhatsapp ? (
+                    <Button size="lg" variant="whatsapp" className="w-full" asChild>
+                      <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Phone className="mr-2 h-4 w-4" />
+                        Chamar pelo WhatsApp
+                      </a>
+                    </Button>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="block w-full">
+                            <Button size="lg" variant="whatsapp" className="w-full" disabled>
+                              <Phone className="mr-2 h-4 w-4" />
+                              Chamar pelo WhatsApp
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Locador não informou WhatsApp</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {showChatButton && (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleOpenChat}
+                      disabled={openingChat}
+                    >
+                      {openingChat ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                      )}
+                      Chat Interno
+                    </Button>
+                  )}
                 </div>
+
 
                 {/* Security Note */}
                 <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
