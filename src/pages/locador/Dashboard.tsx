@@ -62,6 +62,8 @@ const LOCADOR_TOUR_STEPS = [
 
 
 export default function LocadorDashboard() {
+  const { user } = useAuth();
+
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
   const { data: payments = [], isLoading: paymentsLoading } = useLocadorPayments();
