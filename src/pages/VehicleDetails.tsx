@@ -9,6 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ImageGallery } from '@/components/vehicles/ImageGallery';
 import { VehicleInspectionHistory } from '@/components/vehicles/VehicleInspectionHistory';
 import { useVehicle, usePublicVehicle } from '@/hooks/useVehicles';
@@ -27,6 +36,7 @@ import {
   Palette,
   Loader2,
 } from 'lucide-react';
+
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
