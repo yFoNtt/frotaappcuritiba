@@ -60,7 +60,7 @@ function VehicleDetailsSkeleton() {
         <Skeleton className="mb-6 h-10 w-48" />
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="aspect-video rounded-xl" />
+            <Skeleton className="aspect-[4/3] rounded-xl" />
             <Skeleton className="h-12 w-3/4" />
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (

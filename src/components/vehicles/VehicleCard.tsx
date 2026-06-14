@@ -53,7 +53,7 @@ export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
   return (
     <Card className="group overflow-hidden rounded-2xl border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/20">
       {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted p-2">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted p-2">
         <img
           src={vehicle.images[0] || '/placeholder.svg'}
           alt={`${vehicle.brand} ${vehicle.model}`}
