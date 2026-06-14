@@ -188,7 +188,12 @@ export default function VehicleDetails() {
   const whatsappMessage = encodeURIComponent(
     `Olá! Vi o anúncio do ${vehicle.brand} ${vehicle.model} no FrotaApp e gostaria de mais informações.`
   );
-  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
+  const hasWhatsapp = locadorWhatsappDigits.length >= 10;
+  const whatsappLink = hasWhatsapp
+    ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
+    : '#';
+  const showChatButton = !isOwner && role !== 'locador' && role !== 'admin';
+
 
   const vehicleImages = vehicle.images ?? [];
   const kmLimit = vehicle.km_limit ?? 0;
