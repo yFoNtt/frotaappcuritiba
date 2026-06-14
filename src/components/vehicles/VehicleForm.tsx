@@ -91,8 +91,18 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
+
+  // Sync WhatsApp from profile when dialog opens
+  useEffect(() => {
+    if (open) setWhatsapp(formatWhatsapp(profile?.whatsapp ?? ''));
+  }, [open, profile?.whatsapp]);
 
   const isEditing = !!vehicle;
+
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
