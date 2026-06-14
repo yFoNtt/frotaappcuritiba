@@ -53,8 +53,9 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/placeholder.svg';
             }}
-            className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
+
           
           {/* Fullscreen button overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/20 group-hover:opacity-100">
