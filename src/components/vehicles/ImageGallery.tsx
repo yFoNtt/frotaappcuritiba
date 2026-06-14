@@ -140,23 +140,33 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
               variant="ghost"
               size="icon"
               className="absolute right-4 top-4 z-50 h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20"
-              onClick={() => setIsFullscreen(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFullscreen(false);
+              }}
             >
               <X className="h-5 w-5" />
             </Button>
 
             {/* Image counter */}
             {validImages.length > 1 && (
-              <div className="absolute left-4 top-4 z-50 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
+              <div
+                className="absolute left-4 top-4 z-50 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {selectedIndex + 1} / {validImages.length}
               </div>
             )}
 
             {/* Main fullscreen image */}
-            <div className="flex h-full w-full items-center justify-center p-8">
+            <div className="flex h-full w-full items-center justify-center p-4 sm:p-8">
               <img
                 src={validImages[selectedIndex]}
                 alt={`${alt} - Foto ${selectedIndex + 1}`}
+                onClick={(e) => e.stopPropagation()}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
                 className="max-h-full max-w-full object-contain"
               />
             </div>
@@ -168,7 +178,10 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   variant="ghost"
                   size="icon"
                   className="absolute left-4 top-1/2 z-50 h-12 w-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/20"
-                  onClick={goToPrevious}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrevious();
+                  }}
                 >
                   <ChevronLeft className="h-8 w-8" />
                 </Button>
@@ -176,7 +189,10 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   variant="ghost"
                   size="icon"
                   className="absolute right-4 top-1/2 z-50 h-12 w-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/20"
-                  onClick={goToNext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
                 >
                   <ChevronRight className="h-8 w-8" />
                 </Button>
@@ -185,22 +201,31 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
             {/* Thumbnail strip at bottom */}
             {validImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/50 p-2 backdrop-blur-sm">
+              <div
+                className="absolute bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/50 p-2 backdrop-blur-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {validImages.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedIndex(idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedIndex(idx);
+                    }}
                     className={cn(
-                      'relative h-14 w-20 flex-shrink-0 overflow-hidden rounded transition-all duration-200',
+                      'relative h-14 w-20 flex-shrink-0 overflow-hidden rounded bg-muted transition-all duration-200',
                       selectedIndex === idx
                         ? 'ring-2 ring-white'
-                        : 'opacity-50 hover:opacity-100'
+                        : 'opacity-60 hover:opacity-100'
                     )}
                   >
                     <img
                       src={img}
                       alt={`${alt} - Miniatura ${idx + 1}`}
-                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      }}
+                      className="h-full w-full object-contain"
                     />
                   </button>
                 ))}
