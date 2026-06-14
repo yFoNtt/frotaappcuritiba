@@ -20,7 +20,9 @@ const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application
 
 interface Props {
   role: ChatRole;
+  initialConversationId?: string;
 }
+
 
 function formatDay(iso: string) {
   const d = new Date(iso);
