@@ -1029,6 +1029,7 @@ export type Database = {
           id: string
           images: string[]
           km_limit: number
+          locador_whatsapp: string
           model: string
           state: string
           status: string
