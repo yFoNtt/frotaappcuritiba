@@ -31,11 +31,12 @@ function formatDay(iso: string) {
   return format(d, "dd 'de' MMMM", { locale: ptBR });
 }
 
-export function ChatWindow({ role }: Props) {
+export function ChatWindow({ role, initialConversationId }: Props) {
   const { user } = useAuth();
   const { conversations, loading: loadingList, reload: reloadConvs } = useConversations(role);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(initialConversationId ?? null);
   const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
+
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
