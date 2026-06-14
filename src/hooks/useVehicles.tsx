@@ -47,7 +47,9 @@ export interface PublicVehicle {
   state: string;
   current_km: number | null;
   created_at: string;
+  locador_whatsapp?: string | null;
 }
+
 
 const PAGE_SIZE = 12;
 
