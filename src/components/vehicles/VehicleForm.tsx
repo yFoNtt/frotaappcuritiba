@@ -655,6 +655,23 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
               )}
             />
 
+            {/* WhatsApp (do locador, salvo em profiles) */}
+            <div className="space-y-2">
+              <Label htmlFor="vehicle-whatsapp">WhatsApp do locador (com DDD)</Label>
+              <Input
+                id="vehicle-whatsapp"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                placeholder="(41) 99999-9999"
+                inputMode="tel"
+              />
+              <p className="text-xs text-muted-foreground">
+                Este número aparece no botão "Chamar pelo WhatsApp" da página pública. É salvo no seu perfil e usado em todos os veículos.
+              </p>
+            </div>
+
+
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancelar
