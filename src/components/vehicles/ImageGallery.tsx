@@ -130,7 +130,10 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
       {/* Fullscreen Lightbox */}
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black/95 border-none">
+        <DialogContent
+          className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black/95 border-none"
+          onClick={() => setIsFullscreen(false)}
+        >
           <div className="relative flex h-full w-full items-center justify-center">
             {/* Close button */}
             <Button
