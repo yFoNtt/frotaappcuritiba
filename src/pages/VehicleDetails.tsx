@@ -90,30 +90,29 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const [openingChat, setOpeningChat] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
-  // Use full vehicle data for authenticated users, public RPC for anonymous
+  // Always fetch public RPC to get locador_whatsapp; also fetch private when logged in (for plate/inspections)
   const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
-  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(!user ? id : undefined);
+  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(id);
 
   const vehicle = privateVehicle || publicVehicle;
-  const isLoading = user ? privateLoading : publicLoading;
+  const isLoading = (user ? privateLoading : false) || publicLoading;
 
   // Check if the current user is the owner of the vehicle
   const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
   const plate = privateVehicle?.plate;
+  const locadorWhatsappDigits = (publicVehicle?.locador_whatsapp ?? '').replace(/\D/g, '');
 
   const handleOpenChat = async () => {
     if (!user) {
-      toast.info('Faça login ou crie sua conta para conversar com o locador.');
-      const redirect = encodeURIComponent(`/veiculos/${id}`);
-      navigate(`/cadastro?redirect=${redirect}`);
+      setLoginDialogOpen(true);
       return;
     }
-    if (isOwner) {
-      navigate('/locador/mensagens');
+    if (role === 'locador' || role === 'admin') {
       return;
     }
     const locadorId = privateVehicle?.locador_id;
@@ -133,7 +132,7 @@ export default function VehicleDetails() {
 
       if (driverErr) throw driverErr;
       if (!driver) {
-        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat.');
+        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat. Use o WhatsApp para o primeiro contato.');
         return;
       }
 
@@ -144,14 +143,18 @@ export default function VehicleDetails() {
         .eq('locador_id', locadorId)
         .maybeSingle();
 
-      if (!existing) {
-        const { error: insertErr } = await supabase
+      let conversationId = existing?.id;
+      if (!conversationId) {
+        const { data: inserted, error: insertErr } = await supabase
           .from('conversations')
-          .insert({ driver_id: driver.id, locador_id: locadorId });
+          .insert({ driver_id: driver.id, locador_id: locadorId })
+          .select('id')
+          .single();
         if (insertErr) throw insertErr;
+        conversationId = inserted.id;
       }
 
-      navigate('/motorista/mensagens');
+      navigate('/motorista/mensagens', { state: { conversationId } });
     } catch (err) {
       console.error('[VehicleDetails] open chat error', err);
       toast.error('Não foi possível abrir o chat.');
@@ -159,6 +162,7 @@ export default function VehicleDetails() {
       setOpeningChat(false);
     }
   };
+
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
