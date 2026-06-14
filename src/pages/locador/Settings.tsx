@@ -175,14 +175,16 @@ export default function LocadorSettings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="whatsapp">WhatsApp (contato público)</Label>
+                    <Label htmlFor="whatsapp">WhatsApp (com DDD)</Label>
                     <Input
                       id="whatsapp"
                       value={whatsapp}
-                      onChange={(e) => setWhatsapp(e.target.value)}
-                      placeholder="5500000000000"
+                      onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                      placeholder="(41) 99999-9999"
+                      inputMode="tel"
                     />
                   </div>
+
                 </CardContent>
               </Card>
 
