@@ -37,7 +37,17 @@ import { toast } from 'sonner';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Vehicle } from '@/hooks/useVehicles';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { PriceSuggestion } from './PriceSuggestion';
+
+const formatWhatsapp = (raw: string) => {
+  const digits = raw.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -81,8 +91,18 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
+
+  // Sync WhatsApp from profile when dialog opens
+  useEffect(() => {
+    if (open) setWhatsapp(formatWhatsapp(profile?.whatsapp ?? ''));
+  }, [open, profile?.whatsapp]);
 
   const isEditing = !!vehicle;
+
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema),
@@ -230,11 +250,23 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
       return;
     }
 
+    const whatsappDigits = whatsapp.replace(/\D/g, '');
+    if (whatsapp && whatsappDigits.length < 10) {
+      toast.error('WhatsApp inválido. Use o formato (XX) XXXXX-XXXX.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Update WhatsApp in profile if changed
+      if ((profile?.whatsapp ?? '') !== whatsapp) {
+        await updateProfile.mutateAsync({ whatsapp: whatsapp || null });
+      }
+
       // Upload new images
       const newImageUrls = newImages.length > 0 ? await uploadImages(user.id) : [];
+
       const allImages = [...existingImages, ...newImageUrls];
 
       if (isEditing && vehicle) {
@@ -622,6 +654,23 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* WhatsApp (do locador, salvo em profiles) */}
+            <div className="space-y-2">
+              <Label htmlFor="vehicle-whatsapp">WhatsApp do locador (com DDD)</Label>
+              <Input
+                id="vehicle-whatsapp"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                placeholder="(41) 99999-9999"
+                inputMode="tel"
+              />
+              <p className="text-xs text-muted-foreground">
+                Este número aparece no botão "Chamar pelo WhatsApp" da página pública. É salvo no seu perfil e usado em todos os veículos.
+              </p>
+            </div>
+
+
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>

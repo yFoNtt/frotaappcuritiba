@@ -20,7 +20,9 @@ const ALLOWED_MIME = /^(image\/|application\/pdf|application\/msword|application
 
 interface Props {
   role: ChatRole;
+  initialConversationId?: string;
 }
+
 
 function formatDay(iso: string) {
   const d = new Date(iso);
@@ -29,11 +31,12 @@ function formatDay(iso: string) {
   return format(d, "dd 'de' MMMM", { locale: ptBR });
 }
 
-export function ChatWindow({ role }: Props) {
+export function ChatWindow({ role, initialConversationId }: Props) {
   const { user } = useAuth();
   const { conversations, loading: loadingList, reload: reloadConvs } = useConversations(role);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(initialConversationId ?? null);
   const { messages, loading, sending, send, uploadAttachment, markAsRead } = useConversation(activeId, role);
+
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -48,7 +51,7 @@ export function ChatWindow({ role }: Props) {
     | { file: File | null; uploadedAttachment: AttachmentInput | null; text: string }
     | null
   >(null);
-  const [showListMobile, setShowListMobile] = useState(true);
+  const [showListMobile, setShowListMobile] = useState(!initialConversationId);
   // AbortController for the in-flight upload, so the user can cancel it
   const uploadAbortRef = useRef<AbortController | null>(null);
   const [cancelled, setCancelled] = useState(false);

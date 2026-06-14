@@ -9,6 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ImageGallery } from '@/components/vehicles/ImageGallery';
 import { VehicleInspectionHistory } from '@/components/vehicles/VehicleInspectionHistory';
 import { useVehicle, usePublicVehicle } from '@/hooks/useVehicles';
@@ -27,6 +36,7 @@ import {
   Palette,
   Loader2,
 } from 'lucide-react';
+
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
@@ -80,30 +90,29 @@ function VehicleDetailsSkeleton() {
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const [openingChat, setOpeningChat] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
-  // Use full vehicle data for authenticated users, public RPC for anonymous
+  // Always fetch public RPC to get locador_whatsapp; also fetch private when logged in (for plate/inspections)
   const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
-  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(!user ? id : undefined);
+  const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(id);
 
   const vehicle = privateVehicle || publicVehicle;
-  const isLoading = user ? privateLoading : publicLoading;
+  const isLoading = (user ? privateLoading : false) || publicLoading;
 
   // Check if the current user is the owner of the vehicle
   const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
   const plate = privateVehicle?.plate;
+  const locadorWhatsappDigits = (publicVehicle?.locador_whatsapp ?? '').replace(/\D/g, '');
 
   const handleOpenChat = async () => {
     if (!user) {
-      toast.info('Faça login ou crie sua conta para conversar com o locador.');
-      const redirect = encodeURIComponent(`/veiculos/${id}`);
-      navigate(`/cadastro?redirect=${redirect}`);
+      setLoginDialogOpen(true);
       return;
     }
-    if (isOwner) {
-      navigate('/locador/mensagens');
+    if (role === 'locador' || role === 'admin') {
       return;
     }
     const locadorId = privateVehicle?.locador_id;
@@ -123,7 +132,7 @@ export default function VehicleDetails() {
 
       if (driverErr) throw driverErr;
       if (!driver) {
-        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat.');
+        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat. Use o WhatsApp para o primeiro contato.');
         return;
       }
 
@@ -134,14 +143,18 @@ export default function VehicleDetails() {
         .eq('locador_id', locadorId)
         .maybeSingle();
 
-      if (!existing) {
-        const { error: insertErr } = await supabase
+      let conversationId = existing?.id;
+      if (!conversationId) {
+        const { data: inserted, error: insertErr } = await supabase
           .from('conversations')
-          .insert({ driver_id: driver.id, locador_id: locadorId });
+          .insert({ driver_id: driver.id, locador_id: locadorId })
+          .select('id')
+          .single();
         if (insertErr) throw insertErr;
+        conversationId = inserted.id;
       }
 
-      navigate('/motorista/mensagens');
+      navigate('/motorista/mensagens', { state: { conversationId } });
     } catch (err) {
       console.error('[VehicleDetails] open chat error', err);
       toast.error('Não foi possível abrir o chat.');
@@ -149,6 +162,7 @@ export default function VehicleDetails() {
       setOpeningChat(false);
     }
   };
+
 
   if (isLoading) {
     return <VehicleDetailsSkeleton />;
@@ -174,7 +188,12 @@ export default function VehicleDetails() {
   const whatsappMessage = encodeURIComponent(
     `Olá! Vi o anúncio do ${vehicle.brand} ${vehicle.model} no FrotaApp e gostaria de mais informações.`
   );
-  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
+  const hasWhatsapp = locadorWhatsappDigits.length >= 10;
+  const whatsappLink = hasWhatsapp
+    ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
+    : '#';
+  const showChatButton = !isOwner && role !== 'locador' && role !== 'admin';
+
 
   const vehicleImages = vehicle.images ?? [];
   const kmLimit = vehicle.km_limit ?? 0;
@@ -392,27 +411,46 @@ export default function VehicleDetails() {
 
                 {/* CTA Buttons */}
                 <div className="space-y-3">
-                  <Button size="lg" variant="whatsapp" className="w-full" asChild>
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                      <Phone className="mr-2 h-4 w-4" />
-                      WhatsApp
-                    </a>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleOpenChat}
-                    disabled={openingChat}
-                  >
-                    {openingChat ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                    )}
-                    Chat Interno
-                  </Button>
+                  {hasWhatsapp ? (
+                    <Button size="lg" variant="whatsapp" className="w-full" asChild>
+                      <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Phone className="mr-2 h-4 w-4" />
+                        Chamar pelo WhatsApp
+                      </a>
+                    </Button>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="block w-full">
+                            <Button size="lg" variant="whatsapp" className="w-full" disabled>
+                              <Phone className="mr-2 h-4 w-4" />
+                              Chamar pelo WhatsApp
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Locador não informou WhatsApp</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {showChatButton && (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleOpenChat}
+                      disabled={openingChat}
+                    >
+                      {openingChat ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                      )}
+                      Chat Interno
+                    </Button>
+                  )}
                 </div>
+
 
                 {/* Security Note */}
                 <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
@@ -426,6 +464,26 @@ export default function VehicleDetails() {
           </div>
         </div>
       </div>
+
+      <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Entre para conversar</DialogTitle>
+            <DialogDescription>
+              Para conversar com o locador, faça login ou crie uma conta.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" asChild>
+              <Link to={`/login?redirect=/veiculos/${id}`}>Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link to={`/cadastro?redirect=/veiculos/${id}`}>Cadastrar</Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PublicLayout>
+
   );
 }
