@@ -250,11 +250,23 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
       return;
     }
 
+    const whatsappDigits = whatsapp.replace(/\D/g, '');
+    if (whatsapp && whatsappDigits.length < 10) {
+      toast.error('WhatsApp inválido. Use o formato (XX) XXXXX-XXXX.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Update WhatsApp in profile if changed
+      if ((profile?.whatsapp ?? '') !== whatsapp) {
+        await updateProfile.mutateAsync({ whatsapp: whatsapp || null });
+      }
+
       // Upload new images
       const newImageUrls = newImages.length > 0 ? await uploadImages(user.id) : [];
+
       const allImages = [...existingImages, ...newImageUrls];
 
       if (isEditing && vehicle) {
