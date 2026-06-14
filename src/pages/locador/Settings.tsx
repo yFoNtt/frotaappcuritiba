@@ -50,7 +50,20 @@ export default function LocadorSettings() {
     }
   }, [profile]);
 
+  const formatWhatsapp = (raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
   const handleSave = () => {
+    const whatsappDigits = whatsapp.replace(/\D/g, '');
+    if (whatsapp && whatsappDigits.length < 10) {
+      toast.error('WhatsApp inválido. Use o formato (XX) XXXXX-XXXX.');
+      return;
+    }
     updateProfile.mutate({
       full_name: fullName || null,
       phone: phone || null,
@@ -60,6 +73,7 @@ export default function LocadorSettings() {
       state: state || null,
     });
   };
+
 
   const handleChangePassword = () => {
     if (!newPassword) return;
