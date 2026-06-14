@@ -44,7 +44,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
       <div className={cn('space-y-4', className)}>
         {/* Main Image */}
         <div 
-          className="group relative aspect-video cursor-pointer overflow-hidden rounded-xl bg-muted"
+          className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl bg-muted"
           onClick={() => setIsFullscreen(true)}
         >
           <img
