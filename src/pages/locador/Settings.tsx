@@ -12,6 +12,8 @@ import { PrivacySection } from '@/components/settings/PrivacySection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
+import { toast } from 'sonner';
+
 import { 
   User, 
   Building, 
