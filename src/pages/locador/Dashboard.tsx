@@ -30,6 +30,8 @@ import { useMemo } from 'react';
 import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
 import { LocadorInsights } from '@/components/locador/LocadorInsights';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useAuth } from '@/hooks/useAuth';
+
 
 const LOCADOR_TOUR_STEPS = [
   {
