@@ -158,12 +158,13 @@ export function usePublicVehicle(vehicleId: string | undefined) {
         throw error;
       }
 
-      const vehicles = data as PublicVehicle[];
+      const vehicles = (data ?? []) as unknown as PublicVehicle[];
       return vehicles.length > 0 ? vehicles[0] : null;
     },
     enabled: !!vehicleId,
   });
 }
+
 
 // Fetch a single vehicle by ID (full data for authenticated owners)
 export function useVehicle(vehicleId: string | undefined) {
