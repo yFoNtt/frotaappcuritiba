@@ -464,6 +464,26 @@ export default function VehicleDetails() {
           </div>
         </div>
       </div>
+
+      <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Entre para conversar</DialogTitle>
+            <DialogDescription>
+              Para conversar com o locador, faça login ou crie uma conta.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" asChild>
+              <Link to={`/login?redirect=/veiculos/${id}`}>Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link to={`/cadastro?redirect=/veiculos/${id}`}>Cadastrar</Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PublicLayout>
+
   );
 }
