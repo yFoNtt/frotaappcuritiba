@@ -37,31 +37,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  rented: 'Alugado',
-  maintenance: 'Manutenção',
-  inactive: 'Inativo',
-};
-
-const fuelLabels: Record<string, string> = {
-  flex: 'Flex',
-  gasoline: 'Gasolina',
-  ethanol: 'Etanol',
-  diesel: 'Diesel',
-  electric: 'Elétrico',
-  hybrid: 'Híbrido',
-};
-
-const appLabels: Record<string, string> = {
-  Uber: 'Uber',
-  '99': '99',
-  InDriver: 'InDriver',
-  uber: 'Uber',
-  indrive: 'InDriver',
-  other: 'Outro',
-};
+import { statusLabels, fuelLabels, appLabels } from '@/lib/vehicleLabels';
 
 function VehicleDetailsSkeleton() {
   return (
