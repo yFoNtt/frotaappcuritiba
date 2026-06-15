@@ -25,29 +25,7 @@ interface VehicleCardProps {
   urgency?: 'last' | 'new' | null;
 }
 
-
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  rented: 'Alugado',
-  maintenance: 'Manutenção',
-  inactive: 'Inativo'
-};
-
-const fuelLabels: Record<string, string> = {
-  flex: 'Flex',
-  gasoline: 'Gasolina',
-  ethanol: 'Etanol',
-  diesel: 'Diesel',
-  electric: 'Elétrico',
-  hybrid: 'Híbrido'
-};
-
-const appLabels: Record<string, string> = {
-  uber: 'Uber',
-  '99': '99',
-  indrive: 'InDrive',
-  other: 'Outro'
-};
+import { statusLabels, fuelLabels, appLabels } from '@/lib/vehicleLabels';
 
 export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
   return (

@@ -53,12 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let initialized = false;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        initialized = true;
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           // Keep loading true until role resolves to prevent UI flash
           setTimeout(() => {
@@ -76,9 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (initialized) return; // onAuthStateChange já tratou
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchUserRole(session.user.id).then((r) => {
           setRole(r);
@@ -106,6 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (!/[A-Z]/.test(password)) {
         return { error: new Error('Senha deve conter pelo menos uma letra maiúscula') };
+      }
+      if (!/[a-z]/.test(password)) {
+        return { error: new Error('Senha deve conter pelo menos uma letra minúscula') };
       }
       if (!/[0-9]/.test(password)) {
         return { error: new Error('Senha deve conter pelo menos um número') };
@@ -233,12 +240,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setRole(null);
-  };
+  }, []);
 
   // Auto-logout after 30 minutes of inactivity
   const handleInactivityTimeout = useCallback(async () => {
@@ -248,7 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         duration: 8000,
       });
     }
-  }, [user]);
+  }, [user, signOut]);
 
   useInactivityTimeout(handleInactivityTimeout, !!user);
 

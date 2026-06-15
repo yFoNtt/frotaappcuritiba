@@ -404,7 +404,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
   const send = useCallback(
     async (content: string, attachment?: AttachmentInput | null): Promise<boolean> => {
       if (!user || !conversationId) return false;
-      const text = content.trim();
+      const text = sanitizeText(content.trim()) ?? '';
       if (!text && !attachment) return false;
 
       setSending(true);
