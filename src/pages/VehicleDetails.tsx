@@ -71,7 +71,7 @@ export default function VehicleDetails() {
   const [openingChat, setOpeningChat] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
-  // Always fetch public RPC to get locador_whatsapp; also fetch private when logged in (for plate/inspections)
+  // Always fetch public RPC to get whatsapp_locador; also fetch private when logged in (for plate/inspections)
   const { data: privateVehicle, isLoading: privateLoading } = useVehicle(user ? id : undefined);
   const { data: publicVehicle, isLoading: publicLoading } = usePublicVehicle(id);
 
@@ -81,21 +81,27 @@ export default function VehicleDetails() {
   // Check if the current user is the owner of the vehicle
   const isOwner = user && privateVehicle && privateVehicle.locador_id === user.id;
   const plate = privateVehicle?.plate;
-  const locadorWhatsappDigits = (publicVehicle?.locador_whatsapp ?? '').replace(/\D/g, '');
+  const locadorWhatsappDigits = (publicVehicle?.whatsapp_locador ?? '').replace(/\D/g, '');
 
   const handleOpenChat = async () => {
+    // Não logado: abrir Dialog pedindo login
     if (!user) {
       setLoginDialogOpen(true);
       return;
     }
-    if (role === 'locador' || role === 'admin') {
+
+    // Locador vendo o próprio veículo: ir direto para mensagens
+    if (isOwner) {
+      navigate('/locador/mensagens');
       return;
     }
+
     const locadorId = privateVehicle?.locador_id;
     if (!locadorId) {
       toast.error('Não foi possível identificar o locador.');
       return;
     }
+
     setOpeningChat(true);
     try {
       const { data: driver, error: driverErr } = await supabase
@@ -103,34 +109,38 @@ export default function VehicleDetails() {
         .select('id')
         .eq('user_id', user.id)
         .eq('locador_id', locadorId)
-        .eq('status', 'active')
         .maybeSingle();
 
       if (driverErr) throw driverErr;
-      if (!driver) {
-        toast.error('Você precisa estar cadastrado como motorista deste locador para abrir o chat. Use o WhatsApp para o primeiro contato.');
-        return;
-      }
 
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('driver_id', driver.id)
-        .eq('locador_id', locadorId)
-        .maybeSingle();
-
-      let conversationId = existing?.id;
-      if (!conversationId) {
-        const { data: inserted, error: insertErr } = await supabase
+      if (driver) {
+        const { data: existing } = await supabase
           .from('conversations')
-          .insert({ driver_id: driver.id, locador_id: locadorId })
           .select('id')
-          .single();
-        if (insertErr) throw insertErr;
-        conversationId = inserted.id;
-      }
+          .eq('driver_id', driver.id)
+          .eq('locador_id', locadorId)
+          .maybeSingle();
 
-      navigate('/motorista/mensagens', { state: { conversationId } });
+        let conversationId = existing?.id;
+        if (!conversationId) {
+          const { data: inserted, error: insertErr } = await supabase
+            .from('conversations')
+            .insert({ driver_id: driver.id, locador_id: locadorId })
+            .select('id')
+            .single();
+          if (insertErr) throw insertErr;
+          conversationId = inserted.id;
+        }
+
+        navigate('/motorista/mensagens', { state: { conversationId } });
+      } else {
+        // Motorista ainda não cadastrado nesse locador: orientar a usar WhatsApp
+        toast.info(
+          locadorWhatsappDigits.length >= 10
+            ? 'Para usar o chat interno, você precisa ser cadastrado pelo locador. Use o WhatsApp para o primeiro contato.'
+            : 'Para usar o chat interno, você precisa ser cadastrado pelo locador. Entre em contato por outro meio.'
+        );
+      }
     } catch (err) {
       console.error('[VehicleDetails] open chat error', err);
       toast.error('Não foi possível abrir o chat.');
@@ -168,7 +178,7 @@ export default function VehicleDetails() {
   const whatsappLink = hasWhatsapp
     ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
     : '#';
-  const showChatButton = !isOwner && role !== 'locador' && role !== 'admin';
+  const showChatButton = !isOwner && role !== 'admin';
 
 
   const vehicleImages = vehicle.images ?? [];

@@ -1,43 +1,49 @@
-# Sprint de Correções — Auth, Chat e Edge Function
 
-## 1. Bug do checkbox de termos (`RegisterForm.tsx`)
-Trocar o `<Checkbox>` do shadcn por `<input type="checkbox">` nativo nas linhas 248–267, mantendo `<Label>` e os links. Usar `accent-primary` (token semântico válido) e `h-4 w-4 mt-1 cursor-pointer`. Remover import de `Checkbox`. Garante que o `onChange` dispara mesmo se o foco for perdido (clique nos links de Termos/Privacidade).
+# Correções: WhatsApp público, chat e validações em Settings
 
-## 2. Validação de minúscula (`RegisterForm.tsx` + `useAuth.tsx`)
-- `RegisterForm.tsx` linha ~140: adicionar bloco `if (!/[a-z]/.test(password))` após a checagem de maiúscula.
-- `useAuth.tsx` linha ~109: adicionar a mesma checagem após a maiúscula em `signUp`.
-Mensagens em PT-BR alinhadas com as existentes.
+## 1. Migration — expor `whatsapp_locador` na RPC pública
+Criar nova migration que recria `public.get_public_vehicle(uuid)`:
+- Adiciona coluna `whatsapp_locador text` (LEFT JOIN em `profiles.whatsapp` por `user_id = v.locador_id`).
+- **Remove** o filtro `AND v.status = 'available'` para permitir visualização por URL pública independente do status.
+- Mantém `SECURITY DEFINER`, `STABLE`, `search_path = public`.
+- `REVOKE ALL ... FROM PUBLIC` + `GRANT EXECUTE ... TO anon, authenticated`.
 
-## 3. Sanitização do chat (`useChat.ts`)
-No `send` (linha 404), substituir `const text = content.trim();` por:
-```ts
-const text = sanitizeText(content.trim()) ?? '';
-```
-Adicionar `import { sanitizeText } from '@/lib/sanitize';` no topo. Não tocar em anexos.
+Observação: a função atual já faz o JOIN e retorna `locador_whatsapp`. Vou renomear para `whatsapp_locador` conforme pedido e remover o filtro de status.
 
-## 4. CORS restrito (`rate-limited-login/index.ts`)
-Trocar `"Access-Control-Allow-Origin": "*"` por:
-```ts
-"Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "https://frotaappcuritiba.lovable.app",
-```
-**Pendência do usuário:** depois do deploy, adicionar o secret `ALLOWED_ORIGIN` em Project Settings → Secrets (não posso adicioná-lo sem o valor; o fallback hardcoded já cobre produção).
+## 2. `src/hooks/useVehicles.tsx`
+Adicionar `whatsapp_locador: string | null` à interface `PublicVehicle`. Após aprovação da migration os tipos do Supabase serão regenerados automaticamente.
 
-## 5. `GoogleIcon` compartilhado
-- Criar `src/components/auth/GoogleIcon.tsx` com o componente exato do prompt.
-- Substituir o `<svg>` inline em `LoginForm.tsx` (linhas 82–99) e `RegisterForm.tsx` (linhas 193–198) por `<GoogleIcon className="mr-2 h-4 w-4" />`.
+## 3. `src/pages/VehicleDetails.tsx` — botão WhatsApp
+- Montar `whatsappLink` a partir de `vehicle.whatsapp_locador`, mantendo só dígitos, prefixando `55`, exigindo ≥10 dígitos.
+- Se houver número: botão `<a href=...>` com ícone WhatsApp.
+- Se não houver: botão desabilitado "WhatsApp não disponível".
+- Usar tokens semânticos (variantes do `Button`), sem cores cruas.
 
-## 6. `vehicleLabels.ts` centralizado
-- Ler `VehicleDetails.tsx` e `VehicleCard.tsx` para extrair os 3 objetos (`statusLabels`, `fuelLabels`, `appLabels`).
-- Criar `src/lib/vehicleLabels.ts` unindo todas as keys das duas versões (sem perder nenhuma).
-- Importar nos dois arquivos e remover as constantes locais.
+## 4. `src/pages/VehicleDetails.tsx` — chat sem paradoxo
+Substituir `handleOpenChat`:
+- Sem usuário → abre `Dialog` "Acesso necessário" (login / criar conta).
+- `isOwner` → navega para `/locador/mensagens`.
+- Busca `drivers` por `(user_id, locador_id)`; se existir vínculo, faz upsert da `conversations` e navega para `/motorista/mensagens`.
+- Sem vínculo → `toast.info` orientando usar WhatsApp / aguardar cadastro.
+- Adiciona estado `showLoginDialog` e o `Dialog` no JSX (imports de `@/components/ui/dialog`).
 
-## 7. Race condition no `useAuth` (`useAuth.tsx`)
-- No `useEffect`, declarar `let initialized = false;`. Setar `initialized = true` no início do callback de `onAuthStateChange`. Em `getSession().then(...)`, retornar cedo se `initialized` for `true`.
-- Converter `signOut` para `useCallback(async () => { ... }, [])`, no mesmo padrão de `refreshRole`.
+## 5. `src/pages/locador/Settings.tsx` — campo WhatsApp
+- `onChange` aplica máscara `(XX) XXXXX-XXXX`, limita a 11 dígitos, `maxLength={15}`, placeholder `(41) 99999-9999`.
+- Texto auxiliar muted explicando que é exibido publicamente.
+- `handleSave` salva apenas dígitos (`whatsapp.replace(/\D/g, '')`).
+- Ao carregar perfil, aplicar a máscara sobre o valor salvo para exibição.
 
-## Arquivos afetados
-- editar: `src/components/auth/RegisterForm.tsx`, `src/components/auth/LoginForm.tsx`, `src/hooks/useAuth.tsx`, `src/hooks/useChat.ts`, `src/pages/VehicleDetails.tsx`, `src/components/vehicles/VehicleCard.tsx`, `supabase/functions/rate-limited-login/index.ts`
-- criar: `src/components/auth/GoogleIcon.tsx`, `src/lib/vehicleLabels.ts`
+## 6. `src/pages/locador/Settings.tsx` — política de senha
+- Atualizar placeholder para "Mínimo 8 caracteres".
+- Em `handleChangePassword` validar: ≥8 chars, maiúscula, minúscula, número e especial — com `toast.error` para cada caso.
+- Inline no JSX: mensagem "Mínimo 8 caracteres" enquanto incompleto, e a já existente de senhas que não coincidem.
 
-## Fora de escopo
-RLS, migrations, outras Edge Functions, testes existentes, cores cruas Tailwind.
+## Restrições aplicadas
+- Apenas tokens semânticos (sem cores Tailwind cruas).
+- `sonner` para toasts.
+- Sem alterações em RLS, outras Edge Functions, ou no fluxo do lightbox.
+- Sem alterar `src/integrations/supabase/client.ts` ou `types.ts`.
+
+## Ordem de execução
+1. Migration (Entrega 1) — aguarda aprovação do usuário.
+2. Após migration aplicada: editar `useVehicles.tsx`, `Settings.tsx` (entregas 5 e 6), `VehicleDetails.tsx` (entregas 3 e 4).

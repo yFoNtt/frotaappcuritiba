@@ -1029,11 +1029,11 @@ export type Database = {
           id: string
           images: string[]
           km_limit: number
-          locador_whatsapp: string
           model: string
           state: string
           status: string
           weekly_price: number
+          whatsapp_locador: string
           year: number
         }[]
       }

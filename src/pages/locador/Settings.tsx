@@ -82,10 +82,28 @@ export default function LocadorSettings() {
 
   const handleChangePassword = () => {
     if (!newPassword) return;
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos uma letra maiúscula');
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos uma letra minúscula');
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos um número');
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos um caractere especial');
       return;
     }
     if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
       return;
     }
     updatePassword.mutate({ newPassword }, {
@@ -95,6 +113,13 @@ export default function LocadorSettings() {
       }
     });
   };
+
+  const isPasswordStrong =
+    newPassword.length >= 8 &&
+    /[A-Z]/.test(newPassword) &&
+    /[a-z]/.test(newPassword) &&
+    /[0-9]/.test(newPassword) &&
+    /[^A-Za-z0-9]/.test(newPassword);
 
   if (isLoading) {
     return (
@@ -319,8 +344,13 @@ export default function LocadorSettings() {
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                     />
+                    {newPassword && !isPasswordStrong && (
+                      <p className="text-xs text-muted-foreground">
+                        Use 8+ caracteres com maiúscula, minúscula, número e caractere especial.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
@@ -339,7 +369,7 @@ export default function LocadorSettings() {
                     variant="outline"
                     className="w-full"
                     onClick={handleChangePassword}
-                    disabled={!newPassword || newPassword.length < 6 || newPassword !== confirmPassword || updatePassword.isPending}
+                    disabled={!isPasswordStrong || newPassword !== confirmPassword || updatePassword.isPending}
                   >
                     {updatePassword.isPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
