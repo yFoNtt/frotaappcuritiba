@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
 import {
   ArrowRight,
   FileSignature,
@@ -100,9 +102,11 @@ export default function ForRenters() {
     },
   ];
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const benefitsRef = useRef<HTMLElement | null>(null);
+  const scrollToBenefits = () => {
+    benefitsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
 
   return (
     <PublicLayout>
