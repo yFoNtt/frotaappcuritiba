@@ -290,7 +290,9 @@ export function useInspectionExport() {
     drivers?: Array<{ id: string; name: string }>;
     vehicles?: Array<{ id: string; brand: string; model: string; plate: string }>;
   }) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const checkIns = inspections.filter((i) => i.type === 'check_in').length;
     const checkOuts = inspections.filter((i) => i.type === 'check_out').length;
