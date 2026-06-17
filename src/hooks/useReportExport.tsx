@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 interface MonthlyData {
   month: string;
