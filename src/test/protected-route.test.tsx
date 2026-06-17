@@ -9,6 +9,13 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+// ProtectedRoute also consumes useConsentStatus — mock it as "valid" so the
+// LGPD gate is transparent in these tests (separate suite covers consent flow).
+vi.mock('@/hooks/useConsentStatus', () => ({
+  useConsentStatus: () => ({ status: 'valid', isLoading: false }),
+}));
+
+
 function renderWithRouter(initialRoute: string, allowedRoles?: ('admin' | 'locador' | 'motorista')[]) {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>

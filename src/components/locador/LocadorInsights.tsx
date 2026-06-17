@@ -18,16 +18,19 @@ export function LocadorInsights() {
     const rented = vehicles.filter((v) => v.status === 'rented').length;
     const currentOccupation = total > 0 ? (rented / total) * 100 : 0;
 
-    // Previous week occupation: contracts that were active 7 days ago
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    // Previous week occupation: contracts that were active 7 days ago.
+    // Build the date immutably to avoid mutating Date inside useMemo (anti-pattern false-positive
+    // and good practice — `setDate` mutates).
+    const sevenDaysAgoStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
     const rentedLastWeek = contracts.filter(
       (c) =>
         c.start_date <= sevenDaysAgoStr &&
         (!c.end_date || c.end_date >= sevenDaysAgoStr) &&
         c.status !== 'cancelled',
     ).length;
+
     const prevOccupation = total > 0 ? (rentedLastWeek / total) * 100 : 0;
     const occupationDelta = currentOccupation - prevOccupation;
 

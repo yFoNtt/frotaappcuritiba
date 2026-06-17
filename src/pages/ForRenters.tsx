@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/SEO';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
 import {
   ArrowRight,
   FileSignature,
@@ -100,9 +102,11 @@ export default function ForRenters() {
     },
   ];
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const benefitsRef = useRef<HTMLElement | null>(null);
+  const scrollToBenefits = () => {
+    benefitsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
 
   return (
     <PublicLayout>
@@ -134,7 +138,7 @@ export default function ForRenters() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="xl" variant="outline" onClick={() => scrollTo('beneficios')}>
+              <Button size="xl" variant="outline" onClick={scrollToBenefits}>
                 Ver demonstração
               </Button>
             </div>
@@ -143,7 +147,8 @@ export default function ForRenters() {
       </section>
 
       {/* Benefícios */}
-      <section id="beneficios" className="py-20">
+      <section id="beneficios" ref={benefitsRef} className="py-20">
+
         <div className="container">
           <motion.div {...fadeUp} className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
