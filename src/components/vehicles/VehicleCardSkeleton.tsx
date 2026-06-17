@@ -36,4 +36,4 @@ export const VehicleCardSkeleton = memo(function VehicleCardSkeleton() {
       </CardContent>
     </Card>
   );
-}
+});
