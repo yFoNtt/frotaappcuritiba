@@ -13,13 +13,15 @@ function styledCell(v: string | number, style?: object) {
 }
 
 export function useAuditLogsExport() {
-  const exportToPDF = useCallback((logs: AuditLog[]) => {
+  const exportToPDF = useCallback(async (logs: AuditLog[]) => {
     if (logs.length === 0) {
       toast.error('Nenhum log para exportar');
       return;
     }
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
