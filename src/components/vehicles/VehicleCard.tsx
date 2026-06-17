@@ -136,3 +136,5 @@ function VehicleCardImpl({ vehicle, urgency }: VehicleCardProps) {
     </Card>);
 
 }
+
+export const VehicleCard = memo(VehicleCardImpl);
