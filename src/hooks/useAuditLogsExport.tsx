@@ -56,13 +56,15 @@ export function useAuditLogsExport() {
     toast.success('PDF exportado com sucesso');
   }, []);
 
-  const exportToExcel = useCallback((logs: AuditLog[]) => {
+  const exportToExcel = useCallback(async (logs: AuditLog[]) => {
     if (logs.length === 0) {
       toast.error('Nenhum log para exportar');
       return;
     }
 
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const rows = [
       [
