@@ -1,11 +1,47 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin":
-    Deno.env.get("ALLOWED_ORIGIN") ?? "https://frotaappcuritiba.lovable.app",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const BASE_ALLOWED_HEADERS =
+  "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
+
+// Build the configured allow-list (comma-separated env vars, plus sensible defaults).
+const configuredOrigins = [
+  Deno.env.get("ALLOWED_ORIGIN"),
+  Deno.env.get("ORIGEM_PERMITIDA"),
+]
+  .filter((v): v is string => !!v)
+  .flatMap((v) => v.split(",").map((s) => s.trim()))
+  .filter(Boolean);
+
+const STATIC_ALLOWED = new Set<string>([
+  "https://frotaappcuritiba.lovable.app",
+  ...configuredOrigins,
+]);
+
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  if (STATIC_ALLOWED.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    // Allow any Lovable preview/sandbox subdomain and local dev.
+    if (url.hostname.endsWith(".lovable.app")) return true;
+    if (url.hostname.endsWith(".lovableproject.com")) return true;
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return true;
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function buildCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  const allowed = isAllowedOrigin(origin) ? origin! : "https://frotaappcuritiba.lovable.app";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": BASE_ALLOWED_HEADERS,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 // Rate limit config
 const MAX_ATTEMPTS_PER_EMAIL = 5; // max failed attempts per email
@@ -14,6 +50,8 @@ const WINDOW_MINUTES = 15; // time window in minutes
 const LOCKOUT_MINUTES = 15; // lockout duration after exceeding limit
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
