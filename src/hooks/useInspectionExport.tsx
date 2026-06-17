@@ -1,8 +1,7 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 import {
   VehicleInspection,
   FUEL_LEVELS,
