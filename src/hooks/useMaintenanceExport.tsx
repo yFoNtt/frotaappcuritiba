@@ -54,8 +54,10 @@ export function useMaintenanceExport() {
     return parts.length > 0 ? parts.join(' | ') : 'Nenhum filtro aplicado';
   };
 
-  const exportToPDF = useCallback(({ maintenances, vehicles, filters }: ExportOptions) => {
+  const exportToPDF = useCallback(async ({ maintenances, vehicles, filters }: ExportOptions) => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
