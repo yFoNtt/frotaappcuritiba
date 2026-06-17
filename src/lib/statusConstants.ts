@@ -81,7 +81,6 @@ export function countByStatus<T extends string>(
   }
 
   if (unknown > 0 && import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
     console.warn(`[status] ${unknown} item(s) with unknown status ignored from counters`);
   }
 

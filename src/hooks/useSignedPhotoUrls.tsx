@@ -26,6 +26,8 @@ export function useSignedPhotoUrls(photos: string[] | null | undefined) {
     });
 
     return () => { cancelled = true; };
+    // photos is intentionally serialized to a stable string key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos?.join(',')]);
 
   return { signedUrls, isLoading };

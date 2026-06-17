@@ -84,6 +84,7 @@ export function useConversations(role: ChatRole) {
 
     setConversations(convs);
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 
   useEffect(() => {
