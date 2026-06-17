@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,7 @@ interface StatsCardProps {
   variant?: 'default' | 'success' | 'warning' | 'primary';
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) {
+function StatsCardImpl({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) {
   const variantStyles = {
     default: 'bg-muted text-muted-foreground',
     success: 'bg-success/10 text-success',
@@ -45,3 +46,6 @@ export function StatsCard({ title, value, icon: Icon, trend, variant = 'default'
     </Card>
   );
 }
+
+export const StatsCard = memo(StatsCardImpl);
+
