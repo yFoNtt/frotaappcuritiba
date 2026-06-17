@@ -1,65 +1,81 @@
+# Auditoria Final de Produção — Plano por Fases
 
-# Auditoria FrotaApp — Execução em Fases
-
-Você aprovou: **execução faseada, E2E liberado, major bumps só com CVE**. Abaixo o plano. Cada fase termina com aprovação sua antes de seguir.
-
----
-
-## Fase 1 — Auditoria (SOMENTE LEITURA, sem mudar código)
-
-Objetivo: mapear tudo antes de tocar em nada. Entrega = um relatório em `docs/AUDIT_REPORT.md` classificado por severidade (Crítico / Alto / Médio / Baixo).
-
-Atividades:
-1. **Análise estática**
-   - `tsc --noEmit` — erros de tipo
-   - `eslint .` — warnings e erros
-   - `bunx vitest run` — testes unitários atuais
-   - `bun run build` — confirmar build limpo
-   - `scripts/check-hardcoded-colors.mjs` — guarda de tokens
-2. **Dependências**: `bun audit` + `npm audit --json` para identificar CVEs. Cruzar com versões instaladas.
-3. **Segurança backend**: rodar `supabase--linter`, `security--run_security_scan`, revisar todas as policies RLS por tabela, conferir RPCs `SECURITY DEFINER`, conferir Edge Functions (validação JWT, CORS, Zod, secrets expostos).
-4. **Segurança frontend**: grep por `dangerouslySetInnerHTML`, `eval`, `innerHTML`, `localStorage.setItem` de dados sensíveis, redirects sem validação, `any`, `// @ts-ignore`.
-5. **React anti-patterns**: `useEffect` sem cleanup, deps incorretas, `setState` em `useMemo`, ausência de `useCallback`/`useMemo` em hot paths, componentes > 300 linhas.
-6. **Permissões/rotas**: confirmar que toda rota protegida usa `ProtectedRoute` com role correto; tentar acessar rotas cruzadas via Playwright (admin→motorista, motorista→locador).
-7. **E2E**: rodar toda a suíte `e2e/*.spec.ts` contra preview, registrar falhas.
-8. **Performance**: bundle analyzer (`vite build --mode=analyze`), `supabase--slow_queries`, identificar requests duplicados.
-9. **UX/Console**: navegar pelos principais fluxos via Playwright, capturar warnings/erros do console em cada página.
-
-**Entregável Fase 1**: `docs/AUDIT_REPORT.md` com:
-- Inventário de problemas por categoria e severidade
-- Arquivo:linha de cada item
-- Recomendação de correção e estimativa de risco
-- Lista de deps a atualizar (com CVE id quando aplicável)
-- Lista de funcionalidades que **não devo tocar** (regras de negócio)
-
-Nenhum arquivo de código fonte muda nesta fase. Você revisa o relatório e me diz o que aprovar para Fase 2+.
+O projeto já passou pelas Fases 1–5 + ESLint zerado. Esta nova rodada foca no que ainda não foi coberto: bundle, runtime warnings, performance, E2E, responsividade/UX e validação final. Cada fase é independente e aprovada antes da próxima. **Nenhuma regra de negócio será alterada.**
 
 ---
 
-## Fases seguintes (a confirmar após relatório)
+## Fase A — Limpeza de runtime warnings e console (rápida, ~15 min)
 
-Ordem proposta, do mais crítico/menos invasivo ao mais arriscado:
+Console atual mostra avisos reais que precisam sumir antes de prod:
 
-- **Fase 2 — Segurança crítica**: RLS faltando, policies abertas, XSS, secrets, permissões de rota, CORS de Edge Functions. Migrations + edits pontuais.
-- **Fase 3 — Dependências vulneráveis**: aplica updates (patch/minor sempre; major só com CVE), corrige incompatibilidades.
-- **Fase 4 — Bugs de build/console/tipos**: zera `tsc`, ESLint, warnings de console, remove `any` e `console.log` esquecidos.
-- **Fase 5 — Testes**: corrige testes existentes quebrados, adiciona cobertura nos fluxos críticos identificados sem cobertura.
-- **Fase 6 — Performance**: lazy loading faltante, `useMemo`/`useCallback` em hot paths, redução de bundle, otimização de queries lentas (`supabase--slow_queries` + índices).
-- **Fase 7 — UX/Responsividade**: ajustes de feedback (loading, toasts, skeleton), overflow em mobile, sem alterar design system.
-- **Fase 8 — Refactor pontual**: só onde a manutenção justifica (componentes > 300 linhas, duplicação clara). Sem mudar regra de negócio.
-- **Fase 9 — Verificação final**: re-rodar tsc + ESLint + vitest + build + Playwright completo + linter Supabase. Changelog consolidado.
+1. **`fetchPriority` em `<img>`** (HeroSection) — React 18 ainda não reconhece a prop camelCase do React 19. Trocar para `fetchpriority` minúsculo via atributo ou remover.
+2. **React Router v6 future flags** — adicionar `future={{ v7_startTransition: true, v7_relativeSplatPath: true }}` no `BrowserRouter` para silenciar e já preparar v7.
+3. **Varredura `console.log/warn/error`** em `src/` — remover logs de debug residuais (manter apenas `console.error` em ErrorBoundary/catch críticos).
+4. **Promises sem `.catch`** — auditar `void`/floating promises em handlers.
 
-Cada fase será apresentada como novo plano antes de executar, com escopo fechado e arquivos afetados.
+Validação: abrir as principais rotas via Playwright e confirmar console limpo.
 
 ---
 
-## Garantias em todas as fases
+## Fase B — Bundle e code splitting (~30 min)
 
-- Nada de remover funcionalidade ou alterar regra de negócio.
-- Toda mudança de schema via `supabase--migration` (com GRANTs).
-- Sem mexer em `src/integrations/supabase/{client,types}.ts`, `.env`, `supabase/config.toml`.
-- Tokens semânticos sempre; nada de cor crua Tailwind.
-- `sonner` para toasts; `xlsx-js-style` para Excel.
-- Commits/mudanças pequenas e revisáveis.
+1. Rodar `vite build` e analisar chunks > 500 KB.
+2. Garantir `React.lazy` em rotas pesadas que ainda sejam estáticas: relatórios, exportação Excel (`xlsx-js-style`), exportação PDF (se houver), admin, métricas, audit logs, marketplace de detalhe.
+3. Eliminar warnings de "dynamic + static import" do Vite — qualquer módulo importado dinamicamente não pode ser também importado estaticamente em outro arquivo.
+4. Configurar `manualChunks` no `vite.config.ts` para isolar `recharts`, `xlsx-js-style`, `framer-motion`, `@radix-ui/*` em chunks próprios.
+5. Confirmar que `vendor` inicial cai significativamente.
 
-Aprove esta Fase 1 (auditoria read-only com relatório) para eu começar.
+Validação: comparar tamanhos antes/depois e listar no relatório.
+
+---
+
+## Fase C — Performance React (~30 min)
+
+1. Buscar re-renders desnecessários em listas longas (`Vehicles`, `Drivers`, `Payments`, `AuditLogs`): `React.memo` em cards/linhas, `useCallback` em handlers passados como prop, `useMemo` em derivações pesadas.
+2. Verificar `useEffect` com dependências erradas (já tratado parcialmente, mas revisar componentes não tocados).
+3. Confirmar que TanStack Query tem `staleTime` razoável onde aplicável (sem mudar invalidations).
+4. Conferir listeners (`addEventListener`, Supabase realtime channels) com cleanup correto.
+5. Avaliar virtualização (`@tanstack/react-virtual`) **somente** se alguma lista exceder 200 itens visíveis — caso contrário, registrar como não necessário.
+
+Sem refatorações estruturais — só ajustes locais.
+
+---
+
+## Fase D — E2E Playwright + cobertura de testes (~45 min)
+
+1. Rodar a suíte Playwright atual (`e2e/*.spec.ts`) e corrigir flakes/falhas reais.
+2. Garantir cobertura mínima dos fluxos críticos pedidos: login/logout, CRUD veículo, CRUD motorista, marketplace, pagamentos, upload imagem, permissões anon/motorista/locador/admin. A maioria já existe — verificar gaps e completar.
+3. Rodar `vitest run` confirmando 439/439 ainda verde.
+4. Anexar resultados ao relatório final.
+
+---
+
+## Fase E — Responsividade e UX (~30 min)
+
+1. Capturar screenshots Playwright em viewports 375/768/1280 das rotas principais.
+2. Corrigir overflow horizontal, tabelas sem `overflow-x-auto`, modais cortados, botões inacessíveis em mobile.
+3. Garantir loading skeletons, toasts de sucesso/erro e confirmação de exclusão em fluxos onde faltem.
+4. Sem redesenhos — apenas ajustes pontuais de classes Tailwind.
+
+---
+
+## Fase F — Validação final e relatório (~20 min)
+
+1. `vite build` limpo, `tsc --noEmit` limpo, `eslint` 0/0, `vitest` 100%, Playwright 100%.
+2. `supabase--linter` sem novos warnings.
+3. Gerar `docs/FINAL_AUDIT_REPORT.md` consolidando: problemas encontrados, correções, otimizações de bundle/performance, melhorias de segurança aplicadas em rodadas anteriores, resultados de testes, itens não corrigidos (com motivo), confirmação explícita de que nenhuma regra de negócio foi alterada.
+
+---
+
+## Fora de escopo (já feito ou rejeitado)
+
+- Hardening de RLS / CORS / SECURITY DEFINER — concluído na Fase 2.
+- Sanitização PII / bugs de testes — concluído na Fase 5.
+- ESLint cleanup — concluído na rodada anterior.
+- Billing/Stripe, chatbot motorista, push notifications — itens de roadmap do produto, não de auditoria.
+
+---
+
+## Como prosseguir
+
+Aprovar a **Fase A** para começar. Cada fase termina com checkpoint antes da próxima. Posso também executar A+B juntas se preferir acelerar — me diga.
