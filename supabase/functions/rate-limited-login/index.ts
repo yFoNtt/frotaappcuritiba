@@ -17,17 +17,32 @@ const STATIC_ALLOWED = new Set<string>([
   ...configuredOrigins,
 ]);
 
+// Hardened origin allow-list:
+// - exact match against STATIC_ALLOWED (production + configured)
+// - HTTPS-only pattern match for Lovable-controlled domains (preview/sandbox)
+// - http://localhost and http://127.0.0.1 only when ALLOW_LOCAL_DEV=true
+const ALLOW_LOCAL_DEV = (Deno.env.get("ALLOW_LOCAL_DEV") ?? "true").toLowerCase() === "true";
+
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
   if (STATIC_ALLOWED.has(origin)) return true;
+  let url: URL;
   try {
-    const url = new URL(origin);
-    // Allow any Lovable preview/sandbox subdomain and local dev.
-    if (url.hostname.endsWith(".lovable.app")) return true;
-    if (url.hostname.endsWith(".lovableproject.com")) return true;
-    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return true;
+    url = new URL(origin);
   } catch {
     return false;
+  }
+  // Require HTTPS for any wildcard match — blocks http://*.lovable.app spoofing via insecure transport.
+  if (url.protocol === "https:") {
+    if (url.hostname.endsWith(".lovable.app")) return true;
+    if (url.hostname.endsWith(".lovableproject.com")) return true;
+  }
+  if (
+    ALLOW_LOCAL_DEV &&
+    (url.protocol === "http:" || url.protocol === "https:") &&
+    (url.hostname === "localhost" || url.hostname === "127.0.0.1")
+  ) {
+    return true;
   }
   return false;
 }
@@ -39,9 +54,11 @@ function buildCorsHeaders(req: Request): Record<string, string> {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Headers": BASE_ALLOWED_HEADERS,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
 }
+
 
 // Rate limit config
 const MAX_ATTEMPTS_PER_EMAIL = 5; // max failed attempts per email
