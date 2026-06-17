@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Maintenance, MAINTENANCE_TYPES, MAINTENANCE_STATUS } from './useMaintenances';
 import { Vehicle } from './useVehicles';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 interface ExportOptions {
   maintenances: Maintenance[];
