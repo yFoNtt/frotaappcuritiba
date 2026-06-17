@@ -168,7 +168,9 @@ export function useReportExport() {
   }, []);
 
   const exportToExcel = useCallback(async (data: ExportData) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     // Summary sheet
     const summaryData = [
