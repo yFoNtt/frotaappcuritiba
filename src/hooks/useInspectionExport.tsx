@@ -58,8 +58,10 @@ function styledCell(v: string | number | boolean, style?: object) {
 }
 
 export function useInspectionExport() {
-  const exportToPDF = ({ vehicleName, vehiclePlate, inspections, includeChecklist = true }: ExportOptions) => {
+  const exportToPDF = async ({ vehicleName, vehiclePlate, inspections, includeChecklist = true }: ExportOptions) => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFontSize(20);
