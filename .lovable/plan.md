@@ -1,49 +1,65 @@
 
-# Correções: WhatsApp público, chat e validações em Settings
+# Auditoria FrotaApp — Execução em Fases
 
-## 1. Migration — expor `whatsapp_locador` na RPC pública
-Criar nova migration que recria `public.get_public_vehicle(uuid)`:
-- Adiciona coluna `whatsapp_locador text` (LEFT JOIN em `profiles.whatsapp` por `user_id = v.locador_id`).
-- **Remove** o filtro `AND v.status = 'available'` para permitir visualização por URL pública independente do status.
-- Mantém `SECURITY DEFINER`, `STABLE`, `search_path = public`.
-- `REVOKE ALL ... FROM PUBLIC` + `GRANT EXECUTE ... TO anon, authenticated`.
+Você aprovou: **execução faseada, E2E liberado, major bumps só com CVE**. Abaixo o plano. Cada fase termina com aprovação sua antes de seguir.
 
-Observação: a função atual já faz o JOIN e retorna `locador_whatsapp`. Vou renomear para `whatsapp_locador` conforme pedido e remover o filtro de status.
+---
 
-## 2. `src/hooks/useVehicles.tsx`
-Adicionar `whatsapp_locador: string | null` à interface `PublicVehicle`. Após aprovação da migration os tipos do Supabase serão regenerados automaticamente.
+## Fase 1 — Auditoria (SOMENTE LEITURA, sem mudar código)
 
-## 3. `src/pages/VehicleDetails.tsx` — botão WhatsApp
-- Montar `whatsappLink` a partir de `vehicle.whatsapp_locador`, mantendo só dígitos, prefixando `55`, exigindo ≥10 dígitos.
-- Se houver número: botão `<a href=...>` com ícone WhatsApp.
-- Se não houver: botão desabilitado "WhatsApp não disponível".
-- Usar tokens semânticos (variantes do `Button`), sem cores cruas.
+Objetivo: mapear tudo antes de tocar em nada. Entrega = um relatório em `docs/AUDIT_REPORT.md` classificado por severidade (Crítico / Alto / Médio / Baixo).
 
-## 4. `src/pages/VehicleDetails.tsx` — chat sem paradoxo
-Substituir `handleOpenChat`:
-- Sem usuário → abre `Dialog` "Acesso necessário" (login / criar conta).
-- `isOwner` → navega para `/locador/mensagens`.
-- Busca `drivers` por `(user_id, locador_id)`; se existir vínculo, faz upsert da `conversations` e navega para `/motorista/mensagens`.
-- Sem vínculo → `toast.info` orientando usar WhatsApp / aguardar cadastro.
-- Adiciona estado `showLoginDialog` e o `Dialog` no JSX (imports de `@/components/ui/dialog`).
+Atividades:
+1. **Análise estática**
+   - `tsc --noEmit` — erros de tipo
+   - `eslint .` — warnings e erros
+   - `bunx vitest run` — testes unitários atuais
+   - `bun run build` — confirmar build limpo
+   - `scripts/check-hardcoded-colors.mjs` — guarda de tokens
+2. **Dependências**: `bun audit` + `npm audit --json` para identificar CVEs. Cruzar com versões instaladas.
+3. **Segurança backend**: rodar `supabase--linter`, `security--run_security_scan`, revisar todas as policies RLS por tabela, conferir RPCs `SECURITY DEFINER`, conferir Edge Functions (validação JWT, CORS, Zod, secrets expostos).
+4. **Segurança frontend**: grep por `dangerouslySetInnerHTML`, `eval`, `innerHTML`, `localStorage.setItem` de dados sensíveis, redirects sem validação, `any`, `// @ts-ignore`.
+5. **React anti-patterns**: `useEffect` sem cleanup, deps incorretas, `setState` em `useMemo`, ausência de `useCallback`/`useMemo` em hot paths, componentes > 300 linhas.
+6. **Permissões/rotas**: confirmar que toda rota protegida usa `ProtectedRoute` com role correto; tentar acessar rotas cruzadas via Playwright (admin→motorista, motorista→locador).
+7. **E2E**: rodar toda a suíte `e2e/*.spec.ts` contra preview, registrar falhas.
+8. **Performance**: bundle analyzer (`vite build --mode=analyze`), `supabase--slow_queries`, identificar requests duplicados.
+9. **UX/Console**: navegar pelos principais fluxos via Playwright, capturar warnings/erros do console em cada página.
 
-## 5. `src/pages/locador/Settings.tsx` — campo WhatsApp
-- `onChange` aplica máscara `(XX) XXXXX-XXXX`, limita a 11 dígitos, `maxLength={15}`, placeholder `(41) 99999-9999`.
-- Texto auxiliar muted explicando que é exibido publicamente.
-- `handleSave` salva apenas dígitos (`whatsapp.replace(/\D/g, '')`).
-- Ao carregar perfil, aplicar a máscara sobre o valor salvo para exibição.
+**Entregável Fase 1**: `docs/AUDIT_REPORT.md` com:
+- Inventário de problemas por categoria e severidade
+- Arquivo:linha de cada item
+- Recomendação de correção e estimativa de risco
+- Lista de deps a atualizar (com CVE id quando aplicável)
+- Lista de funcionalidades que **não devo tocar** (regras de negócio)
 
-## 6. `src/pages/locador/Settings.tsx` — política de senha
-- Atualizar placeholder para "Mínimo 8 caracteres".
-- Em `handleChangePassword` validar: ≥8 chars, maiúscula, minúscula, número e especial — com `toast.error` para cada caso.
-- Inline no JSX: mensagem "Mínimo 8 caracteres" enquanto incompleto, e a já existente de senhas que não coincidem.
+Nenhum arquivo de código fonte muda nesta fase. Você revisa o relatório e me diz o que aprovar para Fase 2+.
 
-## Restrições aplicadas
-- Apenas tokens semânticos (sem cores Tailwind cruas).
-- `sonner` para toasts.
-- Sem alterações em RLS, outras Edge Functions, ou no fluxo do lightbox.
-- Sem alterar `src/integrations/supabase/client.ts` ou `types.ts`.
+---
 
-## Ordem de execução
-1. Migration (Entrega 1) — aguarda aprovação do usuário.
-2. Após migration aplicada: editar `useVehicles.tsx`, `Settings.tsx` (entregas 5 e 6), `VehicleDetails.tsx` (entregas 3 e 4).
+## Fases seguintes (a confirmar após relatório)
+
+Ordem proposta, do mais crítico/menos invasivo ao mais arriscado:
+
+- **Fase 2 — Segurança crítica**: RLS faltando, policies abertas, XSS, secrets, permissões de rota, CORS de Edge Functions. Migrations + edits pontuais.
+- **Fase 3 — Dependências vulneráveis**: aplica updates (patch/minor sempre; major só com CVE), corrige incompatibilidades.
+- **Fase 4 — Bugs de build/console/tipos**: zera `tsc`, ESLint, warnings de console, remove `any` e `console.log` esquecidos.
+- **Fase 5 — Testes**: corrige testes existentes quebrados, adiciona cobertura nos fluxos críticos identificados sem cobertura.
+- **Fase 6 — Performance**: lazy loading faltante, `useMemo`/`useCallback` em hot paths, redução de bundle, otimização de queries lentas (`supabase--slow_queries` + índices).
+- **Fase 7 — UX/Responsividade**: ajustes de feedback (loading, toasts, skeleton), overflow em mobile, sem alterar design system.
+- **Fase 8 — Refactor pontual**: só onde a manutenção justifica (componentes > 300 linhas, duplicação clara). Sem mudar regra de negócio.
+- **Fase 9 — Verificação final**: re-rodar tsc + ESLint + vitest + build + Playwright completo + linter Supabase. Changelog consolidado.
+
+Cada fase será apresentada como novo plano antes de executar, com escopo fechado e arquivos afetados.
+
+---
+
+## Garantias em todas as fases
+
+- Nada de remover funcionalidade ou alterar regra de negócio.
+- Toda mudança de schema via `supabase--migration` (com GRANTs).
+- Sem mexer em `src/integrations/supabase/{client,types}.ts`, `.env`, `supabase/config.toml`.
+- Tokens semânticos sempre; nada de cor crua Tailwind.
+- `sonner` para toasts; `xlsx-js-style` para Excel.
+- Commits/mudanças pequenas e revisáveis.
+
+Aprove esta Fase 1 (auditoria read-only com relatório) para eu começar.
