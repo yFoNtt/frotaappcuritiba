@@ -165,7 +165,9 @@ export function useMaintenanceExport() {
   }, []);
 
   const exportToExcel = useCallback(async ({ maintenances, vehicles, filters }: ExportOptions) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const completedMaintenances = maintenances.filter(m => m.status === 'completed');
     const totalCost = completedMaintenances.reduce((sum, m) => sum + Number(m.cost || 0), 0);
