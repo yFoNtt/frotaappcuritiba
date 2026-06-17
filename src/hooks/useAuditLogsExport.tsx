@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AuditLog, TABLE_LABELS, ACTION_LABELS } from '@/hooks/useAuditLogs';
 import { toast } from 'sonner';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 const colHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '3B82F6' } } };
 
