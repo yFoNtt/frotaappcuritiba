@@ -14,7 +14,7 @@ interface StatsCardProps {
   variant?: 'default' | 'success' | 'warning' | 'primary';
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) {
+function StatsCardImpl({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) {
   const variantStyles = {
     default: 'bg-muted text-muted-foreground',
     success: 'bg-success/10 text-success',
