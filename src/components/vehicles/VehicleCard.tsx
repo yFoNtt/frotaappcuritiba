@@ -28,7 +28,7 @@ interface VehicleCardProps {
 
 import { statusLabels, fuelLabels, appLabels } from '@/lib/vehicleLabels';
 
-export function VehicleCard({ vehicle, urgency }: VehicleCardProps) {
+function VehicleCardImpl({ vehicle, urgency }: VehicleCardProps) {
   return (
     <Card className="group overflow-hidden rounded-2xl border-border/40 bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/20">
       {/* Image */}
