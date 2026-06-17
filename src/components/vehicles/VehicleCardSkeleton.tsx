@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function VehicleCardSkeleton() {
+export const VehicleCardSkeleton = memo(function VehicleCardSkeleton() {
   return (
     <Card className="overflow-hidden rounded-2xl border-border/40 bg-card">
       {/* Image skeleton */}
