@@ -46,3 +46,6 @@ function StatsCardImpl({ title, value, icon: Icon, trend, variant = 'default' }:
     </Card>
   );
 }
+
+export const StatsCard = memo(StatsCardImpl);
+
