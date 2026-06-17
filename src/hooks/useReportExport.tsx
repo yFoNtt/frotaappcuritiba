@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 interface MonthlyData {
   month: string;
@@ -61,8 +60,10 @@ export function useReportExport() {
   const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const exportToPDF = useCallback((data: ExportData) => {
+  const exportToPDF = useCallback(async (data: ExportData) => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
@@ -167,7 +168,9 @@ export function useReportExport() {
   }, []);
 
   const exportToExcel = useCallback(async (data: ExportData) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     // Summary sheet
     const summaryData = [

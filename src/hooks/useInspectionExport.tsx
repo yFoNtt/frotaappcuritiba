@@ -1,8 +1,7 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 import {
   VehicleInspection,
   FUEL_LEVELS,
@@ -59,8 +58,10 @@ function styledCell(v: string | number | boolean, style?: object) {
 }
 
 export function useInspectionExport() {
-  const exportToPDF = ({ vehicleName, vehiclePlate, inspections, includeChecklist = true }: ExportOptions) => {
+  const exportToPDF = async ({ vehicleName, vehiclePlate, inspections, includeChecklist = true }: ExportOptions) => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFontSize(20);
@@ -289,7 +290,9 @@ export function useInspectionExport() {
     drivers?: Array<{ id: string; name: string }>;
     vehicles?: Array<{ id: string; brand: string; model: string; plate: string }>;
   }) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const checkIns = inspections.filter((i) => i.type === 'check_in').length;
     const checkOuts = inspections.filter((i) => i.type === 'check_out').length;

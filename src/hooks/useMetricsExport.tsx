@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { loadPdfLibs } from '@/lib/lazyExportLibs';
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -45,9 +45,11 @@ interface MetricsExportData {
 }
 
 export function useMetricsExport() {
-  const exportToPDF = (data: MetricsExportData) => {
+  const exportToPDF = async (data: MetricsExportData) => {
     try {
+      const { jsPDF, autoTable } = await loadPdfLibs();
       const doc = new jsPDF();
+
       const pageWidth = doc.internal.pageSize.getWidth();
       let yPos = 20;
 

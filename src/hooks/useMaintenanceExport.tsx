@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Maintenance, MAINTENANCE_TYPES, MAINTENANCE_STATUS } from './useMaintenances';
 import { Vehicle } from './useVehicles';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 interface ExportOptions {
   maintenances: Maintenance[];
@@ -55,8 +54,10 @@ export function useMaintenanceExport() {
     return parts.length > 0 ? parts.join(' | ') : 'Nenhum filtro aplicado';
   };
 
-  const exportToPDF = useCallback(({ maintenances, vehicles, filters }: ExportOptions) => {
+  const exportToPDF = useCallback(async ({ maintenances, vehicles, filters }: ExportOptions) => {
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
@@ -164,7 +165,9 @@ export function useMaintenanceExport() {
   }, []);
 
   const exportToExcel = useCallback(async ({ maintenances, vehicles, filters }: ExportOptions) => {
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const completedMaintenances = maintenances.filter(m => m.status === 'completed');
     const totalCost = completedMaintenances.reduce((sum, m) => sum + Number(m.cost || 0), 0);

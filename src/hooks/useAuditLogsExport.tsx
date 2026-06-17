@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import XLSX from 'xlsx-js-style';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AuditLog, TABLE_LABELS, ACTION_LABELS } from '@/hooks/useAuditLogs';
 import { toast } from 'sonner';
+import { loadPdfLibs, loadXLSX } from '@/lib/lazyExportLibs';
+
 
 const colHeaderStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '3B82F6' } } };
 
@@ -14,13 +13,15 @@ function styledCell(v: string | number, style?: object) {
 }
 
 export function useAuditLogsExport() {
-  const exportToPDF = useCallback((logs: AuditLog[]) => {
+  const exportToPDF = useCallback(async (logs: AuditLog[]) => {
     if (logs.length === 0) {
       toast.error('Nenhum log para exportar');
       return;
     }
 
+    const { jsPDF, autoTable } = await loadPdfLibs();
     const doc = new jsPDF();
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
@@ -55,13 +56,15 @@ export function useAuditLogsExport() {
     toast.success('PDF exportado com sucesso');
   }, []);
 
-  const exportToExcel = useCallback((logs: AuditLog[]) => {
+  const exportToExcel = useCallback(async (logs: AuditLog[]) => {
     if (logs.length === 0) {
       toast.error('Nenhum log para exportar');
       return;
     }
 
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
+
 
     const rows = [
       [
