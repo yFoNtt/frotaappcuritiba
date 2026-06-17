@@ -211,6 +211,8 @@ export function InspectionFormDialog({
         setChecklist(getChecklist());
       }
     }
+    // `form` is stable via useForm; including it would cause re-resets.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isLoadingChecklist, getChecklist, inspection]);
 
   // Find active contract for selected vehicle/driver

@@ -123,11 +123,14 @@ export default function AdminMetrics() {
         }
         return inRange(v.created_at);
       }),
+    // inRange is derived from `range`; listing `range` keeps memo stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [vehicles, filters, range]
   );
 
   const filteredContracts = useMemo(
     () => contracts.filter((c) => inRange(c.created_at)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [contracts, range]
   );
 

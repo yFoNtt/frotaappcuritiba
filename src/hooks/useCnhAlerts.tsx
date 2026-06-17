@@ -25,6 +25,8 @@ export function useCnhAlerts() {
     }
 
     fetchAlerts();
+    // fetchAlerts closes over user via the early-return guard above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 
   const fetchAlerts = async () => {
