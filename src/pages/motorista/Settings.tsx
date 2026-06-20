@@ -204,7 +204,13 @@ export default function MotoristaSettings() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
                 />
+                {newPassword && !isPasswordStrong && (
+                  <p className="text-xs text-muted-foreground">
+                    Use 8+ caracteres com maiúscula, minúscula, número e caractere especial.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar nova senha</Label>
@@ -214,10 +220,16 @@ export default function MotoristaSettings() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-xs text-destructive">As senhas não coincidem</p>
+                )}
               </div>
             </div>
             <Button onClick={handleChangePassword} disabled={updatePassword.isPending}>
-              {updatePassword.isPending ? 'Alterando...' : 'Alterar senha'}
+              {updatePassword.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Alterar senha
             </Button>
           </CardContent>
         </Card>
