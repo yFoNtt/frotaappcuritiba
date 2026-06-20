@@ -188,36 +188,42 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
-          driver_id: string
+          driver_id: string | null
           id: string
+          interested_user_id: string | null
           last_message_at: string
           last_message_preview: string | null
           locador_id: string
           unread_locador: number
           unread_motorista: number
           updated_at: string
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
-          driver_id: string
+          driver_id?: string | null
           id?: string
+          interested_user_id?: string | null
           last_message_at?: string
           last_message_preview?: string | null
           locador_id: string
           unread_locador?: number
           unread_motorista?: number
           updated_at?: string
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
-          driver_id?: string
+          driver_id?: string | null
           id?: string
+          interested_user_id?: string | null
           last_message_at?: string
           last_message_preview?: string | null
           locador_id?: string
           unread_locador?: number
           unread_motorista?: number
           updated_at?: string
+          vehicle_id?: string | null
         }
         Relationships: []
       }
@@ -1029,6 +1035,7 @@ export type Database = {
           id: string
           images: string[]
           km_limit: number
+          locador_id: string
           model: string
           state: string
           status: string
