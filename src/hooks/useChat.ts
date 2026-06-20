@@ -9,7 +9,9 @@ export type ChatRole = 'locador' | 'motorista';
 export interface Conversation {
   id: string;
   locador_id: string;
-  driver_id: string;
+  driver_id: string | null;
+  interested_user_id: string | null;
+  vehicle_id: string | null;
   last_message_preview: string | null;
   last_message_at: string;
   unread_locador: number;
@@ -69,8 +71,10 @@ export function useConversations(role: ChatRole) {
 
     const convs = (data ?? []) as unknown as Conversation[];
 
-    // Hydrate driver info (name) for display
-    const driverIds = Array.from(new Set(convs.map((c) => c.driver_id)));
+    // Hydrate driver info (name) — motoristas já cadastrados pelo locador
+    const driverIds = Array.from(
+      new Set(convs.map((c) => c.driver_id).filter((id): id is string => !!id)),
+    );
     if (driverIds.length > 0) {
       const { data: drivers } = await supabase
         .from('drivers')
@@ -78,7 +82,33 @@ export function useConversations(role: ChatRole) {
         .in('id', driverIds);
       const byId = new Map((drivers ?? []).map((d: any) => [d.id, d]));
       convs.forEach((c) => {
-        c.driver = byId.get(c.driver_id) ?? null;
+        if (c.driver_id) c.driver = byId.get(c.driver_id) ?? null;
+      });
+    }
+
+    // Hydrate conversas-lead (contato do marketplace, sem cadastro prévio)
+    const leadUserIds = Array.from(
+      new Set(
+        convs
+          .filter((c) => !c.driver_id && c.interested_user_id)
+          .map((c) => c.interested_user_id as string),
+      ),
+    );
+    if (leadUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', leadUserIds);
+      const byUserId = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+      convs.forEach((c) => {
+        if (!c.driver_id && c.interested_user_id) {
+          const profile = byUserId.get(c.interested_user_id);
+          c.driver = {
+            id: '',
+            name: profile?.full_name || 'Interessado(a) no veículo',
+            user_id: c.interested_user_id,
+          };
+        }
       });
     }
 
@@ -153,6 +183,70 @@ export async function ensureMotoristaConversation(userId: string): Promise<strin
     return null;
   }
   return created.id;
+}
+
+/**
+ * Para visitantes do marketplace: garante uma conversa entre o usuário logado e o
+ * locador de um veículo, SEM exigir cadastro prévio em `drivers`. Único requisito:
+ * estar autenticado com papel "motorista" (garantido também via RLS).
+ * Se o usuário já for um driver cadastrado por esse locador, reaproveita a conversa
+ * "oficial" em vez de criar uma conversa-lead separada.
+ */
+export async function ensureLeadConversation(
+  userId: string,
+  locadorId: string,
+  vehicleId?: string | null,
+): Promise<string | null> {
+  const { data: driver } = await supabase
+    .from('drivers')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('locador_id', locadorId)
+    .maybeSingle();
+
+  if (driver) {
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('driver_id', driver.id)
+      .eq('locador_id', locadorId)
+      .maybeSingle();
+    if (existing) return existing.id;
+
+    const { data: created, error } = await supabase
+      .from('conversations')
+      .insert({ driver_id: driver.id, locador_id: locadorId, vehicle_id: vehicleId ?? null })
+      .select('id')
+      .single();
+    if (error || !created) {
+      console.error('[ensureLeadConversation] insert (driver) error', error);
+      toast.error('Não foi possível iniciar a conversa.');
+      return null;
+    }
+    return created.id;
+  }
+
+  const { data: existingLead } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('interested_user_id', userId)
+    .eq('locador_id', locadorId)
+    .maybeSingle();
+
+  if (existingLead) return existingLead.id;
+
+  const { data: createdLead, error: leadError } = await supabase
+    .from('conversations')
+    .insert({ interested_user_id: userId, locador_id: locadorId, vehicle_id: vehicleId ?? null })
+    .select('id')
+    .single();
+
+  if (leadError || !createdLead) {
+    console.error('[ensureLeadConversation] insert (lead) error', leadError);
+    toast.error('Não foi possível iniciar a conversa.');
+    return null;
+  }
+  return createdLead.id;
 }
 
 /**

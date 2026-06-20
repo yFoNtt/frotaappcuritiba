@@ -10,7 +10,8 @@ import {
   User, 
   Bell, 
   Shield,
-  Smartphone
+  Smartphone,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
@@ -45,12 +46,28 @@ export default function MotoristaSettings() {
 
   const handleChangePassword = () => {
     if (!newPassword) return;
-    if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+    if (newPassword.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos uma letra maiúscula');
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos uma letra minúscula');
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos um número');
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      toast.error('A senha deve conter pelo menos um caractere especial');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
       return;
     }
     updatePassword.mutate({ newPassword }, {
@@ -60,6 +77,13 @@ export default function MotoristaSettings() {
       },
     });
   };
+
+  const isPasswordStrong =
+    newPassword.length >= 8 &&
+    /[A-Z]/.test(newPassword) &&
+    /[a-z]/.test(newPassword) &&
+    /[0-9]/.test(newPassword) &&
+    /[^A-Za-z0-9]/.test(newPassword);
 
   return (
     <MotoristaLayout>

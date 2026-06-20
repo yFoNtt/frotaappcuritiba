@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { ensureLeadConversation } from '@/hooks/useChat';
 import { SEO } from '@/components/SEO';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,7 @@ export default function VehicleDetails() {
   const locadorWhatsappDigits = (publicVehicle?.whatsapp_locador ?? '').replace(/\D/g, '');
 
   const handleOpenChat = async () => {
-    // Não logado: abrir Dialog pedindo login
+    // Único requisito para o chat interno: estar logado (ter conta na plataforma).
     if (!user) {
       setLoginDialogOpen(true);
       return;
@@ -96,7 +96,7 @@ export default function VehicleDetails() {
       return;
     }
 
-    const locadorId = privateVehicle?.locador_id;
+    const locadorId = publicVehicle?.locador_id;
     if (!locadorId) {
       toast.error('Não foi possível identificar o locador.');
       return;
@@ -104,43 +104,12 @@ export default function VehicleDetails() {
 
     setOpeningChat(true);
     try {
-      const { data: driver, error: driverErr } = await supabase
-        .from('drivers')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('locador_id', locadorId)
-        .maybeSingle();
-
-      if (driverErr) throw driverErr;
-
-      if (driver) {
-        const { data: existing } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('driver_id', driver.id)
-          .eq('locador_id', locadorId)
-          .maybeSingle();
-
-        let conversationId = existing?.id;
-        if (!conversationId) {
-          const { data: inserted, error: insertErr } = await supabase
-            .from('conversations')
-            .insert({ driver_id: driver.id, locador_id: locadorId })
-            .select('id')
-            .single();
-          if (insertErr) throw insertErr;
-          conversationId = inserted.id;
-        }
-
-        navigate('/motorista/mensagens', { state: { conversationId } });
-      } else {
-        // Motorista ainda não cadastrado nesse locador: orientar a usar WhatsApp
-        toast.info(
-          locadorWhatsappDigits.length >= 10
-            ? 'Para usar o chat interno, você precisa ser cadastrado pelo locador. Use o WhatsApp para o primeiro contato.'
-            : 'Para usar o chat interno, você precisa ser cadastrado pelo locador. Entre em contato por outro meio.'
-        );
+      const conversationId = await ensureLeadConversation(user.id, locadorId, id ?? null);
+      if (!conversationId) {
+        toast.error('Não foi possível abrir o chat.');
+        return;
       }
+      navigate('/motorista/mensagens', { state: { conversationId } });
     } catch (err) {
       console.error('[VehicleDetails] open chat error', err);
       toast.error('Não foi possível abrir o chat.');
@@ -178,7 +147,7 @@ export default function VehicleDetails() {
   const whatsappLink = hasWhatsapp
     ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
     : '#';
-  const showChatButton = !isOwner && role !== 'admin';
+  const showChatButton = !isOwner && role === 'motorista';
 
 
   const vehicleImages = vehicle.images ?? [];
