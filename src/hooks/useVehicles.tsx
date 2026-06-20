@@ -48,6 +48,7 @@ export interface PublicVehicle {
   current_km: number | null;
   created_at: string;
   whatsapp_locador?: string | null;
+  locador_id?: string | null;
 }
 
 
