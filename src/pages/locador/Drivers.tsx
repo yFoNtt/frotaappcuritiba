@@ -432,6 +432,11 @@ export default function LocadorDrivers() {
                           )}
                         </div>
                         <div className="flex justify-end gap-1">
+                          {!driver.user_id && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenInviteDialog(driver)} title="Enviar convite de acesso">
+                              <Send className="h-4 w-4 text-primary" />
+                            </Button>
+                          )}
                           {driver.vehicle_id ? (
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
                               {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
