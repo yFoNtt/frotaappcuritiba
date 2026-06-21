@@ -60,9 +60,13 @@ import {
   Mail, 
   Link as LinkIcon,
   Unlink,
-  Loader2
+  Loader2,
+  Send,
+  UserCheck,
+  Copy
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
+import { toast } from 'sonner';
 import { 
   useLocadorDrivers, 
   useCreateDriver, 
@@ -70,6 +74,7 @@ import {
   useDeleteDriver,
   useAssignVehicle,
   useUnassignVehicle,
+  useGenerateDriverInvite,
   Driver,
   DriverInsert 
 } from '@/hooks/useDrivers';
