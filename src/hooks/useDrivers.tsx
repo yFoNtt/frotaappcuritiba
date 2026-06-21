@@ -15,6 +15,9 @@ export interface Driver {
   cnh_expiry: string;
   vehicle_id: string | null;
   status: 'active' | 'inactive' | 'pending';
+  invite_token: string | null;
+  invite_expires_at: string | null;
+  invite_claimed_at: string | null;
   created_at: string;
   updated_at: string;
 }
