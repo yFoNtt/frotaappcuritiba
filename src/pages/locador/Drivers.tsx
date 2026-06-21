@@ -108,6 +108,35 @@ export default function LocadorDrivers() {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<Driver | null>(null);
   const [assigningDriver, setAssigningDriver] = useState<Driver | null>(null);
+  const [invitingDriver, setInvitingDriver] = useState<Driver | null>(null);
+  const [inviteLink, setInviteLink] = useState('');
+  const generateInvite = useGenerateDriverInvite();
+
+  const handleOpenInviteDialog = async (driver: Driver) => {
+    setInvitingDriver(driver);
+    setInviteLink('');
+    try {
+      const { token } = await generateInvite.mutateAsync(driver.id);
+      setInviteLink(`${window.location.origin}/convite/${token}`);
+    } catch {
+      // erro já tratado no hook
+    }
+  };
+
+  const handleCopyInviteLink = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    toast.success('Link copiado!');
+  };
+
+  const inviteWhatsappLink = (() => {
+    if (!invitingDriver?.phone || !inviteLink) return null;
+    const digits = invitingDriver.phone.replace(/\D/g, '');
+    if (digits.length < 10) return null;
+    const message = encodeURIComponent(
+      `Olá, ${invitingDriver.name}! Você foi cadastrado no FrotaApp. Confirme seu acesso aqui: ${inviteLink}`
+    );
+    return `https://wa.me/55${digits}?text=${message}`;
+  })();
 
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
