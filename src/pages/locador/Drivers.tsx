@@ -60,9 +60,13 @@ import {
   Mail, 
   Link as LinkIcon,
   Unlink,
-  Loader2
+  Loader2,
+  Send,
+  UserCheck,
+  Copy
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
+import { toast } from 'sonner';
 import { 
   useLocadorDrivers, 
   useCreateDriver, 
@@ -70,6 +74,7 @@ import {
   useDeleteDriver,
   useAssignVehicle,
   useUnassignVehicle,
+  useGenerateDriverInvite,
   Driver,
   DriverInsert 
 } from '@/hooks/useDrivers';
@@ -103,6 +108,35 @@ export default function LocadorDrivers() {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<Driver | null>(null);
   const [assigningDriver, setAssigningDriver] = useState<Driver | null>(null);
+  const [invitingDriver, setInvitingDriver] = useState<Driver | null>(null);
+  const [inviteLink, setInviteLink] = useState('');
+  const generateInvite = useGenerateDriverInvite();
+
+  const handleOpenInviteDialog = async (driver: Driver) => {
+    setInvitingDriver(driver);
+    setInviteLink('');
+    try {
+      const { token } = await generateInvite.mutateAsync(driver.id);
+      setInviteLink(`${window.location.origin}/convite/${token}`);
+    } catch {
+      // erro já tratado no hook
+    }
+  };
+
+  const handleCopyInviteLink = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    toast.success('Link copiado!');
+  };
+
+  const inviteWhatsappLink = (() => {
+    if (!invitingDriver?.phone || !inviteLink) return null;
+    const digits = invitingDriver.phone.replace(/\D/g, '');
+    if (digits.length < 10) return null;
+    const message = encodeURIComponent(
+      `Olá, ${invitingDriver.name}! Você foi cadastrado no FrotaApp. Confirme seu acesso aqui: ${inviteLink}`
+    );
+    return `https://wa.me/55${digits}?text=${message}`;
+  })();
 
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
@@ -370,7 +404,14 @@ export default function LocadorDrivers() {
                               {driver.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium">{driver.name}</p>
+                              <p className="font-medium flex items-center gap-1.5">
+                                {driver.name}
+                                {driver.user_id && (
+                                  <span title="Conta vinculada">
+                                    <UserCheck className="h-3.5 w-3.5 text-success" />
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-sm text-muted-foreground">{driver.email}</p>
                             </div>
                           </div>
@@ -391,6 +432,11 @@ export default function LocadorDrivers() {
                           )}
                         </div>
                         <div className="flex justify-end gap-1">
+                          {!driver.user_id && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenInviteDialog(driver)} title="Enviar convite de acesso">
+                              <Send className="h-4 w-4 text-primary" />
+                            </Button>
+                          )}
                           {driver.vehicle_id ? (
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
                               {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
@@ -438,7 +484,14 @@ export default function LocadorDrivers() {
                                   {driver.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div>
-                                  <p className="font-medium">{driver.name}</p>
+                                  <p className="font-medium flex items-center gap-1.5">
+                                    {driver.name}
+                                    {driver.user_id && (
+                                      <span title="Conta vinculada">
+                                        <UserCheck className="h-3.5 w-3.5 text-success" />
+                                      </span>
+                                    )}
+                                  </p>
                                   <p className="text-sm text-muted-foreground">Desde {format(parseISO(driver.created_at), 'MM/yyyy')}</p>
                                 </div>
                               </div>
@@ -469,6 +522,11 @@ export default function LocadorDrivers() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
+                                {!driver.user_id && (
+                                  <Button variant="ghost" size="icon" onClick={() => handleOpenInviteDialog(driver)} title="Enviar convite de acesso">
+                                    <Send className="h-4 w-4 text-primary" />
+                                  </Button>
+                                )}
                                 {driver.vehicle_id ? (
                                   <Button variant="ghost" size="icon" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
                                     {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
@@ -747,6 +805,47 @@ export default function LocadorDrivers() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Invite Dialog */}
+        <Dialog open={!!invitingDriver} onOpenChange={(open) => { if (!open) { setInvitingDriver(null); setInviteLink(''); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Convite de acesso</DialogTitle>
+              <DialogDescription>
+                Envie esse link para {invitingDriver?.name} confirmar o cadastro e acessar o app como motorista. Válido por 7 dias.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              {generateInvite.isPending || !inviteLink ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input readOnly value={inviteLink} className="font-mono text-xs" />
+                    <Button variant="outline" size="icon" onClick={handleCopyInviteLink} title="Copiar link">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {inviteWhatsappLink ? (
+                    <Button asChild className="w-full">
+                      <a href={inviteWhatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Send className="mr-2 h-4 w-4" />
+                        Enviar pelo WhatsApp
+                      </a>
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Cadastre o telefone do motorista para enviar direto pelo WhatsApp, ou copie o link acima.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deletingDriver} onOpenChange={(open) => !open && setDeletingDriver(null)}>

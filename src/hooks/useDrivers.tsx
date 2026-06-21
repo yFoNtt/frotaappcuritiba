@@ -15,6 +15,9 @@ export interface Driver {
   cnh_expiry: string;
   vehicle_id: string | null;
   status: 'active' | 'inactive' | 'pending';
+  invite_token: string | null;
+  invite_expires_at: string | null;
+  invite_claimed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -133,6 +136,36 @@ export function useUpdateDriver() {
     },
     onError: () => {
       toast.error('Erro ao atualizar motorista. Tente novamente.');
+    },
+  });
+}
+
+// Generate driver invite token
+export function useGenerateDriverInvite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (driverId: string) => {
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await supabase
+        .from('drivers')
+        .update({ invite_token: token, invite_expires_at: expiresAt })
+        .eq('id', driverId);
+
+      if (error) {
+        console.error('Error generating driver invite:', error);
+        throw error;
+      }
+
+      return { token, expiresAt };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+    },
+    onError: () => {
+      toast.error('Não foi possível gerar o convite. Tente novamente.');
     },
   });
 }

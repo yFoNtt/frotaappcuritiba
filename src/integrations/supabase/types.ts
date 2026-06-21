@@ -379,6 +379,9 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          invite_claimed_at: string | null
+          invite_expires_at: string | null
+          invite_token: string | null
           locador_id: string
           name: string
           phone: string | null
@@ -393,6 +396,9 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          invite_claimed_at?: string | null
+          invite_expires_at?: string | null
+          invite_token?: string | null
           locador_id: string
           name: string
           phone?: string | null
@@ -407,6 +413,9 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          invite_claimed_at?: string | null
+          invite_expires_at?: string | null
+          invite_token?: string | null
           locador_id?: string
           name?: string
           phone?: string | null
@@ -1017,8 +1026,17 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
       }
+      claim_driver_invite: { Args: { _token: string }; Returns: Json }
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
       delete_own_account: { Args: never; Returns: undefined }
+      get_driver_invite_preview: {
+        Args: { _token: string }
+        Returns: {
+          driver_name: string
+          locador_name: string
+          valid: boolean
+        }[]
+      }
       get_public_vehicle: {
         Args: { _vehicle_id: string }
         Returns: {
