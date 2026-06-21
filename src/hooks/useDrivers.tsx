@@ -125,7 +125,36 @@ export function useUpdateDriver() {
       if (error) {
         console.error('Error updating driver:', error);
         throw error;
+}
+
+// Generate driver invite token
+export function useGenerateDriverInvite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (driverId: string) => {
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await supabase
+        .from('drivers')
+        .update({ invite_token: token, invite_expires_at: expiresAt })
+        .eq('id', driverId);
+
+      if (error) {
+        console.error('Error generating driver invite:', error);
+        throw error;
       }
+
+      return { token, expiresAt };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+    },
+    onError: () => {
+      toast.error('Não foi possível gerar o convite. Tente novamente.');
+    },
+  });
 
       return data as Driver;
     },
