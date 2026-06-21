@@ -125,6 +125,19 @@ export function useUpdateDriver() {
       if (error) {
         console.error('Error updating driver:', error);
         throw error;
+      }
+
+      return data as Driver;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast.success('Motorista atualizado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar motorista. Tente novamente.');
+    },
+  });
 }
 
 // Generate driver invite token
@@ -153,18 +166,6 @@ export function useGenerateDriverInvite() {
     },
     onError: () => {
       toast.error('Não foi possível gerar o convite. Tente novamente.');
-    },
-  });
-
-      return data as Driver;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drivers'] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast.success('Motorista atualizado com sucesso!');
-    },
-    onError: () => {
-      toast.error('Erro ao atualizar motorista. Tente novamente.');
     },
   });
 }
