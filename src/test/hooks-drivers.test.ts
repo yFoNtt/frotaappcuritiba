@@ -8,18 +8,21 @@ const mockDrivers: Driver[] = [
     id: 'd1', locador_id: 'l1', user_id: 'u1', name: 'João Silva',
     email: 'joao@email.com', phone: '11999999999', cnh_number: '12345678901',
     cnh_expiry: '2025-12-31', vehicle_id: 'v1', status: 'active',
+    invite_token: null, invite_expires_at: null, invite_claimed_at: null,
     created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
   },
   {
     id: 'd2', locador_id: 'l1', user_id: 'u2', name: 'Maria Santos',
     email: 'maria@email.com', phone: null, cnh_number: '98765432109',
     cnh_expiry: '2024-06-15', vehicle_id: null, status: 'inactive',
+    invite_token: null, invite_expires_at: null, invite_claimed_at: null,
     created_at: '2024-02-01T00:00:00Z', updated_at: '2024-02-01T00:00:00Z',
   },
   {
     id: 'd3', locador_id: 'l1', user_id: null, name: 'Pedro Costa',
     email: 'pedro@email.com', phone: '21988888888', cnh_number: '11122233344',
     cnh_expiry: '2026-03-20', vehicle_id: null, status: 'pending',
+    invite_token: null, invite_expires_at: null, invite_claimed_at: null,
     created_at: '2024-03-01T00:00:00Z', updated_at: '2024-03-01T00:00:00Z',
   },
 ];
