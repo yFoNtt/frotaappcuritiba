@@ -806,6 +806,47 @@ export default function LocadorDrivers() {
           </DialogContent>
         </Dialog>
 
+        {/* Invite Dialog */}
+        <Dialog open={!!invitingDriver} onOpenChange={(open) => { if (!open) { setInvitingDriver(null); setInviteLink(''); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Convite de acesso</DialogTitle>
+              <DialogDescription>
+                Envie esse link para {invitingDriver?.name} confirmar o cadastro e acessar o app como motorista. Válido por 7 dias.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              {generateInvite.isPending || !inviteLink ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input readOnly value={inviteLink} className="font-mono text-xs" />
+                    <Button variant="outline" size="icon" onClick={handleCopyInviteLink} title="Copiar link">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {inviteWhatsappLink ? (
+                    <Button asChild className="w-full">
+                      <a href={inviteWhatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Send className="mr-2 h-4 w-4" />
+                        Enviar pelo WhatsApp
+                      </a>
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Cadastre o telefone do motorista para enviar direto pelo WhatsApp, ou copie o link acima.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deletingDriver} onOpenChange={(open) => !open && setDeletingDriver(null)}>
           <AlertDialogContent>
