@@ -404,7 +404,14 @@ export default function LocadorDrivers() {
                               {driver.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium">{driver.name}</p>
+                              <p className="font-medium flex items-center gap-1.5">
+                                {driver.name}
+                                {driver.user_id && (
+                                  <span title="Conta vinculada">
+                                    <UserCheck className="h-3.5 w-3.5 text-success" />
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-sm text-muted-foreground">{driver.email}</p>
                             </div>
                           </div>
