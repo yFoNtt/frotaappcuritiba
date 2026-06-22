@@ -1,39 +1,43 @@
-## Objetivo
-Permitir que qualquer usuário logado com papel `motorista` abra um chat interno com o locador de qualquer veículo do marketplace, sem precisar de cadastro prévio em `drivers`. Em paralelo, corrige um bug de RLS em `storage.objects` (delete de anexos) e nivela a política de senha do motorista com a do locador.
+## Escopo
+Três entregas independentes, todas com instruções literais já fornecidas. Aplicar exatamente como especificado, sem desvios.
 
-WhatsApp continua público (sem login). Fluxo `ensureMotoristaConversation` (contrato ativo) permanece intacto.
+## Entrega 1 — Corrigir FK `conversations.driver_id`
+**Arquivo novo:** `supabase/migrations/<timestamp>_fix_conversations_driver_fk.sql`
 
-## Entregas
+Bloco `DO $$ ... END $$` idempotente que:
+1. `DROP CONSTRAINT fk_conversations_driver` se existir (apontava errado para `auth.users`).
+2. Recria apontando para `public.drivers(id) ON DELETE CASCADE`.
 
-### 1. Migration SQL
-Aplicar exatamente o bloco fornecido pelo usuário:
-- `conversations.driver_id` vira nullable; adiciona `interested_user_id`, `vehicle_id`; CHECK garante que pelo menos um dos dois identificadores esteja presente; índice único por `(locador_id, interested_user_id)` parcial.
-- Policies RLS reescritas para `conversations` (SELECT/INSERT/UPDATE) admitindo `interested_user_id = auth.uid()` com `has_role('motorista')` e validação de `vehicle_id` pertencente ao locador.
-- Policies RLS reescritas para `messages` (SELECT/INSERT/UPDATE) reconhecendo participantes lead.
-- Policies de `storage.objects` (bucket `chat-attachments`) reescritas — inclui correção do bug de DELETE que comparava `c.driver_id` com `auth.uid()`.
-- `get_public_vehicle(uuid)` recriada para devolver `locador_id` apenas quando `auth.uid()` está presente (visitante anônimo continua sem ver). GRANT EXECUTE para anon/authenticated/service_role.
+Sem alteração em código TS — as RLS e `useChat.ts` já tratam `driver_id` como PK de `drivers`.
 
-### 2. `src/hooks/useChat.ts`
-- Estender interface `Conversation`: `driver_id: string | null`, novos campos `interested_user_id`, `vehicle_id`.
-- Em `useConversations.load()`: hidratar drivers só quando `driver_id` existe; hidratar conversas-lead via `profiles.full_name` por `interested_user_id`, preenchendo o shape `driver` com `id: ''`, nome do perfil (fallback `"Interessado(a) no veículo"`).
-- Adicionar export `ensureLeadConversation(userId, locadorId, vehicleId?)` logo após `ensureMotoristaConversation` (sem alterá-la): reutiliza conversa "driver oficial" se o usuário já é driver desse locador; senão usa/cria conversa-lead por `interested_user_id`.
+## Entrega 2 — Fortalecer `delete_own_account()`
+**Arquivo novo:** `supabase/migrations/<timestamp>_harden_delete_own_account.sql`
 
-### 3. `src/hooks/useVehicles.tsx`
-Apenas tipagem: adicionar `locador_id?: string | null` em `PublicVehicle`.
+`CREATE OR REPLACE FUNCTION public.delete_own_account()` exatamente como no spec:
+1. Anonimiza `audit_logs.changed_by`.
+2. Redige conteúdo + anexos das `messages` do usuário (preserva thread).
+3. `DELETE` em `conversations` lead (`interested_user_id = v_user_id AND driver_id IS NULL`).
+4. `DELETE` em `user_roles`, `cnh_alerts`, `notifications`, `consents`, `profiles`.
+5. `DELETE FROM auth.users WHERE id = v_user_id` para disparar todas as FKs cascade já existentes.
 
-### 4. `src/pages/VehicleDetails.tsx`
-- Trocar import direto do supabase pelo `ensureLeadConversation`.
-- Reescrever `handleOpenChat`: exige login (abre `loginDialogOpen`), atalho para `/locador/mensagens` quando `isOwner`, lê `publicVehicle.locador_id`, chama `ensureLeadConversation` e navega para `/motorista/mensagens` com `state.conversationId`.
-- `showChatButton = !isOwner && role === 'motorista'` (visitante anônimo vê o botão e é convidado a logar quando clica; admin/locador não veem).
-- Botão do WhatsApp permanece inalterado.
+Se a migration falhar com "permission denied for table users", paro e aviso — não tento contornar com GRANT em `auth.users`. Próximo passo seria Edge Function com service role.
 
-### 5. `src/pages/motorista/Settings.tsx`
-- Importar `Loader2`.
-- `handleChangePassword`: aplicar mesma política do locador (8+ chars, maiúscula, minúscula, número, especial) + flag `isPasswordStrong`.
-- JSX dos campos de senha: placeholder, mensagens inline de fraqueza/divergência, `Loader2` no botão durante `isPending`.
+## Entrega 3 — Patch de dependências
+**Arquivo:** `package.json`
+- `jspdf`: `^4.0.0` → `^4.2.1`
+- `react-router-dom`: `^6.30.1` → `^6.30.4`
+
+Após edição, `npm install` (auto pelo harness) regenera lockfile. Vitest roda automaticamente para confirmar 439/439.
 
 ## Fora de escopo (não tocar)
-`ensureMotoristaConversation`, `get_public_vehicles` (lista), `sender_role`, `ChatRole`, vínculo `drivers.user_id`, `supabase/types.ts`, botão WhatsApp.
+- Outros componentes UI, hooks, rotas, specs Playwright, suíte Vitest.
+- vitest UI CVE, deps transitivas moderate/high.
+- Billing/planos, novas tabelas.
 
-## Ordem
-Migration → useChat.ts → useVehicles.tsx → VehicleDetails.tsx → motorista/Settings.tsx. Após a migration aprovada, os types.ts são regenerados automaticamente e os arquivos do frontend são atualizados.
+## Ordem de execução
+Entregas 1, 2 e 3 são independentes — aplico em paralelo (duas migrations + um edit de package.json).
+
+## Verificação manual (pelo usuário, pós-merge)
+- Ent.1: enviar 1ª mensagem como motorista vinculado em `/motorista/mensagens`; testar `claim_driver_invite` migrando conversa-lead.
+- Ent.2: excluir conta de motorista → conversa permanece com mensagem redigida, driver sem `user_id`; excluir conta de locador → vehicles/drivers/contracts/conversations dele somem.
+- Ent.3: rodar `npm run test` (439/439).
