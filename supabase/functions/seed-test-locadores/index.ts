@@ -76,13 +76,14 @@ Deno.serve(async (req) => {
 
   for (const loc of LOCADORES) {
     const log: Record<string, unknown> = { email: loc.email };
+    const password = await derivePassword(loc.email);
     const existing = userList.users.find((u) => u.email === loc.email);
     let userId = existing?.id;
 
     if (!userId) {
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email: loc.email,
-        password: loc.password,
+        password,
         email_confirm: true,
         user_metadata: { full_name: loc.name },
       });
@@ -91,13 +92,14 @@ Deno.serve(async (req) => {
       log.created = true;
     } else {
       await admin.auth.admin.updateUserById(userId, {
-        password: loc.password,
+        password,
         email_confirm: true,
         user_metadata: { full_name: loc.name },
       });
       log.updated = true;
     }
     log.user_id = userId;
+    log.password = password;
 
     // role
     await admin.from("user_roles").upsert(
