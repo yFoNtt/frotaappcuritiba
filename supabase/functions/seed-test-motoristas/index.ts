@@ -24,17 +24,26 @@ const SEED_TOKEN = Deno.env.get("E2E_SEED_TOKEN")!;
 
 const LOCADOR_EMAIL = "locador.teste@frotaapp.com";
 
+// Deriva uma senha forte e determinística a partir do E2E_SEED_TOKEN + email.
+// Apenas quem possui o E2E_SEED_TOKEN (segredo do CI) consegue prever a senha.
+async function derivePassword(email: string): Promise<string> {
+  const data = new TextEncoder().encode(`${SEED_TOKEN}:${email}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `S!${hex.slice(0, 24)}Aa9`;
+}
+
 const MOTORISTAS = [
   {
     email: "motorista.teste.a@frotaapp.dev",
-    password: "Teste@123456",
     name: "Motorista Teste A",
     cnh_number: "12345678900",
     phone: "+5511999990001",
   },
   {
     email: "motorista.teste.b@frotaapp.dev",
-    password: "Teste@123456",
     name: "Motorista Teste B",
     cnh_number: "98765432100",
     phone: "+5511999990002",
