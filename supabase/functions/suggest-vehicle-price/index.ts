@@ -45,6 +45,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Server-side role check: only locadores may consume the AI pricing tool.
+    const { data: isLocador, error: roleErr } = await supabase.rpc("has_role", {
+      _user_id: userData.user.id,
+      _role: "locador",
+    });
+    if (roleErr || !isLocador) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: locador only" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const body = (await req.json()) as RequestBody;
     if (!body.brand || !body.model || !body.year || !body.city) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {

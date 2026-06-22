@@ -24,17 +24,26 @@ const SEED_TOKEN = Deno.env.get("E2E_SEED_TOKEN")!;
 
 const LOCADOR_EMAIL = "locador.teste@frotaapp.com";
 
+// Deriva uma senha forte e determinística a partir do E2E_SEED_TOKEN + email.
+// Apenas quem possui o E2E_SEED_TOKEN (segredo do CI) consegue prever a senha.
+async function derivePassword(email: string): Promise<string> {
+  const data = new TextEncoder().encode(`${SEED_TOKEN}:${email}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `S!${hex.slice(0, 24)}Aa9`;
+}
+
 const MOTORISTAS = [
   {
     email: "motorista.teste.a@frotaapp.dev",
-    password: "Teste@123456",
     name: "Motorista Teste A",
     cnh_number: "12345678900",
     phone: "+5511999990001",
   },
   {
     email: "motorista.teste.b@frotaapp.dev",
-    password: "Teste@123456",
     name: "Motorista Teste B",
     cnh_number: "98765432100",
     phone: "+5511999990002",
@@ -96,6 +105,7 @@ Deno.serve(async (req) => {
 
   for (const m of MOTORISTAS) {
     const log: Record<string, unknown> = { email: m.email };
+    const password = await derivePassword(m.email);
 
     // ---- Ensure auth user (idempotent: create or update) -------------------
     const existing = locadorList.users.find((u) => u.email === m.email);
@@ -105,7 +115,7 @@ Deno.serve(async (req) => {
       const { data: created, error: createErr } =
         await admin.auth.admin.createUser({
           email: m.email,
-          password: m.password,
+          password,
           email_confirm: true,
           user_metadata: { full_name: m.name },
         });
@@ -119,7 +129,7 @@ Deno.serve(async (req) => {
     } else {
       // Reset password + ensure confirmed in case it drifted
       const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
-        password: m.password,
+        password,
         email_confirm: true,
         user_metadata: { full_name: m.name },
       });
@@ -128,6 +138,7 @@ Deno.serve(async (req) => {
       }
       log.updated = true;
     }
+    log.password = password;
 
     // ---- Ensure motorista role ---------------------------------------------
     const { error: roleErr } = await admin
