@@ -18,17 +18,29 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SEED_TOKEN = Deno.env.get("E2E_SEED_TOKEN")!;
 
+// Deriva uma senha forte e determinística a partir do E2E_SEED_TOKEN + email.
+// Sem isso, o código-fonte conteria credenciais públicas (uma vez chamado o
+// seed em produção, qualquer pessoa que descobrisse o email poderia logar).
+// Apenas quem possui o E2E_SEED_TOKEN (segredo do CI) consegue prever a senha.
+async function derivePassword(email: string): Promise<string> {
+  const data = new TextEncoder().encode(`${SEED_TOKEN}:${email}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  // Garante requisitos mínimos do password policy (maiúscula, minúscula, número, especial).
+  return `S!${hex.slice(0, 24)}Aa9`;
+}
+
 const LOCADORES = [
   {
     email: "locador.teste.a@frotaapp.dev",
-    password: "Teste@123456",
     name: "Locador Teste A",
     vehicle: { brand: "Fiat", model: "Mobi A", plate: "TSTAAA1", color: "Branco" },
     driver: { name: "Driver of A", cnh_number: "11122233344", email: "drvA@frotaapp.dev", phone: "+5511900000001" },
   },
   {
     email: "locador.teste.b@frotaapp.dev",
-    password: "Teste@123456",
     name: "Locador Teste B",
     vehicle: { brand: "VW", model: "Gol B", plate: "TSTBBB2", color: "Preto" },
     driver: { name: "Driver of B", cnh_number: "55566677788", email: "drvB@frotaapp.dev", phone: "+5511900000002" },
