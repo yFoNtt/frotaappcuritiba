@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
 
   for (const m of MOTORISTAS) {
     const log: Record<string, unknown> = { email: m.email };
+    const password = await derivePassword(m.email);
 
     // ---- Ensure auth user (idempotent: create or update) -------------------
     const existing = locadorList.users.find((u) => u.email === m.email);
@@ -114,7 +115,7 @@ Deno.serve(async (req) => {
       const { data: created, error: createErr } =
         await admin.auth.admin.createUser({
           email: m.email,
-          password: m.password,
+          password,
           email_confirm: true,
           user_metadata: { full_name: m.name },
         });
@@ -128,7 +129,7 @@ Deno.serve(async (req) => {
     } else {
       // Reset password + ensure confirmed in case it drifted
       const { error: updErr } = await admin.auth.admin.updateUserById(userId, {
-        password: m.password,
+        password,
         email_confirm: true,
         user_metadata: { full_name: m.name },
       });
@@ -137,6 +138,7 @@ Deno.serve(async (req) => {
       }
       log.updated = true;
     }
+    log.password = password;
 
     // ---- Ensure motorista role ---------------------------------------------
     const { error: roleErr } = await admin
