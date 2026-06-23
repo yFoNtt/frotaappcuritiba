@@ -25,9 +25,12 @@ import {
   Users,
   Building2,
   UserCog,
-  Pencil
+  Pencil,
+  Lock,
+  Unlock,
 } from 'lucide-react';
-import { useAdminUsers, useAdminStats, useUpdateUserRole, AdminUser } from '@/hooks/useAdminData';
+import { useAdminUsers, useAdminStats, useUpdateUserRole, useSetUserBlocked, AdminUser } from '@/hooks/useAdminData';
+import { useAuth } from '@/hooks/useAuth';
 import { EditRoleDialog } from '@/components/admin/EditRoleDialog';
 import { format, parseISO } from 'date-fns';
 
@@ -36,15 +39,25 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading: usersLoading } = useAdminUsers();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const updateRoleMutation = useUpdateUserRole();
+  const setBlockedMutation = useSetUserBlocked();
 
   const isLoading = usersLoading || statsLoading;
 
   const handleUpdateRole = async (userId: string, newRole: 'admin' | 'locador' | 'motorista') => {
     await updateRoleMutation.mutateAsync({ userId, newRole });
     setEditingUser(null);
+  };
+
+  const handleToggleBlocked = (u: AdminUser) => {
+    const blocking = !u.blocked_at;
+    const reason = blocking
+      ? (window.prompt('Motivo do bloqueio (opcional):') ?? null)
+      : null;
+    setBlockedMutation.mutate({ userId: u.id, blocked: blocking, reason });
   };
 
 
