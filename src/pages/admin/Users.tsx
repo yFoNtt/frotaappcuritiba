@@ -230,7 +230,13 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {format(parseISO(user.created_at), 'dd/MM/yyyy')}
+                        {user.blocked_at ? (
+                          <Badge variant="destructive" title={user.blocked_reason ?? ''}>
+                            Bloqueado
+                          </Badge>
+                        ) : (
+                          format(parseISO(user.created_at), 'dd/MM/yyyy')
+                        )}
                       </TableCell>
                       <TableCell>
                         {user.last_sign_in_at 
@@ -239,15 +245,33 @@ export default function AdminUsers() {
                         }
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingUser(user)}
-                          title="Editar permissão"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingUser(user)}
+                            title="Editar permissão"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={
+                              user.role === 'admin' ||
+                              user.id === currentUser?.id ||
+                              setBlockedMutation.isPending
+                            }
+                            onClick={() => handleToggleBlocked(user)}
+                            title={user.blocked_at ? 'Desbloquear usuário' : 'Bloquear usuário'}
+                          >
+                            {user.blocked_at
+                              ? <Unlock className="h-4 w-4 text-success" />
+                              : <Lock className="h-4 w-4 text-destructive" />}
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
