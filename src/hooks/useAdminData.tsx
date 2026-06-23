@@ -9,6 +9,8 @@ export interface AdminUser {
   role: 'admin' | 'locador' | 'motorista';
   created_at: string;
   last_sign_in_at: string | null;
+  blocked_at: string | null;
+  blocked_reason: string | null;
 }
 
 export interface PlatformStats {
@@ -59,6 +61,19 @@ export function useAdminUsers() {
         // Continue without emails if there's an error
       }
 
+      // Get blocked status from profiles (admin can read all)
+      const { data: profilesBlocked } = await supabase
+        .from('profiles')
+        .select('user_id, blocked_at, blocked_reason');
+
+      const blockedMap = new Map<string, { blocked_at: string | null; blocked_reason: string | null }>();
+      (profilesBlocked ?? []).forEach((p) => {
+        blockedMap.set(p.user_id, {
+          blocked_at: p.blocked_at,
+          blocked_reason: p.blocked_reason,
+        });
+      });
+
       const emailMap = new Map<string, { email: string; last_sign_in_at: string | null }>();
       if (userEmails) {
         userEmails.forEach((u: { user_id: string; email: string; last_sign_in_at: string | null }) => {
@@ -72,9 +87,50 @@ export function useAdminUsers() {
         role: r.role as 'admin' | 'locador' | 'motorista',
         created_at: r.created_at,
         last_sign_in_at: emailMap.get(r.user_id)?.last_sign_in_at || null,
+        blocked_at: blockedMap.get(r.user_id)?.blocked_at ?? null,
+        blocked_reason: blockedMap.get(r.user_id)?.blocked_reason ?? null,
       }));
     },
     enabled: !!user && role === 'admin',
+  });
+}
+
+// Block or unblock a user (admin only) — server-side enforced via RPC
+export function useSetUserBlocked() {
+  const queryClient = useQueryClient();
+  const { user, role } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      blocked,
+      reason,
+    }: {
+      userId: string;
+      blocked: boolean;
+      reason?: string | null;
+    }) => {
+      if (!user || role !== 'admin') {
+        throw new Error('Não autorizado');
+      }
+      const { error } = await supabase.rpc('admin_set_user_blocked', {
+        _user_id: userId,
+        _blocked: blocked,
+        _reason: reason ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success(vars.blocked ? 'Usuário bloqueado' : 'Usuário desbloqueado');
+    },
+    onError: (error: Error) => {
+      const msg = error.message ?? '';
+      if (msg.includes('cannot_block_self')) toast.error('Você não pode bloquear sua própria conta');
+      else if (msg.includes('cannot_block_admin')) toast.error('Não é permitido bloquear outro administrador');
+      else if (msg.includes('forbidden_admin_only')) toast.error('Apenas administradores podem bloquear usuários');
+      else toast.error('Erro ao atualizar bloqueio');
+    },
   });
 }
 

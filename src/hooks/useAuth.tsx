@@ -225,6 +225,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
+
+        // Enforce admin-applied block: if the account is blocked, sign out
+        // immediately and surface a clear message to the user.
+        const { data: blocked } = await supabase.rpc('is_current_user_blocked');
+        if (blocked === true) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setRole(null);
+          return { error: new Error('Conta bloqueada pelo administrador. Entre em contato com o suporte.') };
+        }
       }
 
       return { error: null };

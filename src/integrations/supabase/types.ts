@@ -789,6 +789,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
           city: string | null
           cnh_expiry: string | null
           cnh_number: string | null
@@ -805,6 +808,9 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           city?: string | null
           cnh_expiry?: string | null
           cnh_number?: string | null
@@ -821,6 +827,9 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
           city?: string | null
           cnh_expiry?: string | null
           cnh_number?: string | null
@@ -1030,6 +1039,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_user_blocked: {
+        Args: { _blocked: boolean; _reason?: string; _user_id: string }
+        Returns: Json
+      }
       assign_initial_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
@@ -1140,6 +1153,7 @@ export type Database = {
         Args: { _alert_type: string; _cnh_expiry: string; _user_id: string }
         Returns: string
       }
+      is_current_user_blocked: { Args: never; Returns: boolean }
       validate_cnh: { Args: { cnh: string }; Returns: boolean }
       validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
       validate_cpf: { Args: { cpf: string }; Returns: boolean }

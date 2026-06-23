@@ -25,9 +25,12 @@ import {
   Users,
   Building2,
   UserCog,
-  Pencil
+  Pencil,
+  Lock,
+  Unlock,
 } from 'lucide-react';
-import { useAdminUsers, useAdminStats, useUpdateUserRole, AdminUser } from '@/hooks/useAdminData';
+import { useAdminUsers, useAdminStats, useUpdateUserRole, useSetUserBlocked, AdminUser } from '@/hooks/useAdminData';
+import { useAuth } from '@/hooks/useAuth';
 import { EditRoleDialog } from '@/components/admin/EditRoleDialog';
 import { format, parseISO } from 'date-fns';
 
@@ -36,15 +39,25 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading: usersLoading } = useAdminUsers();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const updateRoleMutation = useUpdateUserRole();
+  const setBlockedMutation = useSetUserBlocked();
 
   const isLoading = usersLoading || statsLoading;
 
   const handleUpdateRole = async (userId: string, newRole: 'admin' | 'locador' | 'motorista') => {
     await updateRoleMutation.mutateAsync({ userId, newRole });
     setEditingUser(null);
+  };
+
+  const handleToggleBlocked = (u: AdminUser) => {
+    const blocking = !u.blocked_at;
+    const reason = blocking
+      ? (window.prompt('Motivo do bloqueio (opcional):') ?? null)
+      : null;
+    setBlockedMutation.mutate({ userId: u.id, blocked: blocking, reason });
   };
 
 
@@ -217,7 +230,13 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {format(parseISO(user.created_at), 'dd/MM/yyyy')}
+                        {user.blocked_at ? (
+                          <Badge variant="destructive" title={user.blocked_reason ?? ''}>
+                            Bloqueado
+                          </Badge>
+                        ) : (
+                          format(parseISO(user.created_at), 'dd/MM/yyyy')
+                        )}
                       </TableCell>
                       <TableCell>
                         {user.last_sign_in_at 
@@ -226,15 +245,33 @@ export default function AdminUsers() {
                         }
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingUser(user)}
-                          title="Editar permissão"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingUser(user)}
+                            title="Editar permissão"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={
+                              user.role === 'admin' ||
+                              user.id === currentUser?.id ||
+                              setBlockedMutation.isPending
+                            }
+                            onClick={() => handleToggleBlocked(user)}
+                            title={user.blocked_at ? 'Desbloquear usuário' : 'Bloquear usuário'}
+                          >
+                            {user.blocked_at
+                              ? <Unlock className="h-4 w-4 text-success" />
+                              : <Lock className="h-4 w-4 text-destructive" />}
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
