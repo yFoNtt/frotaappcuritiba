@@ -1,43 +1,43 @@
-## Escopo
-Três entregas independentes, todas com instruções literais já fornecidas. Aplicar exatamente como especificado, sem desvios.
+## Plano de implementação
 
-## Entrega 1 — Corrigir FK `conversations.driver_id`
-**Arquivo novo:** `supabase/migrations/<timestamp>_fix_conversations_driver_fk.sql`
+Aplicar as 3 entregas exatamente na ordem especificada, sem tocar em arquivos fora do escopo.
 
-Bloco `DO $$ ... END $$` idempotente que:
-1. `DROP CONSTRAINT fk_conversations_driver` se existir (apontava errado para `auth.users`).
-2. Recria apontando para `public.drivers(id) ON DELETE CASCADE`.
+### Entrega 1 — Migration SQL (RLS do chat-lead)
 
-Sem alteração em código TS — as RLS e `useChat.ts` já tratam `driver_id` como PK de `drivers`.
+Nova migration em `supabase/migrations/<timestamp>_fix_lead_conversation_rls.sql`:
 
-## Entrega 2 — Fortalecer `delete_own_account()`
-**Arquivo novo:** `supabase/migrations/<timestamp>_harden_delete_own_account.sql`
+- Cria `public.vehicle_belongs_to_locador(uuid, uuid)` como `SECURITY DEFINER STABLE` com `search_path = public`, retornando se `vehicles.id = _vehicle_id AND locador_id = _locador_id`.
+- `REVOKE ALL ... FROM PUBLIC` + `GRANT EXECUTE ... TO authenticated`.
+- `DROP POLICY IF EXISTS "Motoristas podem iniciar conversa como interessados" ON public.conversations;`
+- Recria a policy de INSERT em `conversations` usando `vehicle_belongs_to_locador(vehicle_id, locador_id)` no lugar do `EXISTS` direto em `vehicles` (que era bloqueado por RLS do motorista sem contrato).
 
-`CREATE OR REPLACE FUNCTION public.delete_own_account()` exatamente como no spec:
-1. Anonimiza `audit_logs.changed_by`.
-2. Redige conteúdo + anexos das `messages` do usuário (preserva thread).
-3. `DELETE` em `conversations` lead (`interested_user_id = v_user_id AND driver_id IS NULL`).
-4. `DELETE` em `user_roles`, `cnh_alerts`, `notifications`, `consents`, `profiles`.
-5. `DELETE FROM auth.users WHERE id = v_user_id` para disparar todas as FKs cascade já existentes.
+Conteúdo SQL idempotente (`CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS`).
 
-Se a migration falhar com "permission denied for table users", paro e aviso — não tento contornar com GRANT em `auth.users`. Próximo passo seria Edge Function com service role.
+### Entrega 2 — `src/pages/VehicleDetails.tsx`
 
-## Entrega 3 — Patch de dependências
-**Arquivo:** `package.json`
-- `jspdf`: `^4.0.0` → `^4.2.1`
-- `react-router-dom`: `^6.30.1` → `^6.30.4`
+- `handleOpenChat`: adicionar checagem `role !== 'motorista'` (após o gate de login e o atalho do owner) com toast de erro explicando que só motoristas usam o chat interno.
+- Novo `handleWhatsAppClick`: gate de login (abre `LoginDialog`) antes de abrir o `whatsappLink`.
+- `showChatButton`: passa a ser `!isOwner` (sem checar role) — botões sempre visíveis, gate vai pro clique.
+- Trocar o `<a href={whatsappLink}>` do WhatsApp por `<Button onClick={handleWhatsAppClick}>` (mantendo o mesmo visual/ícone) para que o gate de login funcione mesmo sem `user`.
 
-Após edição, `npm install` (auto pelo harness) regenera lockfile. Vitest roda automaticamente para confirmar 439/439.
+### Entrega 3 — Onboarding do motorista
 
-## Fora de escopo (não tocar)
-- Outros componentes UI, hooks, rotas, specs Playwright, suíte Vitest.
-- vitest UI CVE, deps transitivas moderate/high.
-- Billing/planos, novas tabelas.
+**Novo:** `src/components/motorista/OnboardingChecklist.tsx` — card com 5 itens (perfil, veículo, documentos, chat, pagamentos), barra de progresso, dismiss persistido em `localStorage` por `user.id`, esconde quando completo ou dispensado. Usa `useProfile`, `useMotoristaFullData`, `useMotoristaDocuments`, `useMotoristaPayments`, `useConversations('motorista')`.
 
-## Ordem de execução
-Entregas 1, 2 e 3 são independentes — aplico em paralelo (duas migrations + um edit de package.json).
+**Editar:** `src/pages/motorista/Dashboard.tsx`
+- Adicionar imports: `Sparkles, MessageCircle, FileText` (lucide), `useAuth`, `OnboardingChecklist`, `OnboardingTour`.
+- Definir `MOTORISTA_TOUR_STEPS` (5 passos).
+- Renderizar `<OnboardingChecklist />` logo abaixo do header.
+- Renderizar `<OnboardingTour steps={MOTORISTA_TOUR_STEPS} storageKey={`motorista_tour_seen_${user.id}`} />` no fim do layout, condicionado a `user?.id`.
 
-## Verificação manual (pelo usuário, pós-merge)
-- Ent.1: enviar 1ª mensagem como motorista vinculado em `/motorista/mensagens`; testar `claim_driver_invite` migrando conversa-lead.
-- Ent.2: excluir conta de motorista → conversa permanece com mensagem redigida, driver sem `user_id`; excluir conta de locador → vehicles/drivers/contracts/conversations dele somem.
-- Ent.3: rodar `npm run test` (439/439).
+Reaproveita o `OnboardingTour` genérico existente sem alterá-lo.
+
+### Ordem de execução
+
+1. Migration SQL (Entrega 1) — bloqueador do chat-lead.
+2. Editar `VehicleDetails.tsx` (Entrega 2).
+3. Criar `OnboardingChecklist.tsx` do motorista + editar `Dashboard.tsx` do motorista (Entrega 3).
+
+### Fora de escopo (não tocar)
+
+`useChat.ts`, onboarding do locador, `OnboardingTour.tsx` genérico, `useAuth`/`useInactivityTimeout`, qualquer outra policy RLS, cores cruas/tokens não-semânticos.
