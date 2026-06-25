@@ -11,14 +11,49 @@ import {
   Clock,
   ChevronRight,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Sparkles,
+  MessageCircle,
+  FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMotoristaFullData, useMotoristaStats } from '@/hooks/useMotoristaData';
 import { useMotoristaPayments } from '@/hooks/usePayments';
 import { useMemo } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { OnboardingChecklist } from '@/components/motorista/OnboardingChecklist';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+
+const MOTORISTA_TOUR_STEPS = [
+  {
+    icon: Sparkles,
+    title: 'Bem-vindo ao FrotaApp',
+    description: 'Este é o seu painel. Aqui você acompanha seu veículo, pagamentos e documentos em um só lugar.',
+  },
+  {
+    icon: Car,
+    title: 'Seu veículo atual',
+    description: "Em 'Meu Veículo' você vê os dados do carro alugado e o contrato vigente.",
+  },
+  {
+    icon: CreditCard,
+    title: 'Pagamentos',
+    description: 'Acompanhe pagamentos pendentes, em atraso, e veja seu histórico completo.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Fale com seu locador',
+    description: 'Use o chat interno para tirar dúvidas e resolver pendências direto com o locador.',
+  },
+  {
+    icon: FileText,
+    title: 'Documentos',
+    description: "Envie e acompanhe seus documentos (CNH, comprovantes) na aba 'Documentos'.",
+  },
+];
 
 export default function MotoristaDashboard() {
+  const { user } = useAuth();
   const { driver, vehicle, contract, isLoading: dataLoading } = useMotoristaFullData();
   const { data: stats, isLoading: statsLoading } = useMotoristaStats();
   const { data: payments = [], isLoading: paymentsLoading } = useMotoristaPayments();
