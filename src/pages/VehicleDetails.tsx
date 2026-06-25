@@ -163,7 +163,9 @@ export default function VehicleDetails() {
   const whatsappLink = hasWhatsapp
     ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
     : '#';
-  const showChatButton = !isOwner && role === 'motorista';
+  // Botões sempre visíveis (exceto pro próprio dono do veículo); o gate de login
+  // acontece no clique (handleOpenChat / handleWhatsAppClick), não na renderização.
+  const showChatButton = !isOwner;
 
 
   const vehicleImages = vehicle.images ?? [];
