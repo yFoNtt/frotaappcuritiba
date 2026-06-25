@@ -375,6 +375,12 @@ export default function MotoristaDashboard() {
           </Card>
         )}
       </div>
+      {user?.id && (
+        <OnboardingTour
+          steps={MOTORISTA_TOUR_STEPS}
+          storageKey={`motorista_onboarding_tour_${user.id}`}
+        />
+      )}
     </MotoristaLayout>
   );
 }
