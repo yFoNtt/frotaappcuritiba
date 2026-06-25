@@ -385,11 +385,9 @@ export default function VehicleDetails() {
                 {/* CTA Buttons */}
                 <div className="space-y-3">
                   {hasWhatsapp ? (
-                    <Button size="lg" variant="whatsapp" className="w-full" asChild>
-                      <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                        <Phone className="mr-2 h-4 w-4" />
-                        Chamar pelo WhatsApp
-                      </a>
+                    <Button size="lg" variant="whatsapp" className="w-full" onClick={handleWhatsAppClick}>
+                      <Phone className="mr-2 h-4 w-4" />
+                      Chamar pelo WhatsApp
                     </Button>
                   ) : (
                     <TooltipProvider>
