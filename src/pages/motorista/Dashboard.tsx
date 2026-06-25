@@ -11,14 +11,49 @@ import {
   Clock,
   ChevronRight,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Sparkles,
+  MessageCircle,
+  FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMotoristaFullData, useMotoristaStats } from '@/hooks/useMotoristaData';
 import { useMotoristaPayments } from '@/hooks/usePayments';
 import { useMemo } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { OnboardingChecklist } from '@/components/motorista/OnboardingChecklist';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+
+const MOTORISTA_TOUR_STEPS = [
+  {
+    icon: Sparkles,
+    title: 'Bem-vindo ao FrotaApp',
+    description: 'Este é o seu painel. Aqui você acompanha seu veículo, pagamentos e documentos em um só lugar.',
+  },
+  {
+    icon: Car,
+    title: 'Seu veículo atual',
+    description: "Em 'Meu Veículo' você vê os dados do carro alugado e o contrato vigente.",
+  },
+  {
+    icon: CreditCard,
+    title: 'Pagamentos',
+    description: 'Acompanhe pagamentos pendentes, em atraso, e veja seu histórico completo.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Fale com seu locador',
+    description: 'Use o chat interno para tirar dúvidas e resolver pendências direto com o locador.',
+  },
+  {
+    icon: FileText,
+    title: 'Documentos',
+    description: "Envie e acompanhe seus documentos (CNH, comprovantes) na aba 'Documentos'.",
+  },
+];
 
 export default function MotoristaDashboard() {
+  const { user } = useAuth();
   const { driver, vehicle, contract, isLoading: dataLoading } = useMotoristaFullData();
   const { data: stats, isLoading: statsLoading } = useMotoristaStats();
   const { data: payments = [], isLoading: paymentsLoading } = useMotoristaPayments();
@@ -94,6 +129,9 @@ export default function MotoristaDashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold">Olá, {driver.name.split(' ')[0]}!</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Gerencie seu veículo e pagamentos</p>
         </div>
+
+        {/* Onboarding (auto-some quando completo ou dispensado) */}
+        <OnboardingChecklist />
 
         {/* Alert for overdue payments */}
         {pagamentosAtrasados > 0 && (
@@ -337,6 +375,12 @@ export default function MotoristaDashboard() {
           </Card>
         )}
       </div>
+      {user?.id && (
+        <OnboardingTour
+          steps={MOTORISTA_TOUR_STEPS}
+          storageKey={`motorista_onboarding_tour_${user.id}`}
+        />
+      )}
     </MotoristaLayout>
   );
 }

@@ -1157,6 +1157,10 @@ export type Database = {
       validate_cnh: { Args: { cnh: string }; Returns: boolean }
       validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
       validate_cpf: { Args: { cpf: string }; Returns: boolean }
+      vehicle_belongs_to_locador: {
+        Args: { _locador_id: string; _vehicle_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "locador" | "motorista"

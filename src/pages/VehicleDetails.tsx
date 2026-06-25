@@ -96,6 +96,13 @@ export default function VehicleDetails() {
       return;
     }
 
+    // O chat interno depende do modelo de dados de driver/conversation, restrito a
+    // contas com papel "motorista" (também garantido via RLS no banco).
+    if (role !== 'motorista') {
+      toast.error('Apenas contas de motorista podem usar o chat interno com o locador.');
+      return;
+    }
+
     const locadorId = publicVehicle?.locador_id;
     if (!locadorId) {
       toast.error('Não foi possível identificar o locador.');
@@ -116,6 +123,15 @@ export default function VehicleDetails() {
     } finally {
       setOpeningChat(false);
     }
+  };
+
+  const handleWhatsAppClick = () => {
+    // Mesmo gate de login do chat interno: precisa de conta para falar com o locador.
+    if (!user) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    window.open(whatsappLink, '_blank', 'noopener,noreferrer');
   };
 
 
@@ -147,7 +163,9 @@ export default function VehicleDetails() {
   const whatsappLink = hasWhatsapp
     ? `https://wa.me/55${locadorWhatsappDigits}?text=${whatsappMessage}`
     : '#';
-  const showChatButton = !isOwner && role === 'motorista';
+  // Botões sempre visíveis (exceto pro próprio dono do veículo); o gate de login
+  // acontece no clique (handleOpenChat / handleWhatsAppClick), não na renderização.
+  const showChatButton = !isOwner;
 
 
   const vehicleImages = vehicle.images ?? [];
@@ -367,11 +385,9 @@ export default function VehicleDetails() {
                 {/* CTA Buttons */}
                 <div className="space-y-3">
                   {hasWhatsapp ? (
-                    <Button size="lg" variant="whatsapp" className="w-full" asChild>
-                      <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                        <Phone className="mr-2 h-4 w-4" />
-                        Chamar pelo WhatsApp
-                      </a>
+                    <Button size="lg" variant="whatsapp" className="w-full" onClick={handleWhatsAppClick}>
+                      <Phone className="mr-2 h-4 w-4" />
+                      Chamar pelo WhatsApp
                     </Button>
                   ) : (
                     <TooltipProvider>
