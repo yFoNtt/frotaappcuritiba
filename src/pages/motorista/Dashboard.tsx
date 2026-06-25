@@ -130,6 +130,9 @@ export default function MotoristaDashboard() {
           <p className="text-sm sm:text-base text-muted-foreground">Gerencie seu veículo e pagamentos</p>
         </div>
 
+        {/* Onboarding (auto-some quando completo ou dispensado) */}
+        <OnboardingChecklist />
+
         {/* Alert for overdue payments */}
         {pagamentosAtrasados > 0 && (
           <Card className="border-destructive bg-destructive/10">
