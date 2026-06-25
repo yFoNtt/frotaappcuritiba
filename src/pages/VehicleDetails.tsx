@@ -96,6 +96,13 @@ export default function VehicleDetails() {
       return;
     }
 
+    // O chat interno depende do modelo de dados de driver/conversation, restrito a
+    // contas com papel "motorista" (também garantido via RLS no banco).
+    if (role !== 'motorista') {
+      toast.error('Apenas contas de motorista podem usar o chat interno com o locador.');
+      return;
+    }
+
     const locadorId = publicVehicle?.locador_id;
     if (!locadorId) {
       toast.error('Não foi possível identificar o locador.');
@@ -116,6 +123,15 @@ export default function VehicleDetails() {
     } finally {
       setOpeningChat(false);
     }
+  };
+
+  const handleWhatsAppClick = () => {
+    // Mesmo gate de login do chat interno: precisa de conta para falar com o locador.
+    if (!user) {
+      setLoginDialogOpen(true);
+      return;
+    }
+    window.open(whatsappLink, '_blank', 'noopener,noreferrer');
   };
 
 
