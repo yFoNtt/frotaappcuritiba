@@ -1,43 +1,52 @@
-## Plano de implementação
+# Plano — Vulnerabilidades + Hardening (12 entregas)
 
-Aplicar as 3 entregas exatamente na ordem especificada, sem tocar em arquivos fora do escopo.
+Aplico exatamente as 12 entregas do prompt, na ordem obrigatória. Nenhuma migration SQL, nenhuma policy RLS, nenhuma função SECURITY DEFINER alteradas.
 
-### Entrega 1 — Migration SQL (RLS do chat-lead)
+## 1. Dependências (CVE crítico)
+- `package.json`: `vite ^5.4.19 → ^5.4.21`, `vitest ^3.2.4 → ^3.2.6`.
+- Rodar `npm install` para atualizar lockfile.
 
-Nova migration em `supabase/migrations/<timestamp>_fix_lead_conversation_rls.sql`:
+## 2. Módulo CORS compartilhado
+- Criar `supabase/functions/_shared/cors.ts` com `buildCorsHeaders(req)` baseado em allow-list:
+  - Domínio de produção + `ALLOWED_ORIGIN`/`ORIGEM_PERMITIDA`.
+  - HTTPS-only para `*.lovable.app` e `*.lovableproject.com`.
+  - `localhost`/`127.0.0.1` somente se secret `ALLOW_LOCAL_DEV=true` (default agora é **false** — fail-closed).
+- Inclui headers extras (`x-seed-token`, plataforma/runtime do Supabase) e `Vary: Origin`.
 
-- Cria `public.vehicle_belongs_to_locador(uuid, uuid)` como `SECURITY DEFINER STABLE` com `search_path = public`, retornando se `vehicles.id = _vehicle_id AND locador_id = _locador_id`.
-- `REVOKE ALL ... FROM PUBLIC` + `GRANT EXECUTE ... TO authenticated`.
-- `DROP POLICY IF EXISTS "Motoristas podem iniciar conversa como interessados" ON public.conversations;`
-- Recria a policy de INSERT em `conversations` usando `vehicle_belongs_to_locador(vehicle_id, locador_id)` no lugar do `EXISTS` direto em `vehicles` (que era bloqueado por RLS do motorista sem contrato).
+## 3–10. Substituir wildcard `*` pelo allow-list em 8 Edge Functions
+Cada function importa `buildCorsHeaders` do módulo novo e move `const corsHeaders = buildCorsHeaders(req)` para dentro do handler. Lógica de negócio intacta.
 
-Conteúdo SQL idempotente (`CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS`).
+| # | Function | Observação |
+|---|---|---|
+| 3 | `rate-limited-login` | Remove duplicação local; passa a importar do shared |
+| 4 | `locador-assistant` | PII pseudonimizada — alta prioridade |
+| 5 | `generate-notifications` | — |
+| 6 | `check-cnh-expiry` | — |
+| 7 | `suggest-vehicle-price` | — |
+| 8 | `record-consent` | — |
+| 9 | `export-user-data` | LGPD portabilidade |
+| 10 | `log-inconsistency-review` | Move helper `json()` para dentro do handler (fecha sobre `corsHeaders` por request) |
 
-### Entrega 2 — `src/pages/VehicleDetails.tsx`
+**Não tocar**: `seed-test-*` e `cleanup-test-motoristas` (protegidos por `x-seed-token`/service-role, custo desproporcional).
 
-- `handleOpenChat`: adicionar checagem `role !== 'motorista'` (após o gate de login e o atalho do owner) com toast de erro explicando que só motoristas usam o chat interno.
-- Novo `handleWhatsAppClick`: gate de login (abre `LoginDialog`) antes de abrir o `whatsappLink`.
-- `showChatButton`: passa a ser `!isOwner` (sem checar role) — botões sempre visíveis, gate vai pro clique.
-- Trocar o `<a href={whatsappLink}>` do WhatsApp por `<Button onClick={handleWhatsAppClick}>` (mantendo o mesmo visual/ícone) para que o gate de login funcione mesmo sem `user`.
+## 11. Revogar sessão ativa de usuário bloqueado
+`src/hooks/useAuth.tsx`:
+- Adicionar `checkBlockedAndSignOut()` que chama RPC `is_current_user_blocked`, força `signOut` e exibe toast.
+- Disparar na carga inicial (`getSession`), em cada `onAuthStateChange`, e a cada 3 minutos via `setInterval` enquanto houver `user`.
+- **Não alterar** `signIn()` existente.
 
-### Entrega 3 — Onboarding do motorista
+## 12. Novo E2E `e2e/driver-invite-claim.spec.ts`
+5 cenários cobrindo `get_driver_invite_preview` / `claim_driver_invite`:
+1. Preview de token válido retorna nomes corretos.
+2. Preview de token inexistente → inválido.
+3. Anônimo bloqueado (401/403) por falta de GRANT.
+4. Locador autenticado → `wrong_role`.
+5. Motorista confirma vínculo, conversa-lead é promovida (`driver_id` setado, `interested_user_id` zerado), reclaim retorna `invalid_or_expired`.
 
-**Novo:** `src/components/motorista/OnboardingChecklist.tsx` — card com 5 itens (perfil, veículo, documentos, chat, pagamentos), barra de progresso, dismiss persistido em `localStorage` por `user.id`, esconde quando completo ou dispensado. Usa `useProfile`, `useMotoristaFullData`, `useMotoristaDocuments`, `useMotoristaPayments`, `useConversations('motorista')`.
+Helper `generateValidCnh()` replicando algoritmo do trigger `validate_driver_cnh`.
 
-**Editar:** `src/pages/motorista/Dashboard.tsx`
-- Adicionar imports: `Sparkles, MessageCircle, FileText` (lucide), `useAuth`, `OnboardingChecklist`, `OnboardingTour`.
-- Definir `MOTORISTA_TOUR_STEPS` (5 passos).
-- Renderizar `<OnboardingChecklist />` logo abaixo do header.
-- Renderizar `<OnboardingTour steps={MOTORISTA_TOUR_STEPS} storageKey={`motorista_tour_seen_${user.id}`} />` no fim do layout, condicionado a `user?.id`.
+## Validação final
+- `tsc --noEmit`, ESLint e Vitest devem continuar limpos.
 
-Reaproveita o `OnboardingTour` genérico existente sem alterá-lo.
-
-### Ordem de execução
-
-1. Migration SQL (Entrega 1) — bloqueador do chat-lead.
-2. Editar `VehicleDetails.tsx` (Entrega 2).
-3. Criar `OnboardingChecklist.tsx` do motorista + editar `Dashboard.tsx` do motorista (Entrega 3).
-
-### Fora de escopo (não tocar)
-
-`useChat.ts`, onboarding do locador, `OnboardingTour.tsx` genérico, `useAuth`/`useInactivityTimeout`, qualquer outra policy RLS, cores cruas/tokens não-semânticos.
+## Efeito colateral operacional
+Após deploy, chamadas de localhost às Edge Functions hardenizadas serão bloqueadas por CORS, a menos que o secret `ALLOW_LOCAL_DEV=true` esteja configurado no projeto Supabase. Comportamento desejado em produção.

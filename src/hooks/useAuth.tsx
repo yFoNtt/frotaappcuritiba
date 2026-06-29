@@ -52,6 +52,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Checa is_current_user_blocked() e força logout se a conta foi
+  // bloqueada pelo admin. Chamado na carga inicial, em toda mudança de
+  // auth state, e periodicamente enquanto o app fica aberto.
+  const checkBlockedAndSignOut = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data: blocked } = await supabase.rpc('is_current_user_blocked');
+      if (blocked === true) {
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        toast.error(
+          'Sua conta foi bloqueada pelo administrador. Entre em contato com o suporte.',
+          { duration: 10000 }
+        );
+        return true;
+      }
+    } catch (error) {
+      console.error('Error checking blocked status:', error);
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
     let initialized = false;
 
@@ -65,9 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // Keep loading true until role resolves to prevent UI flash
           setTimeout(() => {
-            fetchUserRole(session.user.id).then((r) => {
+            fetchUserRole(session.user.id).then(async (r) => {
               setRole(r);
               setLoading(false);
+              await checkBlockedAndSignOut();
             });
           }, 0);
         } else {
@@ -84,9 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchUserRole(session.user.id).then((r) => {
+        fetchUserRole(session.user.id).then(async (r) => {
           setRole(r);
           setLoading(false);
+          await checkBlockedAndSignOut();
         });
       } else {
         setLoading(false);
@@ -94,7 +119,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkBlockedAndSignOut]);
+
+  // Revalidação periódica: se o admin bloquear o usuário enquanto a aba já
+  // está aberta com sessão válida, o logout acontece em até 3 minutos —
+  // não depende de fechar a aba ou o token expirar.
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      checkBlockedAndSignOut();
+    }, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user, checkBlockedAndSignOut]);
 
   const signUp = async (email: string, password: string, selectedRole: AppRole, profileData?: ProfileData) => {
     try {
