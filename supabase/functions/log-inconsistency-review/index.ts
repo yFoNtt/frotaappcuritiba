@@ -1,10 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-};
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 interface ReviewPayload {
   scope: 'vehicles' | 'contracts';
@@ -14,9 +9,17 @@ interface ReviewPayload {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -28,7 +31,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Validate caller via JWT
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -37,7 +39,6 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid token' }, 401);
     }
 
-    // Confirm admin role
     const admin = createClient(supabaseUrl, serviceKey);
     const { data: roleData } = await admin
       .from('user_roles')
@@ -50,7 +51,6 @@ Deno.serve(async (req) => {
       return json({ error: 'Admin role required' }, 403);
     }
 
-    // Validate body
     const body = (await req.json()) as Partial<ReviewPayload>;
     const scope = body.scope;
     const reviewedIds = Array.isArray(body.reviewedIds) ? body.reviewedIds.slice(0, 500) : [];
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       .from('audit_logs')
       .insert({
         table_name: tableName,
-        record_id: userData.user.id, // anchor to reviewing admin (no specific row)
+        record_id: userData.user.id,
         action: 'INCONSISTENCY_REVIEW',
         changed_by: userData.user.id,
         new_data: {
@@ -94,10 +94,3 @@ Deno.serve(async (req) => {
     return json({ error: (e as Error).message }, 500);
   }
 });
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
