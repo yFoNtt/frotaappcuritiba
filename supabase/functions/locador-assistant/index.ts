@@ -3,13 +3,7 @@
 // na resposta ao frontend; apenas o payload externo é mascarado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { maskPIIDeep, newStats } from "../_shared/maskPII.ts";
-
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -40,6 +34,8 @@ const sanitize = (s: unknown, max: number): string =>
     .slice(0, max);
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
