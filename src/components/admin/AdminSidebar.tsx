@@ -15,6 +15,7 @@ import {
   Shield,
   History,
   Store,
+  Globe,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ const menuItems = [
   { icon: Store, label: 'Ver Marketplace', path: '/veiculos' },
   { icon: CreditCard, label: 'Planos', path: '/admin/planos' },
   { icon: BarChart3, label: 'Métricas', path: '/admin/metricas' },
+  { icon: Globe, label: 'Visitas', path: '/admin/visitas' },
   { icon: History, label: 'Auditoria', path: '/admin/auditoria' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes' },
 ];

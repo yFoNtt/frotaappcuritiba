@@ -33,7 +33,7 @@ const Privacy = () => {
               <li><strong>Cadastro:</strong> nome, e-mail, telefone, senha (criptografada) e perfil (locador/motorista).</li>
               <li><strong>Documentos:</strong> CPF, CNPJ, CNH, comprovantes e fotos enviados para validação.</li>
               <li><strong>Veículos e contratos:</strong> dados da frota, contratos, pagamentos, quilometragem, manutenções e vistorias.</li>
-              <li><strong>Uso da plataforma:</strong> logs de acesso, IP, dispositivo e ações de auditoria.</li>
+              <li><strong>Uso da plataforma:</strong> logs de acesso, IP, dispositivo e ações de auditoria, retidos por até 180 dias.</li>
               <li><strong>Comunicações:</strong> mensagens trocadas no chat interno e interações com o assistente de IA.</li>
             </ul>
           </section>

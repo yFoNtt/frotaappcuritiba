@@ -21,3 +21,5 @@ verify_jwt = true
 [functions.record-consent]
 verify_jwt = true
 
+[functions.log-visit]
+verify_jwt = false

@@ -11,6 +11,7 @@ const AdminLocadorDetails = lazy(() => import("@/pages/admin/LocadorDetails"));
 const AdminVehicles = lazy(() => import("@/pages/admin/Vehicles"));
 const AdminPlans = lazy(() => import("@/pages/admin/Plans"));
 const AdminMetrics = lazy(() => import("@/pages/admin/Metrics"));
+const AdminVisits = lazy(() => import("@/pages/admin/Visits"));
 const AdminSettings = lazy(() => import("@/pages/admin/Settings"));
 const AdminAuditLogs = lazy(() => import("@/pages/admin/AuditLogs"));
 
@@ -35,6 +36,7 @@ export const adminRoutes = (
     {adminRoute("/admin/veiculos", AdminVehicles)}
     {adminRoute("/admin/planos", AdminPlans)}
     {adminRoute("/admin/metricas", AdminMetrics)}
+    {adminRoute("/admin/visitas", AdminVisits)}
     {adminRoute("/admin/configuracoes", AdminSettings)}
     {adminRoute("/admin/auditoria", AdminAuditLogs)}
   </>
