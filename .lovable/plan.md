@@ -1,52 +1,64 @@
-# Plano — Vulnerabilidades + Hardening (12 entregas)
+## Contador de Visitas (`site_visits`) — Painel Admin
 
-Aplico exatamente as 12 entregas do prompt, na ordem obrigatória. Nenhuma migration SQL, nenhuma policy RLS, nenhuma função SECURITY DEFINER alteradas.
+Implementação em 9 entregas na ordem exata do prompt. Nada fora dos arquivos listados será tocado.
 
-## 1. Dependências (CVE crítico)
-- `package.json`: `vite ^5.4.19 → ^5.4.21`, `vitest ^3.2.4 → ^3.2.6`.
-- Rodar `npm install` para atualizar lockfile.
+### Entrega 1 — Migração SQL
+Criar `supabase/migrations/20260701000001_create_site_visits.sql` com:
+- Tabela `public.site_visits` (ip, path, referrer, user_agent, is_mobile, city/region/country, utm_*, created_at)
+- Índices em `created_at DESC` e `(ip_address, created_at DESC)`
+- RLS ON, apenas policy de `SELECT` para admin via `has_role(auth.uid(), 'admin')` — sem INSERT/UPDATE/DELETE (só service_role grava)
+- Função `cleanup_old_site_visits()` (SECURITY DEFINER, retenção 180 dias) com `REVOKE` de PUBLIC/anon/authenticated
+- Job `pg_cron` diário às 03h
 
-## 2. Módulo CORS compartilhado
-- Criar `supabase/functions/_shared/cors.ts` com `buildCorsHeaders(req)` baseado em allow-list:
-  - Domínio de produção + `ALLOWED_ORIGIN`/`ORIGEM_PERMITIDA`.
-  - HTTPS-only para `*.lovable.app` e `*.lovableproject.com`.
-  - `localhost`/`127.0.0.1` somente se secret `ALLOW_LOCAL_DEV=true` (default agora é **false** — fail-closed).
-- Inclui headers extras (`x-seed-token`, plataforma/runtime do Supabase) e `Vary: Origin`.
+### Entrega 2 — Edge Function `log-visit`
+Novo `supabase/functions/log-visit/index.ts`:
+- Usa `buildCorsHeaders` do módulo compartilhado
+- Aceita POST com `{ path, referrer, user_agent, utm_* }`
+- Extrai IP de `x-forwarded-for`/`x-real-ip`, detecta mobile por UA
+- Geolocalização best-effort via `ipapi.co` com timeout 2s e bypass para IPs privados; falha nunca bloqueia insert
+- Insere com `SUPABASE_SERVICE_ROLE_KEY`
 
-## 3–10. Substituir wildcard `*` pelo allow-list em 8 Edge Functions
-Cada function importa `buildCorsHeaders` do módulo novo e move `const corsHeaders = buildCorsHeaders(req)` para dentro do handler. Lógica de negócio intacta.
+### Entrega 3 — `supabase/config.toml`
+Adicionar entrada `[functions.log-visit]` com `verify_jwt = false` (preservando as demais).
 
-| # | Function | Observação |
-|---|---|---|
-| 3 | `rate-limited-login` | Remove duplicação local; passa a importar do shared |
-| 4 | `locador-assistant` | PII pseudonimizada — alta prioridade |
-| 5 | `generate-notifications` | — |
-| 6 | `check-cnh-expiry` | — |
-| 7 | `suggest-vehicle-price` | — |
-| 8 | `record-consent` | — |
-| 9 | `export-user-data` | LGPD portabilidade |
-| 10 | `log-inconsistency-review` | Move helper `json()` para dentro do handler (fecha sobre `corsHeaders` por request) |
+### Entrega 4 — Hook `useVisitLogger`
+Novo `src/hooks/useVisitLogger.tsx`:
+- `useLocation` para disparar em mudança de rota
+- Ignora rotas `/admin/*`
+- Deduplica por path via `useRef`
+- Envia via `supabase.functions.invoke('log-visit', …)` com falha silenciosa
+- Exporta componente `VisitLogger` (retorna null)
 
-**Não tocar**: `seed-test-*` e `cleanup-test-motoristas` (protegidos por `x-seed-token`/service-role, custo desproporcional).
+### Entrega 5 — Ligar em `App.tsx`
+Importar `VisitLogger` e montar dentro do `<BrowserRouter>`, logo abaixo do `<NavigationProgress />`.
 
-## 11. Revogar sessão ativa de usuário bloqueado
-`src/hooks/useAuth.tsx`:
-- Adicionar `checkBlockedAndSignOut()` que chama RPC `is_current_user_blocked`, força `signOut` e exibe toast.
-- Disparar na carga inicial (`getSession`), em cada `onAuthStateChange`, e a cada 3 minutos via `setInterval` enquanto houver `user`.
-- **Não alterar** `signIn()` existente.
+### Entrega 6 — Hook `useSiteVisits`
+Novo `src/hooks/useSiteVisits.tsx`:
+- TanStack Query, `enabled: role === 'admin'`
+- SELECT `*` ordenado por `created_at desc`, limit 2000
+- Cast `'site_visits' as never` (mesmo padrão de `useConsents.tsx`)
 
-## 12. Novo E2E `e2e/driver-invite-claim.spec.ts`
-5 cenários cobrindo `get_driver_invite_preview` / `claim_driver_invite`:
-1. Preview de token válido retorna nomes corretos.
-2. Preview de token inexistente → inválido.
-3. Anônimo bloqueado (401/403) por falta de GRANT.
-4. Locador autenticado → `wrong_role`.
-5. Motorista confirma vínculo, conversa-lead é promovida (`driver_id` setado, `interested_user_id` zerado), reclaim retorna `invalid_or_expired`.
+### Entrega 7 — Página `src/pages/admin/Visits.tsx`
+Nova página dentro de `AdminLayout`:
+- 4 StatCards (Total, IPs únicos, Hoje, Últimos 7 dias)
+- AreaChart Recharts (30 dias) com tokens `hsl(var(--primary))`
+- Cards de Dispositivo (mobile/desktop), Top cidades, Origem (`sourceLabel` derivado de referrer/utm)
+- Tabela das 50 visitas mais recentes
+- Skeleton de loading no padrão do projeto
 
-Helper `generateValidCnh()` replicando algoritmo do trigger `validate_driver_cnh`.
+> Observação: o bloco JSX do prompt veio parcialmente destruído pela renderização de markdown (linhas em branco entre tags, cards sem props visíveis). Vou reconstruir o JSX completo respeitando 100% da lógica, dos ícones, dos textos e da estrutura descrita — tokens semânticos apenas, sem cores cruas.
 
-## Validação final
-- `tsc --noEmit`, ESLint e Vitest devem continuar limpos.
+### Entrega 8 — Rota e menu
+- `src/routes/adminRoutes.tsx`: lazy import de `AdminVisits` + rota `/admin/visitas`
+- `src/components/admin/AdminSidebar.tsx`: importar ícone `Globe` e inserir item "Visitas" entre "Métricas" e "Auditoria"
 
-## Efeito colateral operacional
-Após deploy, chamadas de localhost às Edge Functions hardenizadas serão bloqueadas por CORS, a menos que o secret `ALLOW_LOCAL_DEV=true` esteja configurado no projeto Supabase. Comportamento desejado em produção.
+### Entrega 9 — `src/pages/Privacy.tsx`
+Ajustar o bullet de "Uso da plataforma" para incluir "retidos por até 180 dias".
+
+### Validação pós-implementação
+- `tsc --noEmit`, `vitest run`, `eslint .` limpos
+- Confirmar RLS: SELECT em `site_visits` por não-admin deve falhar
+- Verificar `/admin/visitas` renderiza (mesmo vazio inicialmente)
+
+### Fora do escopo (não tocar)
+`Metrics.tsx`, `LocadorDetails.tsx`, `Users.tsx`, `Locadores.tsx`, `Plans.tsx`, `Settings.tsx`, `AuditLogs.tsx`, `Vehicles.tsx`, `useAuth.tsx`, `_shared/cors.ts`, demais Edge Functions e migrações existentes.
