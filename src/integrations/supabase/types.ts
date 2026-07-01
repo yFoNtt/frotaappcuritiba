@@ -847,6 +847,54 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          ip_address: string
+          is_mobile: boolean | null
+          path: string
+          referrer: string | null
+          region: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip_address: string
+          is_mobile?: boolean | null
+          path: string
+          referrer?: string | null
+          region?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string
+          is_mobile?: boolean | null
+          path?: string
+          referrer?: string | null
+          region?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1049,6 +1097,7 @@ export type Database = {
       }
       claim_driver_invite: { Args: { _token: string }; Returns: Json }
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
+      cleanup_old_site_visits: { Args: never; Returns: undefined }
       delete_own_account: { Args: never; Returns: undefined }
       get_driver_invite_preview: {
         Args: { _token: string }
