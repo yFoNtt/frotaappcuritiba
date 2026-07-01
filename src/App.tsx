@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import NotFound from "./pages/NotFound";
 import { NavigationProgress } from "@/components/NavigationProgress";
+import { VisitLogger } from "@/hooks/useVisitLogger";
 
 import { publicRoutes } from "@/routes/publicRoutes";
 import { locadorRoutes } from "@/routes/locadorRoutes";
@@ -39,6 +40,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NavigationProgress />
+        <VisitLogger />
         <AuthProvider>
           <Routes>
             {publicRoutes}
