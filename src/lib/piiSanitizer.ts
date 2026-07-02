@@ -13,10 +13,11 @@ export const maskCPF = (cpf: string): string => {
   if (!cpf) return cpf;
   const digits = cpf.replace(/\D/g, '');
   if (digits.length !== 11) return cpf;
-  // Mask first 9 digits, keep separators-style readability, expose only last 2.
-  const last2 = digits.slice(9);
-  return `XXX.XXX.XXX.${last2}`;
+  // Full redaction: no real digits are exposed, only the CPF format shape.
+  return 'XXX.XXX.XXX-XX';
 };
+
+
 
 
 export const maskCNH = (cnh: string): string => {
