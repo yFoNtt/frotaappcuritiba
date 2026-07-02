@@ -250,6 +250,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
           onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
           userId={user?.id}
+          displayName={profile?.full_name ?? undefined}
+          companyName={profile?.company_name ?? undefined}
         />
       </aside>
     </>
