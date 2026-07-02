@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useProfile } from '@/hooks/useProfile';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
@@ -55,12 +56,14 @@ const menuItems = [
 ];
 
 
-function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId }: { 
+function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, displayName, companyName }: { 
   collapsed: boolean; 
   onCollapse?: () => void;
   onClose?: () => void;
   onLogout: () => void;
   userId?: string;
+  displayName?: string;
+  companyName?: string;
 }) {
   const location = useLocation();
   const marketplaceItems = [
@@ -150,12 +153,14 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId }: {
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">
         <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", collapsed && "justify-center")}>
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-            <span className="text-sm font-semibold">JS</span>
+            <span className="text-sm font-semibold">
+              {displayName ? displayName.slice(0, 2).toUpperCase() : '?'}
+            </span>
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium">João Silva</p>
-              <p className="truncate text-xs text-sidebar-foreground/60">JS Locações</p>
+              <p className="truncate text-sm font-medium">{displayName || 'Usuário'}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{companyName || 'Sem empresa cadastrada'}</p>
             </div>
           )}
         </div>
@@ -188,6 +193,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { unreadCount } = useNotifications();
+  const { data: profile } = useProfile();
 
   // Close mobile menu on route change
   const location = useLocation();
@@ -222,7 +228,10 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
               userId={user?.id}
+              displayName={profile?.full_name ?? undefined}
+              companyName={profile?.company_name ?? undefined}
             />
+
           </SheetContent>
         </Sheet>
         <span className="text-sm font-semibold text-foreground">FrotaApp</span>
@@ -241,6 +250,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
           onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
           userId={user?.id}
+          displayName={profile?.full_name ?? undefined}
+          companyName={profile?.company_name ?? undefined}
         />
       </aside>
     </>

@@ -1,7 +1,12 @@
 import { expect } from '@playwright/test';
 
-export const SUPABASE_URL = 'https://bohycsldnskyuwsdxrqt.supabase.co';
+// Falls back to the known project values if env vars aren't set, so local
+// runs keep working without extra setup — but CI/other environments can
+// override via E2E_SUPABASE_URL / E2E_SUPABASE_ANON_KEY.
+export const SUPABASE_URL =
+  process.env.E2E_SUPABASE_URL || 'https://bohycsldnskyuwsdxrqt.supabase.co';
 export const SUPABASE_ANON_KEY =
+  process.env.E2E_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvaHljc2xkbnNreXV3c2R4cnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODQ1OTIsImV4cCI6MjA4NDE2MDU5Mn0.6Op1rKmqr8bmfXlM_iCPC1yP36DaZ1TnRwKQqXc4jZQ';
 
 export async function loginViaApi(email: string, password: string) {

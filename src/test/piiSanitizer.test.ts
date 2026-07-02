@@ -10,18 +10,18 @@ import {
 
 describe('piiSanitizer', () => {
   describe('maskCPF', () => {
-    it('masks all digits except the last two', () => {
+    it('fully redacts all digits, exposing no real CPF data', () => {
       const masked = maskCPF('12345678909');
-      expect(masked).toMatch(/^[X.]+09$/);
-      expect(masked.endsWith('09')).toBe(true);
+      expect(masked).toBe('XXX.XXX.XXX-XX');
       expect(masked.includes('1')).toBe(false);
+      expect(masked.includes('9')).toBe(false);
     });
     it('returns input when invalid length', () => {
       expect(maskCPF('123')).toBe('123');
     });
     it('handles formatted CPF', () => {
       const masked = maskCPF('123.456.789-09');
-      expect(masked.endsWith('09')).toBe(true);
+      expect(masked).toBe('XXX.XXX.XXX-XX');
     });
   });
 
