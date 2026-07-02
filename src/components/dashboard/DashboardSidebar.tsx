@@ -193,6 +193,7 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { unreadCount } = useNotifications();
+  const { data: profile } = useProfile();
 
   // Close mobile menu on route change
   const location = useLocation();
@@ -227,7 +228,10 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
               userId={user?.id}
+              displayName={profile?.full_name ?? undefined}
+              companyName={profile?.company_name ?? undefined}
             />
+
           </SheetContent>
         </Sheet>
         <span className="text-sm font-semibold text-foreground">FrotaApp</span>
