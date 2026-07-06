@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "frotaapp-mcp",
+      "version": "0.1.0",
+      "title": "FrotaApp MCP"
+    },
+    "tools": [
+      {
+        "name": "search_vehicles",
+        "title": "Buscar veículos no marketplace",
+        "description": "Lista veículos disponíveis no marketplace público do FrotaApp, com filtros opcionais por cidade, faixa de preço semanal, combustível e câmbio. Retorna dados públicos apenas (sem placa, CPF ou dados do locador).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "Cidade do veículo (ex.: 'Curitiba')."
+            },
+            "max_weekly_price": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Valor semanal máximo em reais."
+            },
+            "fuel_type": {
+              "type": "string",
+              "enum": [
+                "flex",
+                "gasoline",
+                "diesel",
+                "electric",
+                "hybrid"
+              ],
+              "description": "Tipo de combustível."
+            },
+            "transmission": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "automatic"
+              ],
+              "description": "Câmbio."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Número máximo de resultados (padrão 10, máx 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_vehicle_details",
+        "title": "Detalhes de um veículo",
+        "description": "Retorna as informações públicas de um veículo específico do marketplace (specs, preço semanal, apps aceitos, fotos). Placa e dados do locador ficam ocultos.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "vehicle_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID do veículo."
+            }
+          },
+          "required": [
+            "vehicle_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
