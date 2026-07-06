@@ -12,12 +12,11 @@ import { z } from "npm:zod@^3.25.76";
 var search_vehicles_default = defineTool({
   name: "search_vehicles",
   title: "Buscar ve\xEDculos no marketplace",
-  description: "Lista ve\xEDculos dispon\xEDveis no marketplace p\xFAblico do FrotaApp, com filtros opcionais por cidade, faixa de pre\xE7o semanal, combust\xEDvel e c\xE2mbio. Retorna dados p\xFAblicos apenas (sem placa, CPF ou dados do locador).",
+  description: "Lista ve\xEDculos dispon\xEDveis no marketplace p\xFAblico do FrotaApp, com filtros opcionais por cidade, faixa de pre\xE7o semanal e combust\xEDvel. Retorna apenas dados p\xFAblicos (sem placa nem dados do locador).",
   inputSchema: {
     city: z.string().optional().describe("Cidade do ve\xEDculo (ex.: 'Curitiba')."),
     max_weekly_price: z.number().positive().optional().describe("Valor semanal m\xE1ximo em reais."),
     fuel_type: z.enum(["flex", "gasoline", "diesel", "electric", "hybrid"]).optional().describe("Tipo de combust\xEDvel."),
-    transmission: z.enum(["manual", "automatic"]).optional().describe("C\xE2mbio."),
     limit: z.number().int().min(1).max(50).optional().describe("N\xFAmero m\xE1ximo de resultados (padr\xE3o 10, m\xE1x 50).")
   },
   annotations: {
@@ -25,7 +24,7 @@ var search_vehicles_default = defineTool({
     idempotentHint: true,
     openWorldHint: true
   },
-  handler: async ({ city, max_weekly_price, fuel_type, transmission, limit }) => {
+  handler: async ({ city, max_weekly_price, fuel_type, limit }) => {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseKey) {
@@ -38,12 +37,11 @@ var search_vehicles_default = defineTool({
       auth: { persistSession: false, autoRefreshToken: false }
     });
     let query = supabase.from("vehicles").select(
-      "id, brand, model, year, color, fuel_type, transmission, weekly_price, km_franchise, city, state, images"
-    ).eq("status", "available").eq("marketplace_active", true).limit(limit ?? 10);
+      "id, brand, model, year, color, fuel_type, weekly_price, km_limit, city, state"
+    ).eq("status", "available").limit(limit ?? 10);
     if (city) query = query.ilike("city", `%${city}%`);
     if (max_weekly_price) query = query.lte("weekly_price", max_weekly_price);
     if (fuel_type) query = query.eq("fuel_type", fuel_type);
-    if (transmission) query = query.eq("transmission", transmission);
     const { data, error } = await query;
     if (error) {
       return {
@@ -59,7 +57,7 @@ var search_vehicles_default = defineTool({
           text: rows.length === 0 ? "Nenhum ve\xEDculo encontrado com os filtros informados." : `${rows.length} ve\xEDculo(s) encontrado(s):
 
 ` + rows.map(
-            (v) => `\u2022 ${v.brand} ${v.model} ${v.year} \u2014 ${v.city}/${v.state} \u2014 R$ ${v.weekly_price}/semana (${v.fuel_type}, ${v.transmission})`
+            (v) => `\u2022 ${v.brand} ${v.model} ${v.year} \u2014 ${v.city}/${v.state} \u2014 R$ ${v.weekly_price}/semana (${v.fuel_type})`
           ).join("\n")
         }
       ],
@@ -75,7 +73,7 @@ import { z as z2 } from "npm:zod@^3.25.76";
 var get_vehicle_details_default = defineTool2({
   name: "get_vehicle_details",
   title: "Detalhes de um ve\xEDculo",
-  description: "Retorna as informa\xE7\xF5es p\xFAblicas de um ve\xEDculo espec\xEDfico do marketplace (specs, pre\xE7o semanal, apps aceitos, fotos). Placa e dados do locador ficam ocultos.",
+  description: "Retorna as informa\xE7\xF5es p\xFAblicas de um ve\xEDculo espec\xEDfico do marketplace (specs, pre\xE7o semanal, apps aceitos, descri\xE7\xE3o). Placa e dados do locador ficam ocultos.",
   inputSchema: {
     vehicle_id: z2.string().uuid().describe("UUID do ve\xEDculo.")
   },
@@ -97,8 +95,8 @@ var get_vehicle_details_default = defineTool2({
       auth: { persistSession: false, autoRefreshToken: false }
     });
     const { data, error } = await supabase.from("vehicles").select(
-      "id, brand, model, year, color, fuel_type, transmission, category, weekly_price, deposit, km_franchise, excess_km_fee, allowed_apps, description, images, city, state, status, marketplace_active"
-    ).eq("id", vehicle_id).eq("marketplace_active", true).maybeSingle();
+      "id, brand, model, year, color, fuel_type, weekly_price, deposit, km_limit, excess_km_fee, allowed_apps, description, images, city, state, status"
+    ).eq("id", vehicle_id).maybeSingle();
     if (error) {
       return {
         content: [{ type: "text", text: `Erro: ${error.message}` }],
@@ -107,12 +105,7 @@ var get_vehicle_details_default = defineTool2({
     }
     if (!data) {
       return {
-        content: [
-          {
-            type: "text",
-            text: "Ve\xEDculo n\xE3o encontrado ou n\xE3o est\xE1 anunciado no marketplace."
-          }
-        ],
+        content: [{ type: "text", text: "Ve\xEDculo n\xE3o encontrado." }],
         isError: true
       };
     }
@@ -123,8 +116,8 @@ var get_vehicle_details_default = defineTool2({
           text: `${data.brand} ${data.model} ${data.year} (${data.color})
 Cidade: ${data.city}/${data.state}
 Pre\xE7o: R$ ${data.weekly_price}/semana \u2014 Dep\xF3sito: R$ ${data.deposit}
-Combust\xEDvel: ${data.fuel_type} \u2014 C\xE2mbio: ${data.transmission}
-Franquia KM: ${data.km_franchise} \u2014 Excedente: R$ ${data.excess_km_fee}/km
+Combust\xEDvel: ${data.fuel_type}
+Franquia KM: ${data.km_limit} \u2014 Excedente: R$ ${data.excess_km_fee}/km
 Apps aceitos: ${(data.allowed_apps ?? []).join(", ") || "\u2014"}
 Status: ${data.status}
 

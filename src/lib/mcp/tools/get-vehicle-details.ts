@@ -6,7 +6,7 @@ export default defineTool({
   name: "get_vehicle_details",
   title: "Detalhes de um veículo",
   description:
-    "Retorna as informações públicas de um veículo específico do marketplace (specs, preço semanal, apps aceitos, fotos). Placa e dados do locador ficam ocultos.",
+    "Retorna as informações públicas de um veículo específico do marketplace (specs, preço semanal, apps aceitos, descrição). Placa e dados do locador ficam ocultos.",
   inputSchema: {
     vehicle_id: z.string().uuid().describe("UUID do veículo."),
   },
@@ -33,10 +33,9 @@ export default defineTool({
     const { data, error } = await supabase
       .from("vehicles")
       .select(
-        "id, brand, model, year, color, fuel_type, transmission, category, weekly_price, deposit, km_franchise, excess_km_fee, allowed_apps, description, images, city, state, status, marketplace_active",
+        "id, brand, model, year, color, fuel_type, weekly_price, deposit, km_limit, excess_km_fee, allowed_apps, description, images, city, state, status",
       )
       .eq("id", vehicle_id)
-      .eq("marketplace_active", true)
       .maybeSingle();
 
     if (error) {
@@ -47,12 +46,7 @@ export default defineTool({
     }
     if (!data) {
       return {
-        content: [
-          {
-            type: "text",
-            text: "Veículo não encontrado ou não está anunciado no marketplace.",
-          },
-        ],
+        content: [{ type: "text", text: "Veículo não encontrado." }],
         isError: true,
       };
     }
@@ -64,8 +58,8 @@ export default defineTool({
           text: `${data.brand} ${data.model} ${data.year} (${data.color})
 Cidade: ${data.city}/${data.state}
 Preço: R$ ${data.weekly_price}/semana — Depósito: R$ ${data.deposit}
-Combustível: ${data.fuel_type} — Câmbio: ${data.transmission}
-Franquia KM: ${data.km_franchise} — Excedente: R$ ${data.excess_km_fee}/km
+Combustível: ${data.fuel_type}
+Franquia KM: ${data.km_limit} — Excedente: R$ ${data.excess_km_fee}/km
 Apps aceitos: ${(data.allowed_apps ?? []).join(", ") || "—"}
 Status: ${data.status}
 

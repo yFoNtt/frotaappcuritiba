@@ -15,7 +15,7 @@
       {
         "name": "search_vehicles",
         "title": "Buscar veículos no marketplace",
-        "description": "Lista veículos disponíveis no marketplace público do FrotaApp, com filtros opcionais por cidade, faixa de preço semanal, combustível e câmbio. Retorna dados públicos apenas (sem placa, CPF ou dados do locador).",
+        "description": "Lista veículos disponíveis no marketplace público do FrotaApp, com filtros opcionais por cidade, faixa de preço semanal e combustível. Retorna apenas dados públicos (sem placa nem dados do locador).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -44,14 +44,6 @@
               ],
               "description": "Tipo de combustível."
             },
-            "transmission": {
-              "type": "string",
-              "enum": [
-                "manual",
-                "automatic"
-              ],
-              "description": "Câmbio."
-            },
             "limit": {
               "type": "integer",
               "minimum": 1,
@@ -67,7 +59,7 @@
       {
         "name": "get_vehicle_details",
         "title": "Detalhes de um veículo",
-        "description": "Retorna as informações públicas de um veículo específico do marketplace (specs, preço semanal, apps aceitos, fotos). Placa e dados do locador ficam ocultos.",
+        "description": "Retorna as informações públicas de um veículo específico do marketplace (specs, preço semanal, apps aceitos, descrição). Placa e dados do locador ficam ocultos.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
