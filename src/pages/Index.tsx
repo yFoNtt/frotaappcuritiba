@@ -42,7 +42,8 @@ const Index = () => {
   return (
     <PublicLayout>
       <SEO
-        title="FrotaApp - Marketplace de Locação de Veículos para Apps"
+        title="Aluguel de veículos para Uber, 99 e apps"
+
         description="Encontre veículos para alugar e rodar com Uber, 99 e outros apps. Plataforma completa para motoristas e locadores com gestão de frota."
         canonical="/"
         jsonLd={[websiteJsonLd, organizationJsonLd]}
