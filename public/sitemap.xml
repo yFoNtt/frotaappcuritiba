@@ -41,8 +41,24 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://frotaappcuritiba.lovable.app/veiculos/c7c5c292-8a2f-408f-b8ea-252822d37dd8</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://frotaappcuritiba.lovable.app/veiculos/71eb3dc7-1403-4d16-b571-ed2623629aa7</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://frotaappcuritiba.lovable.app/privacidade</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://frotaappcuritiba.lovable.app/termos</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+
 </urlset>

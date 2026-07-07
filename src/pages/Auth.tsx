@@ -71,6 +71,10 @@ export default function Auth() {
         noindex
       />
       <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
+        <h1 className="sr-only">
+          {mode === 'login' ? 'Entrar no FrotaApp' : 'Criar conta no FrotaApp'}
+        </h1>
+
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

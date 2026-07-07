@@ -271,10 +271,10 @@ export default function VehicleDetails() {
             {vehicle.description && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-2xl font-semibold leading-none tracking-tight">
                     <FileText className="h-5 w-5" />
                     Descrição
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground leading-relaxed">{vehicle.description}</p>
@@ -286,10 +286,10 @@ export default function VehicleDetails() {
             {allowedApps.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-2xl font-semibold leading-none tracking-tight">
                     <Car className="h-5 w-5" />
                     Aplicativos Permitidos
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -306,11 +306,12 @@ export default function VehicleDetails() {
             {/* Vehicle Details */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <h2 className="flex items-center gap-2 text-2xl font-semibold leading-none tracking-tight">
                   <Car className="h-5 w-5" />
                   Especificações
-                </CardTitle>
+                </h2>
               </CardHeader>
+
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {plate && (

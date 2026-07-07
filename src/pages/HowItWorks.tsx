@@ -54,12 +54,30 @@ function StepsGrid({ steps }: { steps: typeof motoristaSteps }) {
 }
 
 export default function HowItWorks() {
+  const faqs = [
+    { q: 'Preciso ter CNH para alugar?', a: 'Sim, é necessário ter CNH válida categoria B ou superior.' },
+    { q: 'Como funciona a caução?', a: 'Valor de segurança definido pelo locador, devolvido ao final do contrato se não houver pendências.' },
+    { q: 'Posso usar o veículo em qualquer aplicativo?', a: 'Depende do locador. Cada anúncio especifica quais apps são permitidos (Uber, 99, InDriver, etc.).' },
+    { q: 'O que acontece se eu ultrapassar o limite de quilometragem?', a: 'Cada contrato define um limite. Se ultrapassar, é cobrado um valor por km excedente.' },
+  ];
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+
   return (
     <PublicLayout>
       <SEO
         title="Como Funciona - Aluguel de Veículos para Apps"
         description="Veja como o FrotaApp conecta motoristas e locadores em Curitiba. Processo simples para alugar ou anunciar veículos."
         canonical="/como-funciona"
+        jsonLd={faqJsonLd}
       />
 
       <section className="bg-muted/30 py-16">
@@ -73,6 +91,7 @@ export default function HowItWorks() {
 
       <section className="py-20">
         <div className="container">
+          <h2 className="mb-8 text-center text-3xl font-bold text-foreground">Passo a passo</h2>
           <Tabs defaultValue="motorista" className="mx-auto max-w-5xl">
             <TabsList className="mx-auto mb-12 grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="motorista">Para Motoristas</TabsTrigger>
@@ -89,6 +108,7 @@ export default function HowItWorks() {
           </Tabs>
         </div>
       </section>
+
 
       <section className="bg-muted/30 py-20">
         <div className="container">
