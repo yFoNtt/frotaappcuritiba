@@ -90,7 +90,9 @@ export default function Install() {
         </motion.div>
 
         <div className="mx-auto mt-12 max-w-3xl">
+          <h2 className="mb-6 text-center text-2xl font-bold text-foreground">Passo a passo para instalar</h2>
           <Tabs value={defaultTab} onValueChange={(v) => setDefaultTab(v as "android" | "ios")}>
+
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="android" className="gap-2">
                 <Smartphone className="h-4 w-4" /> Android
