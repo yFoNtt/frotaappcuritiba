@@ -30,12 +30,11 @@ export default defineTool({
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    // A tabela `vehicles` bloqueia SELECT direto para a chave anon via RLS;
+    // esta tool deve usar a mesma RPC SECURITY DEFINER que a página pública
+    // de detalhes do veículo usa, que nunca expõe placa/locador_id para anon.
     const { data, error } = await supabase
-      .from("vehicles")
-      .select(
-        "id, brand, model, year, color, fuel_type, weekly_price, deposit, km_limit, excess_km_fee, allowed_apps, description, images, city, state, status",
-      )
-      .eq("id", vehicle_id)
+      .rpc("get_public_vehicle", { _vehicle_id: vehicle_id })
       .maybeSingle();
 
     if (error) {
