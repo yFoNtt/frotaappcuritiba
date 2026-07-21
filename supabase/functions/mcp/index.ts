@@ -36,20 +36,25 @@ var search_vehicles_default = defineTool({
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
-    let query = supabase.from("vehicles").select(
-      "id, brand, model, year, color, fuel_type, weekly_price, km_limit, city, state"
-    ).eq("status", "available").limit(limit ?? 10);
-    if (city) query = query.ilike("city", `%${city}%`);
-    if (max_weekly_price) query = query.lte("weekly_price", max_weekly_price);
-    if (fuel_type) query = query.eq("fuel_type", fuel_type);
-    const { data, error } = await query;
+    const { data, error } = await supabase.rpc("get_public_vehicles");
     if (error) {
       return {
         content: [{ type: "text", text: `Erro na busca: ${error.message}` }],
         isError: true
       };
     }
-    const rows = data ?? [];
+    let rows = data ?? [];
+    if (city) {
+      const needle = city.toLowerCase();
+      rows = rows.filter((v) => v.city?.toLowerCase().includes(needle));
+    }
+    if (max_weekly_price) {
+      rows = rows.filter((v) => v.weekly_price <= max_weekly_price);
+    }
+    if (fuel_type) {
+      rows = rows.filter((v) => v.fuel_type === fuel_type);
+    }
+    rows = rows.slice(0, limit ?? 10);
     return {
       content: [
         {
