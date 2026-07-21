@@ -59,7 +59,7 @@ describe('Auth page - role-based redirect', () => {
   it('shows login form when no user is authenticated', () => {
     mockUseAuth.mockReturnValue({ user: null, role: null, loading: false, signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn() });
     renderAuthPage();
-    expect(screen.getByText('Entrar no FrotaApp')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Entrar no FrotaApp' })).toBeInTheDocument();
   });
 
   it('redirects admin user to /admin', async () => {
