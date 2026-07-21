@@ -99,13 +99,16 @@ var get_vehicle_details_default = defineTool2({
     const supabase = createClient2(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
-    const { data, error } = await supabase.rpc("get_public_vehicle", { _vehicle_id: vehicle_id }).maybeSingle();
+    const { data: rows, error } = await supabase.rpc("get_public_vehicle", {
+      _vehicle_id: vehicle_id
+    });
     if (error) {
       return {
         content: [{ type: "text", text: `Erro: ${error.message}` }],
         isError: true
       };
     }
+    const data = rows?.[0];
     if (!data) {
       return {
         content: [{ type: "text", text: "Ve\xEDculo n\xE3o encontrado." }],
