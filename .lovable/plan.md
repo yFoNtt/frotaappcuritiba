@@ -1,30 +1,26 @@
+## Diagnóstico
 
-## Plano
+O preview local está OK (HTTP 200, renderiza a home). O **site publicado** (`frotaappcuritiba.lovable.app`) carrega o HTML mas o React quebra imediatamente com:
 
-Aplicar as 6 entregas na ordem exata solicitada, sem tocar em nenhum outro arquivo.
+```
+PAGEERROR: supabaseUrl is required.
+```
 
-### 1. `src/lib/mcp/tools/search-vehicles.ts`
-Substituir a query direta em `.from("vehicles")` por `supabase.rpc("get_public_vehicles")` e aplicar os filtros (`city`, `max_weekly_price`, `fuel_type`, `limit`) em memória sobre o resultado. Remover o segundo bloco `const { data, error } = await query;` que fica redundante.
+Resultado: `<div id="root">` fica vazio e a página aparece "em branco" (só o badge "Edit with Lovable" fica visível).
 
-### 2. `src/lib/mcp/tools/get-vehicle-details.ts`
-Substituir a query direta por `supabase.rpc("get_public_vehicle", { _vehicle_id: vehicle_id }).maybeSingle()`. Restante do handler (tratamento de erro, formatação) permanece.
+### Causa
 
-### 3. `src/test/auth-redirect.test.tsx`
-Trocar a asserção `getByText('Entrar no FrotaApp')` por `getByRole('heading', { level: 1, name: 'Entrar no FrotaApp' })` para lidar com o h1 sr-only + heading visível.
+O bundle atualmente publicado foi gerado **sem** as variáveis `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` embutidas. Isso faz o `createClient(...)` em `src/integrations/supabase/client.ts` (linhas 5–11) receber `undefined` e explodir na inicialização do módulo, antes de qualquer rota React montar.
 
-### 4. `eslint.config.js`
-Adicionar `"supabase/functions/mcp/**"` na lista de `ignores` para não lintar o arquivo auto-gerado do MCP.
+Hoje o `.env` local **já contém** essas variáveis corretamente — ou seja, o bundle atual em produção é antigo/stale, feito antes do `.env` ficar consistente. Um novo build/publish resolve.
 
-### 5. `package.json`
-Mover `@playwright/test` de `dependencies` para `devDependencies` (mantendo `^1.49.0`).
+## Ação
 
-### 6. Terminal
-Rodar `npm audit fix` (sem `--force`). Aceito que restarão 2 warnings em `esbuild`/`vite` (bloqueados por bump major do Vite via `@lovable.dev/mcp-js`).
+1. **Republicar o app** — um novo deploy pega o `.env` atual e embute `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no bundle, eliminando o `supabaseUrl is required`.
+2. **Verificar após publicar** — abrir `https://frotaappcuritiba.lovable.app/` e confirmar que a home renderiza (Header, Hero, cards) sem `PAGEERROR` no console.
 
-### Validação
-Após as edições: rodar typecheck e vitest para confirmar que o teste de auth-redirect passa e que as tools MCP compilam. Não regenerar `supabase/functions/mcp/index.ts` — o plugin Vite cuida disso na próxima build. Após a build, chamar `app_mcp_server--extract_mcp_manifest` para revalidar o manifest e `supabase--deploy_edge_functions` para publicar a função `mcp` com o novo comportamento (uso das RPCs).
+Nenhum código do projeto precisa ser alterado. `src/integrations/supabase/client.ts` é auto-gerado e as regras do projeto proíbem editá-lo, e o `.env` já está correto.
 
-### Não tocar
-- `supabase/functions/mcp/index.ts` (auto-gerado)
-- `bun.lock` / `bun.lockb` / `package-lock.json` (fora do que `npm audit fix` alterar sozinho)
-- Qualquer outro arquivo
+## Observação secundária (não é o que quebra o site)
+
+No preview local existe um warning CORS em `functions/v1/log-visit` porque o `ALLOWED_ORIGIN` só libera o domínio publicado, não `http://localhost:8080`. É um log fire-and-forget e **não afeta a renderização**. Fica registrado aqui, mas não faz parte desta correção.
