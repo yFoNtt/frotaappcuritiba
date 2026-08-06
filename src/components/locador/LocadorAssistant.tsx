@@ -34,6 +34,73 @@ export function LocadorAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // --- Botão flutuante arrastável (vertical) ---
+  const BTN_STORAGE_KEY = "frotaapp:assistant-btn-y";
+  const MIN_Y = 16;
+  const clampY = (y: number) => {
+    const max = typeof window !== "undefined" ? Math.max(MIN_Y, window.innerHeight - 72) : 9999;
+    return Math.min(Math.max(y, MIN_Y), max);
+  };
+  const [offsetY, setOffsetY] = useState<number>(() => {
+    if (typeof window === "undefined") return 24;
+    const stored = Number(window.localStorage.getItem(BTN_STORAGE_KEY));
+    return Number.isFinite(stored) && stored > 0 ? Math.min(Math.max(stored, MIN_Y), Math.max(MIN_Y, window.innerHeight - 72)) : 24;
+  });
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ startY: 0, startOffset: 0, didDrag: false });
+
+  useEffect(() => {
+    const onResize = () => setOffsetY((y) => clampY(y));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const persistY = (y: number) => {
+    try {
+      window.localStorage.setItem(BTN_STORAGE_KEY, String(y));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    dragRef.current = { startY: e.clientY, startOffset: offsetY, didDrag: false };
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    const delta = dragRef.current.startY - e.clientY;
+    if (Math.abs(delta) > 5) dragRef.current.didDrag = true;
+    setOffsetY(clampY(dragRef.current.startOffset + delta));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    setDragging(false);
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    persistY(offsetY);
+  };
+
+  const handleFabClick = () => {
+    if (dragRef.current.didDrag) {
+      dragRef.current.didDrag = false;
+      return;
+    }
+    setOpen(true);
+  };
+
+  const handleFabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    setOffsetY((y) => {
+      const next = clampY(y + (e.key === "ArrowUp" ? 20 : -20));
+      persistY(next);
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 150);
@@ -184,19 +251,27 @@ export function LocadorAssistant() {
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button (arrastável na vertical) */}
       <Button
         type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Abrir Assistente IA"
+        onClick={handleFabClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onKeyDown={handleFabKeyDown}
+        aria-label="Abrir Assistente IA (arraste para reposicionar)"
+        title="Assistente IA — arraste para cima ou para baixo"
+        style={{ bottom: offsetY, touchAction: "none" }}
         className={cn(
-          "fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg",
+          "fixed right-6 z-40 h-14 w-14 rounded-full shadow-lg",
           "bg-primary text-primary-foreground hover:bg-primary/90",
-          "transition-transform hover:scale-105",
+          dragging ? "cursor-grabbing scale-105" : "cursor-grab transition-transform hover:scale-105",
         )}
       >
         <Sparkles className="h-6 w-6" />
       </Button>
+
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
