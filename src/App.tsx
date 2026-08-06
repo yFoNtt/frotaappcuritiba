@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import NotFound from "./pages/NotFound";
@@ -32,7 +31,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <ErrorBoundary>
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="frotaapp-theme">
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -55,7 +53,6 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
   </ThemeProvider>
-  </ErrorBoundary>
 );
 
 export default App;
