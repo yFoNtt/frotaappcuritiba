@@ -65,5 +65,7 @@ export default defineConfig(({ mode }) => {
       },
     },
   },
-}));
+  };
+});
+
 
