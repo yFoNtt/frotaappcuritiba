@@ -251,19 +251,27 @@ export function LocadorAssistant() {
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button (arrastável na vertical) */}
       <Button
         type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Abrir Assistente IA"
+        onClick={handleFabClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onKeyDown={handleFabKeyDown}
+        aria-label="Abrir Assistente IA (arraste para reposicionar)"
+        title="Assistente IA — arraste para cima ou para baixo"
+        style={{ bottom: offsetY, touchAction: "none" }}
         className={cn(
-          "fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg",
+          "fixed right-6 z-40 h-14 w-14 rounded-full shadow-lg",
           "bg-primary text-primary-foreground hover:bg-primary/90",
-          "transition-transform hover:scale-105",
+          dragging ? "cursor-grabbing scale-105" : "cursor-grab transition-transform hover:scale-105",
         )}
       >
         <Sparkles className="h-6 w-6" />
       </Button>
+
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
