@@ -8,6 +8,7 @@ import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 // fallback caso o build seja gerado sem o .env — evita a tela
 // "Configuração ausente" em produção.
 const FALLBACK_SUPABASE_URL = "https://bohycsldnskyuwsdxrqt.supabase.co";
+const FALLBACK_SUPABASE_PROJECT_ID = "bohycsldnskyuwsdxrqt";
 const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvaHljc2xkbnNreXV3c2R4cnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODQ1OTIsImV4cCI6MjA4NDE2MDU5Mn0.6Op1rKmqr8bmfXlM_iCPC1yP36DaZ1TnRwKQqXc4jZQ";
 
@@ -18,11 +19,15 @@ export default defineConfig(({ mode }) => {
   if (!env.VITE_SUPABASE_URL) {
     define["import.meta.env.VITE_SUPABASE_URL"] = JSON.stringify(FALLBACK_SUPABASE_URL);
   }
+  if (!env.VITE_SUPABASE_PROJECT_ID) {
+    define["import.meta.env.VITE_SUPABASE_PROJECT_ID"] = JSON.stringify(FALLBACK_SUPABASE_PROJECT_ID);
+  }
   if (!env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     define["import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY"] = JSON.stringify(
       FALLBACK_SUPABASE_PUBLISHABLE_KEY,
     );
   }
+
 
   return {
   define,
