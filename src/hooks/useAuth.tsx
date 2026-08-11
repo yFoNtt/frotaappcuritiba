@@ -235,25 +235,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Use rate-limited edge function for login
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/rate-limited-login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      // Use rate-limited edge function for login (URL resolvida pelo cliente)
+      const { data, error: invokeError } = await supabase.functions.invoke('rate-limited-login', {
+        body: { email, password },
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          return { error: new Error(data.error || 'Muitas tentativas. Tente novamente mais tarde.') };
+      if (invokeError) {
+        let payload: { error?: string } | null = null;
+        let status = 0;
+        const ctx = (invokeError as { context?: Response }).context;
+        if (ctx && typeof ctx.json === 'function') {
+          status = ctx.status;
+          try {
+            payload = await ctx.json();
+          } catch {
+            payload = null;
+          }
         }
-        return { error: new Error(data.error || 'Email ou senha incorretos') };
+        if (status === 429) {
+          return { error: new Error(payload?.error || 'Muitas tentativas. Tente novamente mais tarde.') };
+        }
+        return { error: new Error(payload?.error || 'Email ou senha incorretos') };
       }
+
 
       // Set session from edge function response
       if (data.session) {
