@@ -30,6 +30,7 @@ import { useMemo } from 'react';
 import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
 import { LocadorInsights } from '@/components/locador/LocadorInsights';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/hooks/useAuth';
 
 
@@ -65,6 +66,8 @@ const LOCADOR_TOUR_STEPS = [
 
 export default function LocadorDashboard() {
   const { user } = useAuth();
+  const onboarding = useOnboarding();
+
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useLocadorVehicles();
   const { data: drivers = [], isLoading: driversLoading } = useLocadorDrivers();
@@ -168,7 +171,7 @@ export default function LocadorDashboard() {
         </div>
 
         {/* Onboarding (auto-hides when complete or dismissed) */}
-        <OnboardingChecklist />
+        <OnboardingChecklist onReplayTour={onboarding.replayTour} />
 
         {/* Insights */}
         <LocadorInsights />
@@ -483,9 +486,11 @@ export default function LocadorDashboard() {
       {user?.id && (
         <OnboardingTour
           steps={LOCADOR_TOUR_STEPS}
-          storageKey={`frotaapp:locador:onboarding_seen:${user.id}`}
+          open={onboarding.tourOpen}
+          onFinish={onboarding.finishTour}
         />
       )}
+
 
     </DashboardLayout>
   );

@@ -51,6 +51,8 @@ const mockProfile: Profile = {
   whatsapp: '11999999999', company_name: 'Frota SP Ltda', document_type: 'cpf',
   document_number: '12345678901', cnh_number: null, cnh_expiry: null,
   city: 'São Paulo', state: 'SP',
+  onboarding_tour_seen_at: null, onboarding_dismissed_at: null,
+
   created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
 };
 

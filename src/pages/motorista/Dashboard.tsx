@@ -23,6 +23,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { OnboardingChecklist } from '@/components/motorista/OnboardingChecklist';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 const MOTORISTA_TOUR_STEPS = [
   {
@@ -54,6 +55,8 @@ const MOTORISTA_TOUR_STEPS = [
 
 export default function MotoristaDashboard() {
   const { user } = useAuth();
+  const onboarding = useOnboarding();
+
   const { driver, vehicle, contract, isLoading: dataLoading } = useMotoristaFullData();
   const { data: stats, isLoading: statsLoading } = useMotoristaStats();
   const { data: payments = [], isLoading: paymentsLoading } = useMotoristaPayments();
@@ -131,7 +134,7 @@ export default function MotoristaDashboard() {
         </div>
 
         {/* Onboarding (auto-some quando completo ou dispensado) */}
-        <OnboardingChecklist />
+        <OnboardingChecklist onReplayTour={onboarding.replayTour} />
 
         {/* Alert for overdue payments */}
         {pagamentosAtrasados > 0 && (
@@ -378,8 +381,10 @@ export default function MotoristaDashboard() {
       {user?.id && (
         <OnboardingTour
           steps={MOTORISTA_TOUR_STEPS}
-          storageKey={`motorista_onboarding_tour_${user.id}`}
+          open={onboarding.tourOpen}
+          onFinish={onboarding.finishTour}
         />
+
       )}
     </MotoristaLayout>
   );
