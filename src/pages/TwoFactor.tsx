@@ -202,9 +202,10 @@ export default function TwoFactor() {
                   Enviando...
                 </>
               ) : secondsLeft > 0 ? (
-                `Reenviar código em ${secondsLeft}s`
+                `Reenviar e-mail em ${secondsLeft}s`
               ) : (
-                'Reenviar código'
+                'Reenviar e-mail'
+
               )}
             </Button>
           </CardContent>
