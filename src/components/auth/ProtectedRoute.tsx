@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, mfaRequired, mfaVerified } = useAuth();
   const { status: consentStatus, isLoading: consentLoading } = useConsentStatus();
   const location = useLocation();
 
@@ -27,6 +27,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Verificação em duas etapas: obrigatória para admin/locador e opcional
+  // para motorista (ativada nas Configurações).
+  if (mfaRequired && !mfaVerified) {
+    return <Navigate to="/verificacao" state={{ from: location }} replace />;
+  }
+
   if (allowedRoles) {
     if (!role || !allowedRoles.includes(role)) {
       // Redirect to appropriate dashboard based on role, or login if no role
@@ -39,6 +45,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (role !== 'admin' && !consentLoading && consentStatus !== 'valid') {
     return <Navigate to="/consent-required" replace />;
   }
+
 
   return <>{children}</>;
 }
