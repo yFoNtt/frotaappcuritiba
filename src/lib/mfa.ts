@@ -55,4 +55,16 @@ export function isValidMfaCode(code: string): boolean {
   return /^\d{6}$/.test(code.trim());
 }
 
+/**
+ * Detecta o retorno pelo link mágico enviado por e-mail.
+ * O Supabase devolve o token no hash (`#access_token=...&type=magiclink`)
+ * ou, no fluxo PKCE, um `?code=` na query string.
+ */
+export function isMagicLinkReturn(hash: string, search = ''): boolean {
+  const h = (hash || '').replace(/^#/, '');
+  const params = new URLSearchParams(h);
+  if (params.get('access_token') || params.get('type') === 'magiclink') return true;
+  return new URLSearchParams(search || '').has('code');
+}
+
 export const MFA_RESEND_SECONDS = 60;
