@@ -34,6 +34,8 @@ export const publicRoutes = (
     <Route path="/termos" element={<Lazy><Terms /></Lazy>} />
     <Route path="/consent-required" element={<Lazy><ConsentGate /></Lazy>} />
     <Route path="/convite/:token" element={<Lazy><ClaimInvite /></Lazy>} />
+    <Route path="/verificacao" element={<Lazy><TwoFactor /></Lazy>} />
+
   </>
 );
 
