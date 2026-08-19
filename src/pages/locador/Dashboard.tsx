@@ -30,6 +30,7 @@ import { useMemo } from 'react';
 import { OnboardingChecklist } from '@/components/locador/OnboardingChecklist';
 import { LocadorInsights } from '@/components/locador/LocadorInsights';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/hooks/useAuth';
 
 
@@ -170,7 +171,7 @@ export default function LocadorDashboard() {
         </div>
 
         {/* Onboarding (auto-hides when complete or dismissed) */}
-        <OnboardingChecklist />
+        <OnboardingChecklist onReplayTour={onboarding.replayTour} />
 
         {/* Insights */}
         <LocadorInsights />

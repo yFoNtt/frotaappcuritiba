@@ -23,6 +23,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { OnboardingChecklist } from '@/components/motorista/OnboardingChecklist';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 const MOTORISTA_TOUR_STEPS = [
   {
@@ -131,7 +132,7 @@ export default function MotoristaDashboard() {
         </div>
 
         {/* Onboarding (auto-some quando completo ou dispensado) */}
-        <OnboardingChecklist />
+        <OnboardingChecklist onReplayTour={onboarding.replayTour} />
 
         {/* Alert for overdue payments */}
         {pagamentosAtrasados > 0 && (
