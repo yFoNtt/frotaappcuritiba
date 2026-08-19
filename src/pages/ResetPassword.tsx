@@ -39,6 +39,13 @@ export default function ResetPassword() {
       return;
     }
 
+    if (!/[a-z]/.test(password)) {
+      toast.error('A senha deve conter pelo menos uma letra minúscula');
+      return;
+    }
+
+
+
     if (!/[0-9]/.test(password)) {
       toast.error('A senha deve conter pelo menos um número');
       return;
