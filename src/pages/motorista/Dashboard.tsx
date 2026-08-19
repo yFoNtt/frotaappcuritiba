@@ -381,8 +381,10 @@ export default function MotoristaDashboard() {
       {user?.id && (
         <OnboardingTour
           steps={MOTORISTA_TOUR_STEPS}
-          storageKey={`motorista_onboarding_tour_${user.id}`}
+          open={onboarding.tourOpen}
+          onFinish={onboarding.finishTour}
         />
+
       )}
     </MotoristaLayout>
   );
