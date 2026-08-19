@@ -17,9 +17,12 @@ export interface Profile {
   cnh_expiry: string | null;
   city: string | null;
   state: string | null;
+  onboarding_tour_seen_at: string | null;
+  onboarding_dismissed_at: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export function useProfile() {
   const { user } = useAuth();
