@@ -101,6 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let initialized = false;
 
+    const resolveUser = async (userId: string) => {
+      const [r, enabled] = await Promise.all([fetchUserRole(userId), fetchMfaEnabled(userId)]);
+      setRole(r);
+      setMfaEnabled(enabled);
+      setMfaVerifiedState(isMfaVerified(userId));
+      setLoading(false);
+      await checkBlockedAndSignOut();
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -111,14 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // Keep loading true until role resolves to prevent UI flash
           setTimeout(() => {
-            fetchUserRole(session.user.id).then(async (r) => {
-              setRole(r);
-              setLoading(false);
-              await checkBlockedAndSignOut();
-            });
+            resolveUser(session.user.id);
           }, 0);
         } else {
           setRole(null);
+          setMfaEnabled(false);
+          setMfaVerifiedState(false);
           setLoading(false);
         }
       }
@@ -131,11 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchUserRole(session.user.id).then(async (r) => {
-          setRole(r);
-          setLoading(false);
-          await checkBlockedAndSignOut();
-        });
+        resolveUser(session.user.id);
       } else {
         setLoading(false);
       }
@@ -143,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [checkBlockedAndSignOut]);
+
 
   // Revalidação periódica: se o admin bloquear o usuário enquanto a aba já
   // está aberta com sessão válida, o logout acontece em até 3 minutos —
