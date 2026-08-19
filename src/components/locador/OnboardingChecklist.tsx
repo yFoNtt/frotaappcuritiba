@@ -1,10 +1,10 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Circle, X, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, X, ArrowRight, PartyPopper, HelpCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/hooks/useAuth';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { useProfile } from '@/hooks/useProfile';
 import { useLocadorVehicles } from '@/hooks/useVehicles';
 import { useLocadorDrivers } from '@/hooks/useDrivers';
@@ -20,22 +20,18 @@ interface ChecklistItem {
   disabledHint?: string;
 }
 
-export function OnboardingChecklist() {
-  const { user } = useAuth();
-  const storageKey = user ? `onboarding_dismissed_${user.id}` : null;
+interface OnboardingChecklistProps {
+  onReplayTour?: () => void;
+}
+
+export function OnboardingChecklist({ onReplayTour }: OnboardingChecklistProps) {
+  const { ready, dismissed, dismissChecklist } = useOnboarding();
 
   const { data: profile } = useProfile();
   const { data: vehicles = [] } = useLocadorVehicles();
   const { data: drivers = [] } = useLocadorDrivers();
   const { data: contracts = [] } = useLocadorContracts();
   const { data: templates = [] } = useChecklistTemplates();
-
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    setDismissed(localStorage.getItem(storageKey) === '1');
-  }, [storageKey]);
 
   const items: ChecklistItem[] = useMemo(() => {
     const hasVehicle = vehicles.length > 0;
@@ -81,12 +77,17 @@ export function OnboardingChecklist() {
   const total = items.length;
   const isComplete = done === total;
 
-  if (dismissed || isComplete) return null;
+  const autoDismissed = useRef(false);
+  useEffect(() => {
+    if (ready && isComplete && !dismissed && !autoDismissed.current) {
+      autoDismissed.current = true;
+      dismissChecklist();
+    }
+  }, [ready, isComplete, dismissed, dismissChecklist]);
 
-  const handleDismiss = () => {
-    if (storageKey) localStorage.setItem(storageKey, '1');
-    setDismissed(true);
-  };
+  if (!ready || dismissed) return null;
+
+  const handleDismiss = () => dismissChecklist();
 
   return (
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
