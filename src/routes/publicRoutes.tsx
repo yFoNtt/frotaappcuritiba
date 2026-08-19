@@ -15,6 +15,8 @@ const Privacy = lazy(() => import("@/pages/Privacy"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const ConsentGate = lazy(() => import("@/pages/ConsentGate"));
 const ClaimInvite = lazy(() => import("@/pages/ClaimInvite"));
+const TwoFactor = lazy(() => import("@/pages/TwoFactor"));
+
 
 export const publicRoutes = (
   <>
