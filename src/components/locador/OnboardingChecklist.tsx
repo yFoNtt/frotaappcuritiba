@@ -89,6 +89,22 @@ export function OnboardingChecklist({ onReplayTour }: OnboardingChecklistProps) 
 
   const handleDismiss = () => dismissChecklist();
 
+  if (isComplete) {
+    return (
+      <Card className="border-success/30 bg-gradient-to-br from-success/5 to-transparent">
+        <CardContent className="flex items-center gap-3 p-4 sm:p-6">
+          <PartyPopper className="h-6 w-6 shrink-0 text-success" />
+          <div>
+            <h2 className="text-base font-bold tracking-tight">Tudo pronto!</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Você concluiu todos os passos iniciais. Bom trabalho!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
       <CardContent className="p-4 sm:p-6">
@@ -161,6 +177,15 @@ export function OnboardingChecklist({ onReplayTour }: OnboardingChecklistProps) 
             );
           })}
         </ul>
+
+        {onReplayTour && (
+          <div className="mt-4 border-t border-border pt-3">
+            <Button type="button" variant="ghost" size="sm" onClick={onReplayTour}>
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Rever o passo a passo
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
