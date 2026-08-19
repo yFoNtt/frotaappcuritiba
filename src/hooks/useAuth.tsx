@@ -318,12 +318,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const refreshMfaSettings = useCallback(async () => {
+    if (user) {
+      setMfaEnabled(await fetchMfaEnabled(user.id));
+    }
+  }, [user]);
+
+  const markMfaVerified = useCallback(() => {
+    if (user) {
+      setMfaVerified(user.id);
+      setMfaVerifiedState(true);
+    }
+  }, [user]);
+
   const signOut = useCallback(async () => {
+    clearMfaVerified(user?.id);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setRole(null);
-  }, []);
+    setMfaEnabled(false);
+    setMfaVerifiedState(false);
+  }, [user]);
 
   // Auto-logout after 30 minutes of inactivity
   const handleInactivityTimeout = useCallback(async () => {
@@ -337,11 +353,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useInactivityTimeout(handleInactivityTimeout, !!user);
 
+  const mfaRequired = !!user && isMfaRequired(role, mfaEnabled);
+
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut, refreshRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        role,
+        loading,
+        mfaRequired,
+        mfaVerified,
+        markMfaVerified,
+        refreshMfaSettings,
+        signUp,
+        signIn,
+        signOut,
+        refreshRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {
