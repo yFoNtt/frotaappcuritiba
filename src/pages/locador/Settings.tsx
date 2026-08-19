@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChecklistTemplateEditor } from '@/components/inspections/ChecklistTemplateEditor';
 import { PrivacySection } from '@/components/settings/PrivacySection';
+import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile, useUpdatePassword } from '@/hooks/useProfile';
