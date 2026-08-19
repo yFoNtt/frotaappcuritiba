@@ -55,6 +55,8 @@ const MOTORISTA_TOUR_STEPS = [
 
 export default function MotoristaDashboard() {
   const { user } = useAuth();
+  const onboarding = useOnboarding();
+
   const { driver, vehicle, contract, isLoading: dataLoading } = useMotoristaFullData();
   const { data: stats, isLoading: statsLoading } = useMotoristaStats();
   const { data: payments = [], isLoading: paymentsLoading } = useMotoristaPayments();
