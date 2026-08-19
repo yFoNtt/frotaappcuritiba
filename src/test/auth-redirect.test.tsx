@@ -107,7 +107,7 @@ describe('Auth page - role-based redirect', () => {
     }, { timeout: 500 });
   });
 
-  it('stays on auth page when user exists but role is null', () => {
+  it('shows role selection (no redirect loop) when user exists but role is null', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '4', email: 'norole@test.com' },
       role: null,
@@ -118,7 +118,9 @@ describe('Auth page - role-based redirect', () => {
       refreshRole: vi.fn(),
     });
     renderAuthPage();
-    // Should NOT redirect — shows role selection redirect state
-    expect(screen.getByText('Redirecionando para seleção de perfil...')).toBeInTheDocument();
+    // Não pode ficar preso no spinner "Redirecionando..."
+    expect(screen.queryByText('Redirecionando para seleção de perfil...')).not.toBeInTheDocument();
+    expect(screen.getByText('Bem-vindo ao FrotaApp!')).toBeInTheDocument();
   });
 });
+
