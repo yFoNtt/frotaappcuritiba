@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
+import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -19,6 +20,10 @@ interface AuthContextType {
   session: Session | null;
   role: AppRole | null;
   loading: boolean;
+  mfaRequired: boolean;
+  mfaVerified: boolean;
+  markMfaVerified: () => void;
+  refreshMfaSettings: () => Promise<void>;
   signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -32,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaVerified, setMfaVerifiedState] = useState(false);
+
 
   const fetchUserRole = async (userId: string) => {
     try {
