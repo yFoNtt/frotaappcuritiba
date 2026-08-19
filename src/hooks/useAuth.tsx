@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
+import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -19,6 +20,10 @@ interface AuthContextType {
   session: Session | null;
   role: AppRole | null;
   loading: boolean;
+  mfaRequired: boolean;
+  mfaVerified: boolean;
+  markMfaVerified: () => void;
+  refreshMfaSettings: () => Promise<void>;
   signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -32,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaVerified, setMfaVerifiedState] = useState(false);
+
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -51,6 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
   };
+
+  const fetchMfaEnabled = async (userId: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('mfa_enabled')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data?.mfa_enabled === true;
+    } catch (error) {
+      console.error('Error fetching MFA settings:', error);
+      return false;
+    }
+  };
+
 
   // Checa is_current_user_blocked() e força logout se a conta foi
   // bloqueada pelo admin. Chamado na carga inicial, em toda mudança de
@@ -78,6 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let initialized = false;
 
+    const resolveUser = async (userId: string) => {
+      const [r, enabled] = await Promise.all([fetchUserRole(userId), fetchMfaEnabled(userId)]);
+      setRole(r);
+      setMfaEnabled(enabled);
+      setMfaVerifiedState(isMfaVerified(userId));
+      setLoading(false);
+      await checkBlockedAndSignOut();
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -88,14 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // Keep loading true until role resolves to prevent UI flash
           setTimeout(() => {
-            fetchUserRole(session.user.id).then(async (r) => {
-              setRole(r);
-              setLoading(false);
-              await checkBlockedAndSignOut();
-            });
+            resolveUser(session.user.id);
           }, 0);
         } else {
           setRole(null);
+          setMfaEnabled(false);
+          setMfaVerifiedState(false);
           setLoading(false);
         }
       }
@@ -108,11 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchUserRole(session.user.id).then(async (r) => {
-          setRole(r);
-          setLoading(false);
-          await checkBlockedAndSignOut();
-        });
+        resolveUser(session.user.id);
       } else {
         setLoading(false);
       }
@@ -120,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [checkBlockedAndSignOut]);
+
 
   // Revalidação periódica: se o admin bloquear o usuário enquanto a aba já
   // está aberta com sessão válida, o logout acontece em até 3 minutos —
@@ -291,12 +318,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const refreshMfaSettings = useCallback(async () => {
+    if (user) {
+      setMfaEnabled(await fetchMfaEnabled(user.id));
+    }
+  }, [user]);
+
+  const markMfaVerified = useCallback(() => {
+    if (user) {
+      setMfaVerified(user.id);
+      setMfaVerifiedState(true);
+    }
+  }, [user]);
+
   const signOut = useCallback(async () => {
+    clearMfaVerified(user?.id);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setRole(null);
-  }, []);
+    setMfaEnabled(false);
+    setMfaVerifiedState(false);
+  }, [user]);
 
   // Auto-logout after 30 minutes of inactivity
   const handleInactivityTimeout = useCallback(async () => {
@@ -310,11 +353,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useInactivityTimeout(handleInactivityTimeout, !!user);
 
+  const mfaRequired = !!user && isMfaRequired(role, mfaEnabled);
+
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signUp, signIn, signOut, refreshRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        role,
+        loading,
+        mfaRequired,
+        mfaVerified,
+        markMfaVerified,
+        refreshMfaSettings,
+        signUp,
+        signIn,
+        signOut,
+        refreshRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {

@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
+
 import { 
   User, 
   Bell, 
@@ -186,8 +188,12 @@ export default function MotoristaSettings() {
           </CardContent>
         </Card>
 
+        {/* Two-factor */}
+        <TwoFactorCard />
+
         {/* Security */}
         <Card>
+
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
