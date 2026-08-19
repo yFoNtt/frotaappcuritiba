@@ -60,6 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchMfaEnabled = async (userId: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('mfa_enabled')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data?.mfa_enabled === true;
+    } catch (error) {
+      console.error('Error fetching MFA settings:', error);
+      return false;
+    }
+  };
+
+
   // Checa is_current_user_blocked() e força logout se a conta foi
   // bloqueada pelo admin. Chamado na carga inicial, em toda mudança de
   // auth state, e periodicamente enquanto o app fica aberto.
