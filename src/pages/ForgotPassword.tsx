@@ -9,6 +9,7 @@ import { Car, Mail, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
+import { translateAuthError } from '@/components/auth/authErrors';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -17,23 +18,37 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email.trim()) {
-      toast.error('Digite seu email');
+
+    const trimmed = email.trim();
+
+    if (!trimmed) {
+      toast.error('Digite seu e-mail para receber o link de recuperação.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
+      toast.error('Digite um e-mail válido.');
       return;
     }
 
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
-    });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setEmailSent(true);
-      toast.success('Email de recuperação enviado!');
+      if (error) {
+        console.error('Reset password error:', error);
+        toast.error(translateAuthError(error, 'reset'));
+      } else {
+        // Resposta neutra: não revelamos se o e-mail existe na base.
+        setEmailSent(true);
+        toast.success('Se existir uma conta com este e-mail, enviamos o link de recuperação.');
+      }
+    } catch (err) {
+      console.error('Reset password error:', err);
+      toast.error(translateAuthError(err, 'reset'));
     }
 
     setLoading(false);
@@ -71,8 +86,8 @@ export default function ForgotPassword() {
                    <CheckCircle2 className="h-8 w-8 text-success" />
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
-                  Enviamos um link de recuperação para <strong>{email}</strong>. 
-                  O link expira em 1 hora.
+                  Se existir uma conta com o e-mail <strong>{email}</strong>, enviamos um link
+                  de recuperação. O link expira em 1 hora. Verifique também a caixa de spam.
                 </p>
                 <Button
                   variant="outline"

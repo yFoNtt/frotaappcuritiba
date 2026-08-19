@@ -8,7 +8,8 @@ import { PasswordField } from './PasswordField';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { getWeakPasswordMessage } from './utils';
-import { lovable } from '@/integrations/lovable/index';
+import { translateAuthError } from './authErrors';
+import { useGoogleSignIn } from './useGoogleSignIn';
 import { GoogleIcon } from './GoogleIcon';
 
 export function LoginForm() {
@@ -16,27 +17,10 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const { googleLoading, handleGoogleSignIn } = useGoogleSignIn();
   const [passwordWarning, setPasswordWarning] = useState('');
   const [rateLimitMessage, setRateLimitMessage] = useState('');
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    try {
-      const { error } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        toast.error('Erro ao entrar com Google. Tente novamente.');
-        console.error('Google OAuth error:', error);
-      }
-    } catch (err) {
-      toast.error('Erro ao entrar com Google. Tente novamente.');
-      console.error('Google OAuth error:', err);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +43,10 @@ export function LoginForm() {
         setPasswordWarning(weakMsg);
         toast.error(weakMsg);
       } else {
-        toast.error(msg);
+        // Mensagens vindas da função de login já estão em português;
+        // as demais (backend) são traduzidas.
+        const isPortuguese = /[áàâãéêíóôõúç]/i.test(msg) || /senha|tentativa|conta|bloquead/i.test(msg);
+        toast.error(isPortuguese ? msg : translateAuthError(error, 'login'));
       }
     } else {
       toast.success('Login realizado com sucesso!');

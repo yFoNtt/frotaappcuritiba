@@ -8,6 +8,7 @@ import { PasswordField } from '@/components/auth/PasswordField';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
+import { translateAuthError } from '@/components/auth/authErrors';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -16,8 +17,26 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validSession, setValidSession] = useState<boolean | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Erros vindos do link (hash ou query) têm prioridade sobre a sessão
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlError =
+      hashParams.get('error_description') ||
+      hashParams.get('error_code') ||
+      hashParams.get('error') ||
+      queryParams.get('error_description') ||
+      queryParams.get('error_code') ||
+      queryParams.get('error');
+
+    if (urlError) {
+      setLinkError(translateAuthError(urlError, 'update'));
+      setValidSession(false);
+      return;
+    }
+
     // Check if user came from email link (has valid session)
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -63,21 +82,27 @@ export default function ResetPassword() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password: password,
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      setSuccess(true);
-      toast.success('Senha atualizada com sucesso!');
-      
-      // Sign out and redirect to login after 3 seconds
-      setTimeout(async () => {
-        await supabase.auth.signOut();
-        navigate('/login');
-      }, 3000);
+      if (error) {
+        console.error('Update password error:', error);
+        toast.error(translateAuthError(error, 'update'));
+      } else {
+        setSuccess(true);
+        toast.success('Senha atualizada com sucesso!');
+
+        // Sign out and redirect to login after 3 seconds
+        setTimeout(async () => {
+          await supabase.auth.signOut();
+          navigate('/login');
+        }, 3000);
+      }
+    } catch (err) {
+      console.error('Update password error:', err);
+      toast.error(translateAuthError(err, 'update'));
     }
 
     setLoading(false);
@@ -104,7 +129,7 @@ export default function ResetPassword() {
               </div>
               <CardTitle className="text-2xl">Link inválido ou expirado</CardTitle>
               <CardDescription>
-                Este link de recuperação não é mais válido. Solicite um novo link.
+                {linkError ?? 'Este link de recuperação não é mais válido. Solicite um novo link.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
