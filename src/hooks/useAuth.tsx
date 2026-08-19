@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
+import { InactivityWarningDialog } from '@/components/auth/InactivityWarningDialog';
 import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
@@ -393,6 +394,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <InactivityWarningDialog
+        open={inactivityWarning}
+        onContinue={continueSession}
+        onLogout={logoutNow}
+      />
     </AuthContext.Provider>
   );
 
