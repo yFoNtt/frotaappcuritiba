@@ -143,13 +143,22 @@ export default function TwoFactor() {
             <h1 className="sr-only">Verificação em duas etapas</h1>
             <CardTitle className="text-2xl">Verificação em duas etapas</CardTitle>
             <CardDescription>
-              Enviamos um código de 6 dígitos para <strong>{user?.email}</strong>. Digite-o abaixo para concluir o
-              acesso.
+              Enviamos um e-mail para <strong>{user?.email}</strong>. Clique no botão do e-mail para concluir o acesso
+              — ou, se o e-mail trouxer um código de 6 dígitos, digite-o abaixo.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4 text-left">
+              <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">
+                Abra o e-mail e clique no botão de acesso. Você voltará para esta página já verificado. Se não
+                encontrar, confira a caixa de spam.
+              </p>
+            </div>
+
             <div className="flex justify-center">
+
               <InputOTP
                 maxLength={6}
                 value={code}
