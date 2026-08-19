@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChecklistTemplateEditor } from '@/components/inspections/ChecklistTemplateEditor';
 import { PrivacySection } from '@/components/settings/PrivacySection';
 import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
+import { ConnectedAccountsCard } from '@/components/settings/ConnectedAccountsCard';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
@@ -329,6 +330,10 @@ export default function LocadorSettings() {
 
               {/* Two-factor */}
               <TwoFactorCard />
+
+              {/* Contas conectadas */}
+              <ConnectedAccountsCard />
+
 
               {/* Security */}
 
