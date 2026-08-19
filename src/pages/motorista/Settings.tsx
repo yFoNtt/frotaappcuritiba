@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
+import { ConnectedAccountsCard } from '@/components/settings/ConnectedAccountsCard';
 
 import { 
   User, 
@@ -190,6 +191,9 @@ export default function MotoristaSettings() {
 
         {/* Two-factor */}
         <TwoFactorCard />
+
+        {/* Contas conectadas */}
+        <ConnectedAccountsCard />
 
         {/* Security */}
         <Card>
