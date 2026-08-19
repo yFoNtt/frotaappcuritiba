@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -13,43 +13,28 @@ export interface OnboardingStep {
 
 interface OnboardingTourProps {
   steps: OnboardingStep[];
-  storageKey: string;
-  autoOpen?: boolean;
+  /** Controlado pelo estado de onboarding salvo na conta do usuário. */
+  open: boolean;
+  onFinish: () => void;
 }
 
-export function OnboardingTour({ steps, storageKey, autoOpen = true }: OnboardingTourProps) {
-  const [open, setOpen] = useState(false);
+export function OnboardingTour({ steps, open, onFinish }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
-  useEffect(() => {
-    if (!autoOpen) return;
-    if (typeof window === 'undefined') return;
-    try {
-      const seen = window.localStorage.getItem(storageKey);
-      if (!seen) setOpen(true);
-    } catch {
-      // ignore localStorage errors (private mode, etc.)
-    }
-  }, [autoOpen, storageKey]);
-
   const finish = () => {
-    try {
-      window.localStorage.setItem(storageKey, '1');
-    } catch {
-      // ignore
-    }
-    setOpen(false);
     setCurrentStep(0);
+    onFinish();
   };
 
   if (!steps.length) return null;
 
-  const step = steps[currentStep];
+  const step = steps[Math.min(currentStep, steps.length - 1)];
   const isLast = currentStep === steps.length - 1;
   const Icon = step.icon;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : finish())}>
+    <Dialog open={open} onOpenChange={(v) => (v ? undefined : finish())}>
+
       <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-2xl">
 
 
