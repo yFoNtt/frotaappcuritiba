@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { validateDocument, validateCNHDocument } from '@/lib/documentValidation';
 import { isAfter, startOfDay } from 'date-fns';
 import { getWeakPasswordMessage } from './utils';
-import { lovable } from '@/integrations/lovable/index';
+import { useGoogleSignIn } from './useGoogleSignIn';
+import { translateAuthError } from './authErrors';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -27,28 +28,12 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const { googleLoading, handleGoogleSignIn } = useGoogleSignIn();
   const [passwordWarning, setPasswordWarning] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    try {
-      const { error } = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        toast.error('Erro ao entrar com Google. Tente novamente.');
-        console.error('Google OAuth error:', error);
-      }
-    } catch (err) {
-      toast.error('Erro ao entrar com Google. Tente novamente.');
-      console.error('Google OAuth error:', err);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+
 
   // Document state
   const [document, setDocument] = useState('');
@@ -173,7 +158,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
         setPasswordWarning(weakMsg);
         toast.error(weakMsg);
       } else {
-        toast.error(error.message);
+        toast.error(translateAuthError(error, 'signup'));
       }
     } else {
       toast.success('Conta criada com sucesso! Faça login para continuar.');

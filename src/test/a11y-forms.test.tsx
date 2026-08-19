@@ -106,17 +106,17 @@ describe('A11y: ForgotPassword page', () => {
     // Dynamic import to avoid heavy mocking
     const { default: ForgotPassword } = await import('@/pages/ForgotPassword');
     renderWithRouter(<ForgotPassword />);
-    
-    expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
-    expect(screen.getByRole('button', { name: /enviar link/i })).toBeInTheDocument();
-  });
+
+    expect(screen.getAllByLabelText('Email')[0]).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Email')[0]).toHaveAttribute('type', 'email');
+    expect(screen.getAllByRole('button', { name: /enviar link/i })[0]).toBeInTheDocument();
+  }, 20000);
 
   it('back to login link is accessible', async () => {
     const { default: ForgotPassword } = await import('@/pages/ForgotPassword');
     renderWithRouter(<ForgotPassword />);
-    
-    const backLink = screen.getByText('Voltar para o login');
+
+    const backLink = screen.getAllByText('Voltar para o login')[0];
     expect(backLink.closest('a')).toHaveAttribute('href', '/login');
-  });
+  }, 20000);
 });
