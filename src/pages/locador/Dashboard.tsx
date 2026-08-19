@@ -483,9 +483,11 @@ export default function LocadorDashboard() {
       {user?.id && (
         <OnboardingTour
           steps={LOCADOR_TOUR_STEPS}
-          storageKey={`frotaapp:locador:onboarding_seen:${user.id}`}
+          open={onboarding.tourOpen}
+          onFinish={onboarding.finishTour}
         />
       )}
+
 
     </DashboardLayout>
   );
