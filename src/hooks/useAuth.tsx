@@ -341,8 +341,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMfaVerifiedState(false);
   }, [user]);
 
-  // Auto-logout after 30 minutes of inactivity
+  // Auto-logout após 60 minutos de inatividade, com aviso 1 minuto antes
+  const [inactivityWarning, setInactivityWarning] = useState(false);
+
   const handleInactivityTimeout = useCallback(async () => {
+    setInactivityWarning(false);
     if (user) {
       await signOut();
       toast.info('Sua sessão expirou por inatividade. Faça login novamente.', {
@@ -351,7 +354,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, signOut]);
 
-  useInactivityTimeout(handleInactivityTimeout, !!user);
+  const handleInactivityWarning = useCallback(() => {
+    if (user) setInactivityWarning(true);
+  }, [user]);
+
+  const { reset: resetInactivity } = useInactivityTimeout(handleInactivityTimeout, !!user, {
+    onWarning: handleInactivityWarning,
+  });
+
+  const continueSession = useCallback(() => {
+    setInactivityWarning(false);
+    resetInactivity();
+  }, [resetInactivity]);
+
+  const logoutNow = useCallback(async () => {
+    setInactivityWarning(false);
+    await signOut();
+  }, [signOut]);
+
 
   const mfaRequired = !!user && isMfaRequired(role, mfaEnabled);
 
