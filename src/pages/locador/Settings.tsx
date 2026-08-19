@@ -325,7 +325,11 @@ export default function LocadorSettings() {
                 </CardContent>
               </Card>
 
+              {/* Two-factor */}
+              <TwoFactorCard />
+
               {/* Security */}
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
