@@ -801,6 +801,7 @@ export type Database = {
           document_type: string | null
           full_name: string | null
           id: string
+          mfa_enabled: boolean
           phone: string | null
           state: string | null
           updated_at: string
@@ -820,6 +821,7 @@ export type Database = {
           document_type?: string | null
           full_name?: string | null
           id?: string
+          mfa_enabled?: boolean
           phone?: string | null
           state?: string | null
           updated_at?: string
@@ -839,6 +841,7 @@ export type Database = {
           document_type?: string | null
           full_name?: string | null
           id?: string
+          mfa_enabled?: boolean
           phone?: string | null
           state?: string | null
           updated_at?: string
