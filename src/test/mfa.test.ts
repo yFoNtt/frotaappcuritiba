@@ -6,7 +6,25 @@ import {
   isMfaVerified,
   setMfaVerified,
   clearMfaVerified,
+  isMagicLinkReturn,
 } from '@/lib/mfa';
+
+describe('MFA - retorno pelo link do e-mail', () => {
+  it('reconhece o hash do link mágico', () => {
+    expect(isMagicLinkReturn('#access_token=abc&type=magiclink')).toBe(true);
+    expect(isMagicLinkReturn('#type=magiclink')).toBe(true);
+  });
+
+  it('reconhece o fluxo PKCE com ?code=', () => {
+    expect(isMagicLinkReturn('', '?code=xyz')).toBe(true);
+  });
+
+  it('ignora URLs comuns', () => {
+    expect(isMagicLinkReturn('')).toBe(false);
+    expect(isMagicLinkReturn('#top', '?ref=email')).toBe(false);
+  });
+});
+
 
 describe('MFA - obrigatoriedade por role', () => {
   it('é obrigatória para admin e locador', () => {

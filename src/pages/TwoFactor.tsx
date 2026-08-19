@@ -4,12 +4,12 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, MailCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
-import { isValidMfaCode, MFA_RESEND_SECONDS } from '@/lib/mfa';
+import { isValidMfaCode, isMagicLinkReturn, MFA_RESEND_SECONDS } from '@/lib/mfa';
 
 export default function TwoFactor() {
   const navigate = useNavigate();
@@ -20,6 +20,12 @@ export default function TwoFactor() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const autoSentRef = useRef(false);
 
+  // Retorno pelo botão do e-mail: a sessão vem no hash/query da URL.
+  const [returningFromLink] = useState(() =>
+    typeof window === 'undefined' ? false : isMagicLinkReturn(window.location.hash, window.location.search)
+  );
+  const linkHandledRef = useRef(false);
+
   const dashboardPath =
     role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : role === 'motorista' ? '/motorista' : '/';
 
@@ -28,25 +34,40 @@ export default function TwoFactor() {
     setSending(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: user.email,
-      options: { shouldCreateUser: false },
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/verificacao`,
+      },
     });
     setSending(false);
 
     if (error) {
-      toast.error('Não foi possível enviar o código. Tente novamente em instantes.');
+      toast.error('Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.');
       return;
     }
     setSecondsLeft(MFA_RESEND_SECONDS);
-    toast.success('Código enviado para o seu e-mail.');
+    toast.success('E-mail de verificação enviado.');
   }, [user?.email]);
 
-  // Envia o código automaticamente na primeira abertura da tela.
+  // Envia o e-mail automaticamente na primeira abertura da tela
+  // (exceto quando o usuário está justamente voltando pelo link).
   useEffect(() => {
+    if (returningFromLink) return;
     if (!loading && user?.email && !autoSentRef.current) {
       autoSentRef.current = true;
       sendCode();
     }
-  }, [loading, user?.email, sendCode]);
+  }, [loading, user?.email, sendCode, returningFromLink]);
+
+  // Conclui a verificação quando o usuário volta pelo link do e-mail.
+  useEffect(() => {
+    if (!returningFromLink || linkHandledRef.current) return;
+    if (loading || !user) return;
+    linkHandledRef.current = true;
+    markMfaVerified();
+    window.history.replaceState(null, '', '/verificacao');
+    toast.success('Verificação concluída!');
+  }, [returningFromLink, loading, user, markMfaVerified]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -55,14 +76,19 @@ export default function TwoFactor() {
   }, [secondsLeft]);
 
   useEffect(() => {
-    if (!loading && !user) navigate('/login', { replace: true });
-  }, [loading, user, navigate]);
+    if (loading || user) return;
+    // Ao voltar pelo link, a sessão leva alguns instantes para ser hidratada.
+    const delay = returningFromLink ? 5000 : 0;
+    const t = setTimeout(() => navigate('/login', { replace: true }), delay);
+    return () => clearTimeout(t);
+  }, [loading, user, navigate, returningFromLink]);
 
   useEffect(() => {
     if (!loading && user && (!mfaRequired || mfaVerified)) {
       navigate(dashboardPath, { replace: true });
     }
   }, [loading, user, mfaRequired, mfaVerified, dashboardPath, navigate]);
+
 
   const handleVerify = async (value: string) => {
     if (!user?.email) return;
@@ -117,13 +143,22 @@ export default function TwoFactor() {
             <h1 className="sr-only">Verificação em duas etapas</h1>
             <CardTitle className="text-2xl">Verificação em duas etapas</CardTitle>
             <CardDescription>
-              Enviamos um código de 6 dígitos para <strong>{user?.email}</strong>. Digite-o abaixo para concluir o
-              acesso.
+              Enviamos um e-mail para <strong>{user?.email}</strong>. Clique no botão do e-mail para concluir o acesso
+              — ou, se o e-mail trouxer um código de 6 dígitos, digite-o abaixo.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4 text-left">
+              <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">
+                Abra o e-mail e clique no botão de acesso. Você voltará para esta página já verificado. Se não
+                encontrar, confira a caixa de spam.
+              </p>
+            </div>
+
             <div className="flex justify-center">
+
               <InputOTP
                 maxLength={6}
                 value={code}
@@ -167,9 +202,10 @@ export default function TwoFactor() {
                   Enviando...
                 </>
               ) : secondsLeft > 0 ? (
-                `Reenviar código em ${secondsLeft}s`
+                `Reenviar e-mail em ${secondsLeft}s`
               ) : (
-                'Reenviar código'
+                'Reenviar e-mail'
+
               )}
             </Button>
           </CardContent>
