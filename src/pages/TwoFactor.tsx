@@ -12,7 +12,9 @@ import { toast } from 'sonner';
 import {
   isValidMfaCode,
   isMagicLinkReturn,
+  parseMagicLinkTokens,
   parseMagicLinkError,
+  setMfaVerified,
   magicLinkErrorMessage,
   MFA_CODE_INPUT_ENABLED,
   MFA_LINK_HYDRATION_TIMEOUT_MS,
@@ -29,12 +31,17 @@ export default function TwoFactor() {
   const autoSentRef = useRef(false);
 
   // Retorno pelo botão do e-mail: a sessão vem no hash/query da URL.
-  const [returningFromLink] = useState(() =>
-    typeof window === 'undefined' ? false : isMagicLinkReturn(window.location.hash, window.location.search)
-  );
+  // Capturamos a URL original ANTES de qualquer limpeza — só limpamos depois
+  // que o token foi trocado por sessão.
+  const [initialUrl] = useState(() => ({
+    hash: typeof window === 'undefined' ? '' : window.location.hash,
+    search: typeof window === 'undefined' ? '' : window.location.search,
+  }));
+  const [returningFromLink] = useState(() => isMagicLinkReturn(initialUrl.hash, initialUrl.search));
   const [linkError, setLinkError] = useState<string | null>(() =>
-    typeof window === 'undefined' ? null : parseMagicLinkError(window.location.hash, window.location.search)
+    parseMagicLinkError(initialUrl.hash, initialUrl.search)
   );
+  const [linkDone, setLinkDone] = useState(false);
   const linkHandledRef = useRef(false);
 
   const dashboardPath =
@@ -61,41 +68,80 @@ export default function TwoFactor() {
     toast.success('E-mail de verificação enviado.');
   }, [user?.email]);
 
-  // Limpa o hash/query assim que a tela abre vinda do e-mail,
-  // para que um refresh não repita o mesmo erro.
+  // Processa o retorno do link: troca o token por sessão e SÓ ENTÃO limpa a URL.
   useEffect(() => {
-    if (returningFromLink && typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/verificacao');
-    }
-  }, [returningFromLink]);
-
-  // Envia o e-mail automaticamente na primeira abertura da tela
-  // (exceto quando o usuário está voltando pelo link — mesmo com erro,
-  // o reenvio fica sob controle do usuário para não gastar o limite).
-  useEffect(() => {
-    if (returningFromLink) return;
-    if (!loading && user?.email && !autoSentRef.current) {
-      autoSentRef.current = true;
-      sendCode();
-    }
-  }, [loading, user?.email, sendCode, returningFromLink]);
-
-  // Conclui a verificação quando o usuário volta pelo link do e-mail.
-  useEffect(() => {
-    if (!returningFromLink || linkError || linkHandledRef.current) return;
-    if (loading || !user) return;
+    if (!returningFromLink || linkHandledRef.current) return;
     linkHandledRef.current = true;
-    markMfaVerified();
-    toast.success('Verificação concluída!');
-  }, [returningFromLink, linkError, loading, user, markMfaVerified]);
 
-  // Link pré-carregado por scanners de e-mail (ou token já usado): a sessão
-  // nunca chega. Em vez de travar no carregamento, mostramos o aviso.
+    const cleanUrl = () => window.history.replaceState(null, '', '/verificacao');
+    const tokens = parseMagicLinkTokens(initialUrl.hash, initialUrl.search);
+    console.info('[MFA] retorno do link', {
+      hash: initialUrl.hash,
+      search: initialUrl.search,
+      type: tokens?.type ?? null,
+      flow: tokens?.code ? 'pkce' : tokens?.accessToken ? 'implicit' : 'desconhecido',
+      error: parseMagicLinkError(initialUrl.hash, initialUrl.search),
+    });
+
+    if (parseMagicLinkError(initialUrl.hash, initialUrl.search)) {
+      cleanUrl();
+      return;
+    }
+
+    let cancelled = false;
+
+    const finish = (userId: string) => {
+      setMfaVerified(userId);
+      setLinkDone(true);
+      markMfaVerified();
+      cleanUrl();
+      toast.success('Verificação concluída!');
+    };
+
+    const run = async () => {
+      try {
+        if (tokens?.accessToken && tokens?.refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: tokens.accessToken,
+            refresh_token: tokens.refreshToken,
+          });
+          if (!cancelled && data?.session?.user && !error) return finish(data.session.user.id);
+        } else if (tokens?.code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(tokens.code);
+          if (!cancelled && data?.session?.user && !error) return finish(data.session.user.id);
+        }
+
+        // Fallback: o próprio client pode ter consumido a URL (detectSessionInUrl).
+        const deadline = Date.now() + MFA_LINK_HYDRATION_TIMEOUT_MS;
+        while (!cancelled && Date.now() < deadline) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) return finish(data.session.user.id);
+          await new Promise((r) => setTimeout(r, 400));
+        }
+        if (!cancelled) {
+          setLinkError('otp_expired');
+          cleanUrl();
+        }
+      } catch (err) {
+        console.error('[MFA] falha ao concluir verificação pelo link', err);
+        if (!cancelled) {
+          setLinkError('exchange_failed');
+          cleanUrl();
+        }
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [returningFromLink, initialUrl, markMfaVerified]);
+
+  // Se a sessão só aparece depois (SIGNED_IN tardio), marca como verificado.
   useEffect(() => {
-    if (!returningFromLink || linkError || loading || user) return;
-    const t = setTimeout(() => setLinkError('otp_expired'), MFA_LINK_HYDRATION_TIMEOUT_MS);
-    return () => clearTimeout(t);
-  }, [returningFromLink, linkError, loading, user]);
+    if (!returningFromLink || linkError || !linkDone || !user) return;
+    markMfaVerified();
+  }, [returningFromLink, linkError, linkDone, user, markMfaVerified]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -143,7 +189,7 @@ export default function TwoFactor() {
   };
 
   // Enquanto o link ainda está sendo processado, mostramos o carregamento.
-  const processingLink = returningFromLink && !linkError && (loading || !user);
+  const processingLink = returningFromLink && !linkError && (!linkDone || loading || !user);
 
   if (loading || processingLink) {
     return (
