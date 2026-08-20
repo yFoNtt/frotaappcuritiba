@@ -153,14 +153,12 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, disp
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">
         <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", collapsed && "justify-center")}>
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-            <span className="text-sm font-semibold">
-              {displayName ? displayName.slice(0, 2).toUpperCase() : '?'}
-            </span>
+            <span className="text-sm font-semibold">{getInitials(displayName || '')}</span>
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{displayName || 'Usuário'}</p>
-              <p className="truncate text-xs text-sidebar-foreground/60">{companyName || 'Sem empresa cadastrada'}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{companyName || userEmail || 'Sem empresa cadastrada'}</p>
             </div>
           )}
         </div>
