@@ -36,6 +36,7 @@ import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useProfile } from '@/hooks/useProfile';
+import { getDisplayName, getInitials } from '@/lib/userDisplay';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
@@ -56,7 +57,7 @@ const menuItems = [
 ];
 
 
-function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, displayName, companyName }: { 
+function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, displayName, companyName, userEmail }: { 
   collapsed: boolean; 
   onCollapse?: () => void;
   onClose?: () => void;
@@ -64,6 +65,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, disp
   userId?: string;
   displayName?: string;
   companyName?: string;
+  userEmail?: string;
 }) {
   const location = useLocation();
   const marketplaceItems = [
@@ -153,14 +155,12 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, disp
       <div className="border-t border-sidebar-border p-3 flex-shrink-0">
         <div className={cn("flex items-center gap-3 rounded-lg px-3 py-2", collapsed && "justify-center")}>
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-            <span className="text-sm font-semibold">
-              {displayName ? displayName.slice(0, 2).toUpperCase() : '?'}
-            </span>
+            <span className="text-sm font-semibold">{getInitials(displayName || '')}</span>
           </div>
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{displayName || 'Usuário'}</p>
-              <p className="truncate text-xs text-sidebar-foreground/60">{companyName || 'Sem empresa cadastrada'}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{companyName || userEmail || 'Sem empresa cadastrada'}</p>
             </div>
           )}
         </div>
@@ -228,7 +228,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
               userId={user?.id}
-              displayName={profile?.full_name ?? undefined}
+              displayName={getDisplayName(user, profile?.full_name)}
+              userEmail={user?.email}
               companyName={profile?.company_name ?? undefined}
             />
 
@@ -250,7 +251,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
           onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
           userId={user?.id}
-          displayName={profile?.full_name ?? undefined}
+          displayName={getDisplayName(user, profile?.full_name)}
+          userEmail={user?.email}
           companyName={profile?.company_name ?? undefined}
         />
       </aside>
