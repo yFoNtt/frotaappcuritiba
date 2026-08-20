@@ -7,8 +7,16 @@ export function isMfaMandatory(role: MfaRole): boolean {
   return MFA_MANDATORY_ROLES.includes(role);
 }
 
+/**
+ * TEMPORÁRIO (demonstração): desliga a verificação em duas etapas.
+ * Toda a lógica de MFA continua no código — apenas não é exigida.
+ * Para REATIVAR o MFA: trocar esta constante para `false`.
+ */
+export const MFA_DISABLED_FOR_DEMO = true;
+
 /** Decide se o usuário precisa passar pela verificação em duas etapas. */
 export function isMfaRequired(role: MfaRole, mfaEnabled: boolean): boolean {
+  if (MFA_DISABLED_FOR_DEMO) return false;
   return isMfaMandatory(role) || mfaEnabled === true;
 }
 
