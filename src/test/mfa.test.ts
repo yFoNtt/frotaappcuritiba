@@ -9,6 +9,7 @@ import {
   isMagicLinkReturn,
   parseMagicLinkError,
   magicLinkErrorMessage,
+  MFA_DISABLED_FOR_DEMO,
 } from '@/lib/mfa';
 
 describe('MFA - retorno pelo link do e-mail', () => {
