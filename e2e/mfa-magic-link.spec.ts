@@ -43,3 +43,36 @@ test.describe('MFA — retorno pelo link do e-mail', () => {
     await page.waitForURL('**/login', { timeout: 15000 });
   });
 });
+
+/**
+ * Fluxo completo: login > /verificacao > retorno do link com token válido
+ * (extraído da sessão real) > navegação automática para o painel do papel.
+ */
+test('retorno do link com token válido navega sozinho para o dashboard', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('input[type="email"]', TEST_ACCOUNTS.locador.email);
+  await page.fill('input[type="password"]', TEST_ACCOUNTS.locador.password);
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/(locador|verificacao)/, { timeout: 20000 });
+
+  // Tokens reais da sessão ativa, simulando o que o link do e-mail devolve.
+  const tokens = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (!key) return null;
+    const raw = localStorage.getItem(key)!;
+    const parsed = JSON.parse(raw);
+    const session = parsed.currentSession ?? parsed;
+    return { access: session.access_token as string, refresh: session.refresh_token as string };
+  });
+  expect(tokens).not.toBeNull();
+
+  await page.evaluate(() => sessionStorage.clear());
+  await page.goto(
+    `/verificacao#access_token=${tokens!.access}&refresh_token=${tokens!.refresh}&type=magiclink&token_type=bearer`
+  );
+
+  await page.waitForURL('**/locador**', { timeout: 25000 });
+  await expect(page).toHaveURL(/\/locador/);
+  // A URL é limpa só após a troca do token por sessão.
+  await expect(page).not.toHaveURL(/access_token/);
+});
