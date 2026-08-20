@@ -58,13 +58,12 @@ describe('MFA - obrigatoriedade por role', () => {
     expect(isMfaMandatory(null)).toBe(false);
   });
 
-  it('motorista só exige MFA quando ativou nas configurações', () => {
+  it('com MFA_DISABLED_FOR_DEMO ativo, nenhum papel exige verificação', () => {
+    expect(MFA_DISABLED_FOR_DEMO).toBe(true);
     expect(isMfaRequired('motorista', false)).toBe(false);
-    expect(isMfaRequired('motorista', true)).toBe(true);
-  });
-
-  it('admin exige MFA mesmo com flag desativada', () => {
-    expect(isMfaRequired('admin', false)).toBe(true);
+    expect(isMfaRequired('motorista', true)).toBe(false);
+    expect(isMfaRequired('locador', false)).toBe(false);
+    expect(isMfaRequired('admin', false)).toBe(false);
   });
 });
 
