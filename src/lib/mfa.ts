@@ -60,12 +60,33 @@ export function isValidMfaCode(code: string): boolean {
  * O Supabase devolve o token no hash (`#access_token=...&type=magiclink`)
  * ou, no fluxo PKCE, um `?code=` na query string.
  */
-export function isMagicLinkReturn(hash: string, search = ''): boolean {
-  const h = (hash || '').replace(/^#/, '');
-  const params = new URLSearchParams(h);
-  if (params.get('access_token') || params.get('type') === 'magiclink') return true;
+export const MAGIC_LINK_TYPES = ['magiclink', 'email', 'signup', 'recovery', 'invite'];
+
+export interface MagicLinkTokens {
+  accessToken?: string;
+  refreshToken?: string;
+  code?: string;
+  type?: string;
+}
+
+/** Extrai os tokens do retorno do link (hash implícito ou `?code=` do PKCE). */
+export function parseMagicLinkTokens(hash: string, search = ''): MagicLinkTokens | null {
+  const h = new URLSearchParams((hash || '').replace(/^#/, ''));
   const q = new URLSearchParams(search || '');
-  if (q.has('code')) return true;
+  const accessToken = h.get('access_token') || q.get('access_token') || undefined;
+  const refreshToken = h.get('refresh_token') || q.get('refresh_token') || undefined;
+  const code = q.get('code') || h.get('code') || undefined;
+  const type = h.get('type') || q.get('type') || undefined;
+  if (!accessToken && !code) return null;
+  return { accessToken, refreshToken, code, type };
+}
+
+export function isMagicLinkReturn(hash: string, search = ''): boolean {
+  if (parseMagicLinkTokens(hash, search)) return true;
+  const h = new URLSearchParams((hash || '').replace(/^#/, ''));
+  const q = new URLSearchParams(search || '');
+  const type = h.get('type') || q.get('type');
+  if (type && MAGIC_LINK_TYPES.includes(type)) return true;
   return !!parseMagicLinkError(hash, search);
 }
 
@@ -101,7 +122,7 @@ export function magicLinkErrorMessage(code: string | null): string {
 export const MFA_CODE_INPUT_ENABLED = false;
 
 /** Tempo máximo de espera pela hidratação da sessão no retorno pelo link. */
-export const MFA_LINK_HYDRATION_TIMEOUT_MS = 5000;
+export const MFA_LINK_HYDRATION_TIMEOUT_MS = 8000;
 
 export const MFA_RESEND_SECONDS = 60;
 
