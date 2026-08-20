@@ -36,6 +36,7 @@ import { LogoutConfirmDialog } from '@/components/auth/LogoutConfirmDialog';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useProfile } from '@/hooks/useProfile';
+import { getDisplayName, getInitials } from '@/lib/userDisplay';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/locador' },
@@ -56,7 +57,7 @@ const menuItems = [
 ];
 
 
-function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, displayName, companyName }: { 
+function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, displayName, companyName, userEmail }: { 
   collapsed: boolean; 
   onCollapse?: () => void;
   onClose?: () => void;
@@ -64,6 +65,7 @@ function SidebarContent({ collapsed, onCollapse, onClose, onLogout, userId, disp
   userId?: string;
   displayName?: string;
   companyName?: string;
+  userEmail?: string;
 }) {
   const location = useLocation();
   const marketplaceItems = [
@@ -226,7 +228,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
               onClose={() => setMobileOpen(false)}
               onLogout={handleLogout}
               userId={user?.id}
-              displayName={profile?.full_name ?? undefined}
+              displayName={getDisplayName(user, profile?.full_name)}
+              userEmail={user?.email}
               companyName={profile?.company_name ?? undefined}
             />
 
@@ -248,7 +251,8 @@ export function DashboardSidebar({ collapsed, onCollapseChange }: DashboardSideb
           onCollapse={() => onCollapseChange(!collapsed)}
           onLogout={handleLogout}
           userId={user?.id}
-          displayName={profile?.full_name ?? undefined}
+          displayName={getDisplayName(user, profile?.full_name)}
+          userEmail={user?.email}
           companyName={profile?.company_name ?? undefined}
         />
       </aside>
