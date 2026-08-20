@@ -4,12 +4,20 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { ShieldCheck, Loader2, MailCheck } from 'lucide-react';
+import { ShieldCheck, Loader2, MailCheck, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { SEO } from '@/components/SEO';
 import { toast } from 'sonner';
-import { isValidMfaCode, isMagicLinkReturn, MFA_RESEND_SECONDS } from '@/lib/mfa';
+import {
+  isValidMfaCode,
+  isMagicLinkReturn,
+  parseMagicLinkError,
+  magicLinkErrorMessage,
+  MFA_CODE_INPUT_ENABLED,
+  MFA_LINK_HYDRATION_TIMEOUT_MS,
+  MFA_RESEND_SECONDS,
+} from '@/lib/mfa';
 
 export default function TwoFactor() {
   const navigate = useNavigate();
@@ -23,6 +31,9 @@ export default function TwoFactor() {
   // Retorno pelo botão do e-mail: a sessão vem no hash/query da URL.
   const [returningFromLink] = useState(() =>
     typeof window === 'undefined' ? false : isMagicLinkReturn(window.location.hash, window.location.search)
+  );
+  const [linkError, setLinkError] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : parseMagicLinkError(window.location.hash, window.location.search)
   );
   const linkHandledRef = useRef(false);
 
@@ -45,12 +56,22 @@ export default function TwoFactor() {
       toast.error('Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.');
       return;
     }
+    setLinkError(null);
     setSecondsLeft(MFA_RESEND_SECONDS);
     toast.success('E-mail de verificação enviado.');
   }, [user?.email]);
 
+  // Limpa o hash/query assim que a tela abre vinda do e-mail,
+  // para que um refresh não repita o mesmo erro.
+  useEffect(() => {
+    if (returningFromLink && typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/verificacao');
+    }
+  }, [returningFromLink]);
+
   // Envia o e-mail automaticamente na primeira abertura da tela
-  // (exceto quando o usuário está justamente voltando pelo link).
+  // (exceto quando o usuário está voltando pelo link — mesmo com erro,
+  // o reenvio fica sob controle do usuário para não gastar o limite).
   useEffect(() => {
     if (returningFromLink) return;
     if (!loading && user?.email && !autoSentRef.current) {
@@ -61,13 +82,20 @@ export default function TwoFactor() {
 
   // Conclui a verificação quando o usuário volta pelo link do e-mail.
   useEffect(() => {
-    if (!returningFromLink || linkHandledRef.current) return;
+    if (!returningFromLink || linkError || linkHandledRef.current) return;
     if (loading || !user) return;
     linkHandledRef.current = true;
     markMfaVerified();
-    window.history.replaceState(null, '', '/verificacao');
     toast.success('Verificação concluída!');
-  }, [returningFromLink, loading, user, markMfaVerified]);
+  }, [returningFromLink, linkError, loading, user, markMfaVerified]);
+
+  // Link pré-carregado por scanners de e-mail (ou token já usado): a sessão
+  // nunca chega. Em vez de travar no carregamento, mostramos o aviso.
+  useEffect(() => {
+    if (!returningFromLink || linkError || loading || user) return;
+    const t = setTimeout(() => setLinkError('otp_expired'), MFA_LINK_HYDRATION_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [returningFromLink, linkError, loading, user]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -77,10 +105,9 @@ export default function TwoFactor() {
 
   useEffect(() => {
     if (loading || user) return;
-    // Ao voltar pelo link, a sessão leva alguns instantes para ser hidratada.
-    const delay = returningFromLink ? 5000 : 0;
-    const t = setTimeout(() => navigate('/login', { replace: true }), delay);
-    return () => clearTimeout(t);
+    // Sem sessão e sem retorno de link: não há o que verificar.
+    if (returningFromLink) return;
+    navigate('/login', { replace: true });
   }, [loading, user, navigate, returningFromLink]);
 
   useEffect(() => {
@@ -88,7 +115,6 @@ export default function TwoFactor() {
       navigate(dashboardPath, { replace: true });
     }
   }, [loading, user, mfaRequired, mfaVerified, dashboardPath, navigate]);
-
 
   const handleVerify = async (value: string) => {
     if (!user?.email) return;
@@ -116,11 +142,17 @@ export default function TwoFactor() {
     navigate(dashboardPath, { replace: true });
   };
 
-  if (loading) {
+  // Enquanto o link ainda está sendo processado, mostramos o carregamento.
+  const processingLink = returningFromLink && !linkError && (loading || !user);
+
+  if (loading || processingLink) {
     return (
       <PublicLayout>
         <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Concluindo sua verificação...</p>
+          </div>
         </div>
       </PublicLayout>
     );
@@ -130,7 +162,7 @@ export default function TwoFactor() {
     <PublicLayout>
       <SEO
         title="Verificação em duas etapas — Confirme seu acesso"
-        description="Confirme o código enviado para o seu e-mail para concluir o acesso à sua conta FrotaApp com segurança."
+        description="Confirme o acesso à sua conta FrotaApp pelo e-mail de verificação, com segurança."
         canonical="/verificacao"
         noindex
       />
@@ -143,58 +175,77 @@ export default function TwoFactor() {
             <h1 className="sr-only">Verificação em duas etapas</h1>
             <CardTitle className="text-2xl">Verificação em duas etapas</CardTitle>
             <CardDescription>
-              Enviamos um e-mail para <strong>{user?.email}</strong>. Clique no botão do e-mail para concluir o acesso
-              — ou, se o e-mail trouxer um código de 6 dígitos, digite-o abaixo.
+              {user?.email ? (
+                <>
+                  Enviamos um e-mail para <strong>{user.email}</strong>. Abra a mensagem e toque no botão de acesso
+                  para concluir a entrada.
+                </>
+              ) : (
+                'Abra o e-mail de verificação e toque no botão de acesso para concluir a entrada.'
+              )}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4 text-left">
-              <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-              <p className="text-sm text-muted-foreground">
-                Abra o e-mail e clique no botão de acesso. Você voltará para esta página já verificado. Se não
-                encontrar, confira a caixa de spam.
-              </p>
-            </div>
-
-            <div className="flex justify-center">
-
-              <InputOTP
-                maxLength={6}
-                value={code}
-                onChange={(value) => {
-                  setCode(value);
-                  if (value.length === 6) handleVerify(value);
-                }}
-                disabled={verifying}
+            {linkError ? (
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-left"
               >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+                <p className="text-sm text-destructive">{magicLinkErrorMessage(linkError)}</p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4 text-left">
+                <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">
+                  Você voltará para esta página já verificado. Se o e-mail não aparecer em alguns instantes, confira a
+                  caixa de spam.
+                </p>
+              </div>
+            )}
 
-            <Button className="w-full" onClick={() => handleVerify(code)} disabled={verifying || code.length < 6}>
-              {verifying ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                'Confirmar código'
-              )}
-            </Button>
+            {MFA_CODE_INPUT_ENABLED && (
+              <>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={code}
+                    onChange={(value) => {
+                      setCode(value);
+                      if (value.length === 6) handleVerify(value);
+                    }}
+                    disabled={verifying}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <Button className="w-full" onClick={() => handleVerify(code)} disabled={verifying || code.length < 6}>
+                  {verifying ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    'Confirmar código'
+                  )}
+                </Button>
+              </>
+            )}
 
             <Button
-              variant="outline"
               className="w-full"
+              variant={linkError ? 'default' : 'outline'}
               onClick={sendCode}
-              disabled={sending || secondsLeft > 0}
+              disabled={sending || secondsLeft > 0 || !user?.email}
             >
               {sending ? (
                 <>
@@ -205,9 +256,14 @@ export default function TwoFactor() {
                 `Reenviar e-mail em ${secondsLeft}s`
               ) : (
                 'Reenviar e-mail'
-
               )}
             </Button>
+
+            {!user?.email && (
+              <p className="text-center text-sm text-muted-foreground">
+                Sua sessão não está mais ativa. Entre novamente para receber um novo e-mail de verificação.
+              </p>
+            )}
           </CardContent>
 
           <CardFooter className="flex justify-center">
@@ -219,7 +275,7 @@ export default function TwoFactor() {
                 navigate('/login', { replace: true });
               }}
             >
-              Sair da conta
+              {user ? 'Sair da conta' : 'Ir para o login'}
             </button>
           </CardFooter>
         </Card>
@@ -227,3 +283,4 @@ export default function TwoFactor() {
     </PublicLayout>
   );
 }
+
