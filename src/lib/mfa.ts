@@ -64,7 +64,44 @@ export function isMagicLinkReturn(hash: string, search = ''): boolean {
   const h = (hash || '').replace(/^#/, '');
   const params = new URLSearchParams(h);
   if (params.get('access_token') || params.get('type') === 'magiclink') return true;
-  return new URLSearchParams(search || '').has('code');
+  const q = new URLSearchParams(search || '');
+  if (q.has('code')) return true;
+  return !!parseMagicLinkError(hash, search);
 }
 
+/**
+ * Erros devolvidos pelo provedor no retorno do link
+ * (`#error=access_denied&error_code=otp_expired&error_description=...`).
+ * Também cobre o caso de scanners corporativos que "pré-carregam" o link
+ * e consomem o token antes do clique real do usuário.
+ */
+export function parseMagicLinkError(hash: string, search = ''): string | null {
+  const sources = [new URLSearchParams((hash || '').replace(/^#/, '')), new URLSearchParams(search || '')];
+  for (const p of sources) {
+    const code = p.get('error_code');
+    const err = p.get('error');
+    if (code || err) return code || err;
+  }
+  return null;
+}
+
+/** Mensagem em pt-BR para o erro do link. */
+export function magicLinkErrorMessage(code: string | null): string {
+  if (code === 'otp_expired' || code === 'access_denied') {
+    return 'Este link expirou ou já foi utilizado. Toque em “Reenviar e-mail” para receber um novo.';
+  }
+  return 'Não foi possível concluir a verificação por este link. Toque em “Reenviar e-mail” para receber um novo.';
+}
+
+/**
+ * Enquanto não houver domínio de e-mail próprio, o e-mail entregue traz apenas
+ * o botão de acesso — sem código de 6 dígitos. Ative esta flag quando os
+ * modelos em pt-BR com `{{ .Token }}` estiverem no ar.
+ */
+export const MFA_CODE_INPUT_ENABLED = false;
+
+/** Tempo máximo de espera pela hidratação da sessão no retorno pelo link. */
+export const MFA_LINK_HYDRATION_TIMEOUT_MS = 5000;
+
 export const MFA_RESEND_SECONDS = 60;
+

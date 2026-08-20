@@ -7,6 +7,8 @@ import {
   setMfaVerified,
   clearMfaVerified,
   isMagicLinkReturn,
+  parseMagicLinkError,
+  magicLinkErrorMessage,
 } from '@/lib/mfa';
 
 describe('MFA - retorno pelo link do e-mail', () => {
@@ -19,11 +21,30 @@ describe('MFA - retorno pelo link do e-mail', () => {
     expect(isMagicLinkReturn('', '?code=xyz')).toBe(true);
   });
 
+  it('reconhece o retorno com erro do provedor', () => {
+    expect(isMagicLinkReturn('#error=access_denied&error_code=otp_expired')).toBe(true);
+    expect(isMagicLinkReturn('', '?error_code=otp_expired')).toBe(true);
+  });
+
   it('ignora URLs comuns', () => {
     expect(isMagicLinkReturn('')).toBe(false);
     expect(isMagicLinkReturn('#top', '?ref=email')).toBe(false);
   });
 });
+
+describe('MFA - erros do link', () => {
+  it('extrai o código do erro do hash e da query', () => {
+    expect(parseMagicLinkError('#error=access_denied&error_code=otp_expired')).toBe('otp_expired');
+    expect(parseMagicLinkError('', '?error=access_denied')).toBe('access_denied');
+    expect(parseMagicLinkError('#access_token=abc')).toBeNull();
+  });
+
+  it('traduz a mensagem para pt-BR', () => {
+    expect(magicLinkErrorMessage('otp_expired')).toMatch(/expirou/i);
+    expect(magicLinkErrorMessage('outro')).toMatch(/Reenviar e-mail/i);
+  });
+});
+
 
 
 describe('MFA - obrigatoriedade por role', () => {
