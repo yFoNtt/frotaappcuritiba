@@ -166,11 +166,18 @@ export function PasswordField({
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => onConfirmPasswordChange?.(e.target.value)}
-              className="pl-10"
+              className={`pl-10 ${confirmError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+              aria-invalid={confirmError ? true : undefined}
+              aria-describedby={confirmError ? 'confirmPassword-error' : undefined}
               required
               disabled={loading}
             />
           </div>
+          {confirmError && (
+            <p id="confirmPassword-error" className="text-xs text-destructive">
+              {confirmError}
+            </p>
+          )}
         </div>
       )}
     </>
