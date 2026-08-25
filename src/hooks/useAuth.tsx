@@ -286,12 +286,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error(payload?.error || 'Email ou senha incorretos') };
       }
 
+      // Credenciais inválidas e rate limit são resultados esperados da função,
+      // não falhas de runtime. O status original vem no payload para que a UI
+      // preserve as mensagens e o bloqueio temporário.
+      const loginResult = data as {
+        error?: string;
+        status?: number;
+        session?: Session;
+      } | null;
+
+      if (loginResult?.error) {
+        const fallback = loginResult.status === 429
+          ? 'Muitas tentativas. Tente novamente mais tarde.'
+          : 'Email ou senha incorretos';
+        return { error: new Error(loginResult.error || fallback) };
+      }
 
       // Set session from edge function response
-      if (data.session) {
+      if (loginResult?.session) {
         await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
+          access_token: loginResult.session.access_token,
+          refresh_token: loginResult.session.refresh_token,
         });
 
         // Enforce admin-applied block: if the account is blocked, sign out
@@ -304,6 +319,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole(null);
           return { error: new Error('Conta bloqueada pelo administrador. Entre em contato com o suporte.') };
         }
+      } else {
+        return { error: new Error('Não foi possível iniciar a sessão. Tente novamente.') };
       }
 
       return { error: null };
