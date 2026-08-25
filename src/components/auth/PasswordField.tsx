@@ -47,6 +47,8 @@ interface PasswordFieldProps {
   showStrength?: boolean;
   passwordWarning?: string;
   loading?: boolean;
+  error?: string;
+  confirmError?: string;
 }
 
 export function PasswordField({
@@ -59,6 +61,8 @@ export function PasswordField({
   showStrength = false,
   passwordWarning,
   loading = false,
+  error,
+  confirmError,
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
