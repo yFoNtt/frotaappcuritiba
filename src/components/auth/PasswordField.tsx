@@ -90,10 +90,13 @@ export function PasswordField({
             placeholder="••••••••"
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
-            className="pl-10 pr-10"
+            className={`pl-10 pr-10 ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'password-error' : undefined}
             required
             disabled={loading}
           />
+
           <Button
             type="button"
             variant="ghost"
