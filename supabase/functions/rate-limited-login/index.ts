@@ -88,11 +88,15 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: `Muitas tentativas de login para este email. Tente novamente em ${LOCKOUT_MINUTES} minutos.`,
+          status: 429,
           rateLimited: true,
           retryAfterMinutes: LOCKOUT_MINUTES,
         }),
         {
-          status: 429,
+          // Falhas esperadas de autenticação são respostas de negócio. Manter
+          // HTTP 200 evita que o cliente de Functions as classifique como
+          // erro de runtime; o status original segue explícito no payload.
+          status: 200,
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
@@ -106,11 +110,12 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: `Muitas tentativas de login deste endereço. Tente novamente em ${LOCKOUT_MINUTES} minutos.`,
+          status: 429,
           rateLimited: true,
           retryAfterMinutes: LOCKOUT_MINUTES,
         }),
         {
-          status: 429,
+          status: 200,
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
@@ -146,10 +151,11 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: errorMessage,
+          status: 401,
           remainingAttempts: Math.max(0, remainingAttempts),
         }),
         {
-          status: 401,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
