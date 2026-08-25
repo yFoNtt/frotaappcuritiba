@@ -47,6 +47,8 @@ interface PasswordFieldProps {
   showStrength?: boolean;
   passwordWarning?: string;
   loading?: boolean;
+  error?: string;
+  confirmError?: string;
 }
 
 export function PasswordField({
@@ -59,6 +61,8 @@ export function PasswordField({
   showStrength = false,
   passwordWarning,
   loading = false,
+  error,
+  confirmError,
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -86,10 +90,13 @@ export function PasswordField({
             placeholder="••••••••"
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
-            className="pl-10 pr-10"
+            className={`pl-10 pr-10 ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'password-error' : undefined}
             required
             disabled={loading}
           />
+
           <Button
             type="button"
             variant="ghost"
@@ -104,6 +111,14 @@ export function PasswordField({
             )}
           </Button>
         </div>
+
+        {error && (
+          <p id="password-error" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
+
+
 
         {/* Password strength indicator */}
         {strength && (
@@ -162,11 +177,18 @@ export function PasswordField({
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => onConfirmPasswordChange?.(e.target.value)}
-              className="pl-10"
+              className={`pl-10 ${confirmError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+              aria-invalid={confirmError ? true : undefined}
+              aria-describedby={confirmError ? 'confirmPassword-error' : undefined}
               required
               disabled={loading}
             />
           </div>
+          {confirmError && (
+            <p id="confirmPassword-error" className="text-xs text-destructive">
+              {confirmError}
+            </p>
+          )}
         </div>
       )}
     </>

@@ -6,9 +6,10 @@ interface EmailFieldProps {
   email: string;
   onEmailChange: (value: string) => void;
   loading?: boolean;
+  error?: string;
 }
 
-export function EmailField({ email, onEmailChange, loading = false }: EmailFieldProps) {
+export function EmailField({ email, onEmailChange, loading = false, error }: EmailFieldProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor="email">E-mail</Label>
@@ -20,11 +21,18 @@ export function EmailField({ email, onEmailChange, loading = false }: EmailField
           placeholder="seu@email.com"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
-          className="pl-10"
+          className={`pl-10 ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'email-error' : undefined}
           required
           disabled={loading}
         />
       </div>
+      {error && (
+        <p id="email-error" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,11 +12,10 @@ import { DocumentFields } from './DocumentFields';
 import { RoleSelector } from './RoleSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { validateDocument, validateCNHDocument } from '@/lib/documentValidation';
-import { isAfter, startOfDay } from 'date-fns';
 import { getWeakPasswordMessage } from './utils';
 import { useGoogleSignIn } from './useGoogleSignIn';
 import { translateAuthError } from './authErrors';
+import { registerSchema, type RegisterFormValues } from './registerSchema';
 
 type AppRole = 'locador' | 'motorista';
 
@@ -24,133 +25,78 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const { signUp } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const { googleLoading, handleGoogleSignIn } = useGoogleSignIn();
   const [passwordWarning, setPasswordWarning] = useState('');
-  const [selectedRole, setSelectedRole] = useState<AppRole>('locador');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-
-
-  // Document state
-  const [document, setDocument] = useState('');
-  const [documentError, setDocumentError] = useState('');
+  // Live (per-keystroke) feedback state kept by DocumentFields
   const [documentValid, setDocumentValid] = useState(false);
-
-  // CNH state
-  const [cnh, setCnh] = useState('');
-  const [cnhError, setCnhError] = useState('');
+  const [documentLiveError, setDocumentLiveError] = useState('');
   const [cnhValid, setCnhValid] = useState(false);
-  const [cnhExpiry, setCnhExpiry] = useState('');
-  const [cnhExpiryError, setCnhExpiryError] = useState('');
+  const [cnhLiveError, setCnhLiveError] = useState('');
   const [cnhExpiryValid, setCnhExpiryValid] = useState(false);
+  const [cnhExpiryLiveError, setCnhExpiryLiveError] = useState('');
+
+  const {
+    handleSubmit,
+    watch,
+    setValue,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      role: 'locador',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      document: '',
+      cnh: '',
+      cnhExpiry: '',
+      acceptedTerms: false,
+    },
+  });
+
+  const selectedRole = watch('role');
+  const email = watch('email');
+  const password = watch('password');
+  const confirmPassword = watch('confirmPassword');
+  const document = watch('document');
+  const cnh = watch('cnh') ?? '';
+  const cnhExpiry = watch('cnhExpiry') ?? '';
+  const acceptedTerms = watch('acceptedTerms');
+  const loading = isSubmitting;
 
   // Clear CNH fields when switching to locador
   useEffect(() => {
     if (selectedRole === 'locador') {
-      setCnh('');
-      setCnhError('');
+      setValue('cnh', '');
+      setValue('cnhExpiry', '');
+      clearErrors(['cnh', 'cnhExpiry']);
       setCnhValid(false);
-      setCnhExpiry('');
-      setCnhExpiryError('');
+      setCnhLiveError('');
       setCnhExpiryValid(false);
+      setCnhExpiryLiveError('');
     }
-  }, [selectedRole]);
+  }, [selectedRole, setValue, clearErrors]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const setField = (field: keyof RegisterFormValues) => (value: string) => {
+    setValue(field, value as never);
+    clearErrors(field);
+  };
 
-    if (!acceptedTerms) {
-      toast.error('Você precisa aceitar os Termos de Uso e a Política de Privacidade.');
-      return;
-    }
+  const onSubmit = async (values: RegisterFormValues) => {
+    setPasswordWarning('');
 
-    setLoading(true);
-
-    // Validate document
-    const docValidation = validateDocument(document);
-    if (!docValidation.isValid) {
-      toast.error(docValidation.message);
-      setDocumentError(docValidation.message);
-      setLoading(false);
-      return;
-    }
-
-    // Validate CNH for motorista
-    if (selectedRole === 'motorista') {
-      const cnhValidation = validateCNHDocument(cnh);
-      if (!cnhValidation.isValid) {
-        toast.error(cnhValidation.message);
-        setCnhError(cnhValidation.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!cnhExpiry) {
-        toast.error('Data de validade da CNH é obrigatória');
-        setCnhExpiryError('Data de validade é obrigatória');
-        setLoading(false);
-        return;
-      }
-
-      const expiryDate = new Date(cnhExpiry);
-      const today = startOfDay(new Date());
-      if (!isAfter(expiryDate, today)) {
-        toast.error('CNH vencida. Renove sua habilitação antes de continuar.');
-        setCnhExpiryError('CNH vencida. Renove sua habilitação antes de continuar.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem');
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      toast.error('A senha deve ter pelo menos 8 caracteres');
-      setLoading(false);
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      toast.error('A senha deve conter pelo menos uma letra maiúscula');
-      setLoading(false);
-      return;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      toast.error('A senha deve conter pelo menos uma letra minúscula');
-      setLoading(false);
-      return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      toast.error('A senha deve conter pelo menos um número');
-      setLoading(false);
-      return;
-    }
-
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      toast.error('A senha deve conter pelo menos um caractere especial');
-      setLoading(false);
-      return;
-    }
-
-    const cleanDocument = document.replace(/\D/g, '');
+    const cleanDocument = values.document.replace(/\D/g, '');
     const profileData = {
-      documentType: cleanDocument.length === 11 ? 'cpf' as const : 'cnpj' as const,
+      documentType: cleanDocument.length === 11 ? ('cpf' as const) : ('cnpj' as const),
       documentNumber: cleanDocument,
-      cnhNumber: selectedRole === 'motorista' ? cnh.replace(/\D/g, '') : undefined,
-      cnhExpiry: selectedRole === 'motorista' ? cnhExpiry : undefined,
+      cnhNumber: values.role === 'motorista' ? (values.cnh ?? '').replace(/\D/g, '') : undefined,
+      cnhExpiry: values.role === 'motorista' ? values.cnhExpiry : undefined,
     };
 
-    const { error } = await signUp(email, password, selectedRole, profileData);
+    const { error } = await signUp(values.email, values.password, values.role as AppRole, profileData);
 
     if (error) {
       const weakMsg = getWeakPasswordMessage(error);
@@ -160,12 +106,11 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       } else {
         toast.error(translateAuthError(error, 'signup'));
       }
-    } else {
-      toast.success('Conta criada com sucesso! Faça login para continuar.');
-      onRegistered();
+      return;
     }
 
-    setLoading(false);
+    toast.success('Conta criada com sucesso! Faça login para continuar.');
+    onRegistered();
   };
 
   return (
@@ -196,63 +141,84 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
         </div>
       </div>
 
-      <RoleSelector selectedRole={selectedRole} onRoleChange={setSelectedRole} />
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <RoleSelector
+        selectedRole={selectedRole as AppRole}
+        onRoleChange={(role) => setValue('role', role)}
+      />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <DocumentFields
-          selectedRole={selectedRole}
+          selectedRole={selectedRole as AppRole}
           loading={loading}
           document={document}
-          onDocumentChange={setDocument}
-          documentError={documentError}
-          onDocumentErrorChange={setDocumentError}
+          onDocumentChange={setField('document')}
+          documentError={errors.document?.message ?? documentLiveError}
+          onDocumentErrorChange={setDocumentLiveError}
           documentValid={documentValid}
           onDocumentValidChange={setDocumentValid}
           cnh={cnh}
-          onCnhChange={setCnh}
-          cnhError={cnhError}
-          onCnhErrorChange={setCnhError}
+          onCnhChange={setField('cnh')}
+          cnhError={errors.cnh?.message ?? cnhLiveError}
+          onCnhErrorChange={setCnhLiveError}
           cnhValid={cnhValid}
           onCnhValidChange={setCnhValid}
           cnhExpiry={cnhExpiry}
-          onCnhExpiryChange={setCnhExpiry}
-          cnhExpiryError={cnhExpiryError}
-          onCnhExpiryErrorChange={setCnhExpiryError}
+          onCnhExpiryChange={setField('cnhExpiry')}
+          cnhExpiryError={errors.cnhExpiry?.message ?? cnhExpiryLiveError}
+          onCnhExpiryErrorChange={setCnhExpiryLiveError}
           cnhExpiryValid={cnhExpiryValid}
           onCnhExpiryValidChange={setCnhExpiryValid}
         />
-        <EmailField email={email} onEmailChange={setEmail} loading={loading} />
+        <EmailField
+          email={email}
+          onEmailChange={setField('email')}
+          loading={loading}
+          error={errors.email?.message}
+        />
         <PasswordField
           password={password}
-          onPasswordChange={setPassword}
+          onPasswordChange={setField('password')}
           confirmPassword={confirmPassword}
-          onConfirmPasswordChange={setConfirmPassword}
+          onConfirmPasswordChange={setField('confirmPassword')}
           showConfirm
           showStrength
           passwordWarning={passwordWarning}
           loading={loading}
+          error={errors.password?.message}
+          confirmError={errors.confirmPassword?.message}
         />
-        <div className="flex items-start gap-2 pt-1">
-          <input
-            id="accept-terms"
-            type="checkbox"
-            checked={acceptedTerms}
-            onChange={(e) => setAcceptedTerms(e.target.checked)}
-            disabled={loading}
-            className="mt-1 h-4 w-4 cursor-pointer accent-primary"
-          />
-          <Label htmlFor="accept-terms" className="text-sm font-normal leading-snug text-muted-foreground">
-            Li e aceito os{' '}
-            <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              Termos de Uso
-            </a>{' '}
-            e a{' '}
-            <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              Política de Privacidade
-            </a>
-            .
-          </Label>
+        <div className="space-y-1 pt-1">
+          <div className="flex items-start gap-2">
+            <input
+              id="accept-terms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => {
+                setValue('acceptedTerms', e.target.checked);
+                clearErrors('acceptedTerms');
+              }}
+              disabled={loading}
+              className="mt-1 h-4 w-4 cursor-pointer accent-primary"
+            />
+            <Label
+              htmlFor="accept-terms"
+              className="text-sm font-normal leading-snug text-muted-foreground"
+            >
+              Li e aceito os{' '}
+              <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Termos de Uso
+              </a>{' '}
+              e a{' '}
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Política de Privacidade
+              </a>
+              .
+            </Label>
+          </div>
+          {errors.acceptedTerms?.message && (
+            <p className="text-xs text-destructive">{errors.acceptedTerms.message}</p>
+          )}
         </div>
-        <Button type="submit" className="w-full" disabled={loading || !acceptedTerms}>
+        <Button type="submit" className="w-full" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
