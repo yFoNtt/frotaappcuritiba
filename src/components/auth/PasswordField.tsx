@@ -112,6 +112,14 @@ export function PasswordField({
           </Button>
         </div>
 
+        {error && (
+          <p id="password-error" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
+
+
+
         {/* Password strength indicator */}
         {strength && (
           <div className="space-y-2 pt-1">
