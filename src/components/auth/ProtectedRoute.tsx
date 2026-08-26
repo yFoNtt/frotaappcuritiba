@@ -27,8 +27,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Verificação em duas etapas: obrigatória para admin/locador e opcional
-  // para motorista (ativada nas Configurações).
+  // Verificação em duas etapas: opcional para todas as roles,
+  // ativada individualmente por cada usuário em Configurações.
   if (mfaRequired && !mfaVerified) {
     return <Navigate to="/verificacao" state={{ from: location }} replace />;
   }
