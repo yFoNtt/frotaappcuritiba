@@ -9,7 +9,6 @@ import {
   isMagicLinkReturn,
   parseMagicLinkError,
   magicLinkErrorMessage,
-  MFA_DISABLED_FOR_DEMO,
 } from '@/lib/mfa';
 
 describe('MFA - retorno pelo link do e-mail', () => {
@@ -49,22 +48,20 @@ describe('MFA - erros do link', () => {
 
 
 describe('MFA - obrigatoriedade por role', () => {
-  it('é obrigatória para admin e locador', () => {
-    expect(isMfaMandatory('admin')).toBe(true);
-    expect(isMfaMandatory('locador')).toBe(true);
-  });
-
-  it('não é obrigatória para motorista nem sem role', () => {
+  it('não é obrigatória para nenhuma role (sempre opcional)', () => {
+    expect(isMfaMandatory('admin')).toBe(false);
+    expect(isMfaMandatory('locador')).toBe(false);
     expect(isMfaMandatory('motorista')).toBe(false);
     expect(isMfaMandatory(null)).toBe(false);
   });
 
-  it('com MFA_DISABLED_FOR_DEMO ativo, nenhum papel exige verificação', () => {
-    expect(MFA_DISABLED_FOR_DEMO).toBe(true);
-    expect(isMfaRequired('motorista', false)).toBe(false);
-    expect(isMfaRequired('motorista', true)).toBe(false);
-    expect(isMfaRequired('locador', false)).toBe(false);
+  it('só exige verificação quando o usuário ativou nas Configurações', () => {
     expect(isMfaRequired('admin', false)).toBe(false);
+    expect(isMfaRequired('locador', false)).toBe(false);
+    expect(isMfaRequired('motorista', false)).toBe(false);
+    expect(isMfaRequired('admin', true)).toBe(true);
+    expect(isMfaRequired('locador', true)).toBe(true);
+    expect(isMfaRequired('motorista', true)).toBe(true);
   });
 });
 

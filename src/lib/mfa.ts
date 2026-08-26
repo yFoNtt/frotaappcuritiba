@@ -1,24 +1,22 @@
 export type MfaRole = 'admin' | 'locador' | 'motorista' | null;
 
-/** Roles em que a verificação em duas etapas é obrigatória. */
-export const MFA_MANDATORY_ROLES: MfaRole[] = ['admin', 'locador'];
+/**
+ * Verificação em duas etapas é sempre OPCIONAL, para todas as roles.
+ * Nenhuma role é obrigada a usar — cada usuário decide em Configurações.
+ * (Antes admin/locador eram obrigatórios por padrão; alterado porque o
+ * fluxo de e-mail com link de verificação ainda não é confiável.)
+ */
+export const MFA_MANDATORY_ROLES: MfaRole[] = [];
 
 export function isMfaMandatory(role: MfaRole): boolean {
   return MFA_MANDATORY_ROLES.includes(role);
 }
 
-/**
- * TEMPORÁRIO (demonstração): desliga a verificação em duas etapas.
- * Toda a lógica de MFA continua no código — apenas não é exigida.
- * Para REATIVAR o MFA: trocar esta constante para `false`.
- */
-export const MFA_DISABLED_FOR_DEMO = true;
-
 /** Decide se o usuário precisa passar pela verificação em duas etapas. */
 export function isMfaRequired(role: MfaRole, mfaEnabled: boolean): boolean {
-  if (MFA_DISABLED_FOR_DEMO) return false;
   return isMfaMandatory(role) || mfaEnabled === true;
 }
+
 
 const STORAGE_PREFIX = 'frotaapp:mfa-ok:';
 
