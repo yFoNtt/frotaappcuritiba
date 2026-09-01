@@ -1100,6 +1100,10 @@ export type Database = {
         Args: { _blocked: boolean; _reason?: string; _user_id: string }
         Returns: Json
       }
+      admin_set_user_mfa: {
+        Args: { _enabled: boolean; _user_id: string }
+        Returns: Json
+      }
       assign_initial_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
