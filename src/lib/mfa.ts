@@ -24,11 +24,17 @@ function key(userId: string) {
   return `${STORAGE_PREFIX}${userId}`;
 }
 
-/** A verificação vale enquanto a aba/sessão do navegador estiver aberta. */
+/**
+ * A verificação vale enquanto o navegador estiver aberto (não a aba).
+ * Usa localStorage — e não sessionStorage — porque o link mágico de e-mail
+ * normalmente abre em uma NOVA aba (especialmente em apps de e-mail no
+ * celular), então a aba original precisa enxergar a confirmação feita na
+ * aba do link. Ver watchMfaVerified() para o sync cross-tab.
+ */
 export function isMfaVerified(userId: string | null | undefined): boolean {
   if (!userId || typeof window === 'undefined') return false;
   try {
-    return window.sessionStorage.getItem(key(userId)) === '1';
+    return window.localStorage.getItem(key(userId)) === '1';
   } catch {
     return false;
   }
@@ -36,7 +42,7 @@ export function isMfaVerified(userId: string | null | undefined): boolean {
 
 export function setMfaVerified(userId: string) {
   try {
-    window.sessionStorage.setItem(key(userId), '1');
+    window.localStorage.setItem(key(userId), '1');
   } catch {
     /* storage indisponível */
   }
@@ -45,15 +51,32 @@ export function setMfaVerified(userId: string) {
 export function clearMfaVerified(userId?: string | null) {
   try {
     if (userId) {
-      window.sessionStorage.removeItem(key(userId));
+      window.localStorage.removeItem(key(userId));
       return;
     }
-    Object.keys(window.sessionStorage)
+    Object.keys(window.localStorage)
       .filter((k) => k.startsWith(STORAGE_PREFIX))
-      .forEach((k) => window.sessionStorage.removeItem(k));
+      .forEach((k) => window.localStorage.removeItem(k));
   } catch {
     /* storage indisponível */
   }
+}
+
+/**
+ * Observa a confirmação de MFA feita em OUTRA aba (ex.: a aba aberta pelo
+ * link mágico do e-mail) e chama `onVerified` quando ela acontecer.
+ * Retorna a função de cleanup para remover o listener.
+ */
+export function watchMfaVerified(userId: string | null | undefined, onVerified: () => void): () => void {
+  if (!userId || typeof window === 'undefined') return () => {};
+  const targetKey = key(userId);
+  const handler = (e: StorageEvent) => {
+    if (e.key === targetKey && e.newValue === '1') {
+      onVerified();
+    }
+  };
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
 }
 
 /** Códigos são de 6 dígitos numéricos. */
