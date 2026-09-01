@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
 import { InactivityWarningDialog } from '@/components/auth/InactivityWarningDialog';
-import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified } from '@/lib/mfa';
+import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified, watchMfaVerified } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -159,6 +159,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 3 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user, checkBlockedAndSignOut]);
+
+  // Sincroniza a verificação de MFA entre abas: quando o usuário confirma
+  // pelo link mágico em uma aba nova, esta aba (onde ele está esperando)
+  // precisa ser avisada para liberar o acesso sem precisar de refresh manual.
+  useEffect(() => {
+    if (!user) return;
+    return watchMfaVerified(user.id, () => setMfaVerifiedState(true));
+  }, [user]);
 
   const signUp = async (email: string, password: string, selectedRole: AppRole, profileData?: ProfileData) => {
     try {

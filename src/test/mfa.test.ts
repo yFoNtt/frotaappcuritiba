@@ -81,7 +81,7 @@ describe('MFA - validação de código', () => {
 
 describe('MFA - estado de verificação por sessão', () => {
   beforeEach(() => {
-    window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   it('começa não verificado', () => {
