@@ -60,8 +60,15 @@ export function TwoFactorCard() {
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />
           Verificação em duas etapas
-          {mandatory && <Badge variant="secondary">Obrigatória</Badge>}
+          {mandatory ? (
+            <Badge variant="secondary">Obrigatória</Badge>
+          ) : (
+            <Badge variant={enabled ? 'default' : 'outline'}>
+              {enabled ? 'Ativa' : 'Desativada'}
+            </Badge>
+          )}
         </CardTitle>
+
         <CardDescription>
           Ao entrar na conta, pedimos um código de 6 dígitos enviado para o seu e-mail cadastrado.
         </CardDescription>

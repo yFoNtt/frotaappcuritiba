@@ -13,6 +13,9 @@ import {
   Save
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
+import { ConnectedAccountsCard } from '@/components/settings/ConnectedAccountsCard';
+
 
 export default function AdminSettings() {
   const handleSave = () => {
@@ -102,7 +105,12 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
+          {/* Two-factor + contas conectadas */}
+          <TwoFactorCard />
+          <ConnectedAccountsCard />
+
           {/* Security */}
+
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
