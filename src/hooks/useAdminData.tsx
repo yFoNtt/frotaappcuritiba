@@ -438,3 +438,79 @@ export function useAdminMonthlyData() {
     enabled: !!user && role === 'admin',
   });
 }
+
+export interface AdminMfaUser {
+  id: string;
+  email: string;
+  role: 'admin' | 'locador' | 'motorista';
+  full_name: string | null;
+  mfa_enabled: boolean;
+  last_sign_in_at: string | null;
+}
+
+// Fetch MFA status for every user (admin only)
+export function useAdminMfaUsers() {
+  const { user, role } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin', 'mfa-users'],
+    queryFn: async (): Promise<AdminMfaUser[]> => {
+      if (!user || role !== 'admin') return [];
+
+      const [rolesResult, profilesResult, emailsResult] = await Promise.all([
+        supabase.from('user_roles').select('user_id, role'),
+        supabase.from('profiles').select('user_id, full_name, mfa_enabled'),
+        supabase.rpc('get_user_emails_for_admin'),
+      ]);
+
+      if (rolesResult.error) throw rolesResult.error;
+
+      const profileMap = new Map<string, { full_name: string | null; mfa_enabled: boolean }>();
+      (profilesResult.data ?? []).forEach((p) => {
+        profileMap.set(p.user_id, { full_name: p.full_name, mfa_enabled: !!p.mfa_enabled });
+      });
+
+      const emailMap = new Map<string, { email: string; last_sign_in_at: string | null }>();
+      (emailsResult.data ?? []).forEach((u: { user_id: string; email: string; last_sign_in_at: string | null }) => {
+        emailMap.set(u.user_id, { email: u.email, last_sign_in_at: u.last_sign_in_at });
+      });
+
+      return (rolesResult.data ?? []).map((r) => ({
+        id: r.user_id,
+        email: emailMap.get(r.user_id)?.email ?? '',
+        role: r.role as 'admin' | 'locador' | 'motorista',
+        full_name: profileMap.get(r.user_id)?.full_name ?? null,
+        mfa_enabled: profileMap.get(r.user_id)?.mfa_enabled ?? false,
+        last_sign_in_at: emailMap.get(r.user_id)?.last_sign_in_at ?? null,
+      }));
+    },
+    enabled: !!user && role === 'admin',
+  });
+}
+
+// Enable/disable MFA for any user (admin only) — server-side enforced via RPC
+export function useSetUserMfa() {
+  const queryClient = useQueryClient();
+  const { user, role } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ userId, enabled }: { userId: string; enabled: boolean }) => {
+      if (!user || role !== 'admin') throw new Error('Não autorizado');
+      const { error } = await supabase.rpc('admin_set_user_mfa', {
+        _user_id: userId,
+        _enabled: enabled,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'mfa-users'] });
+      toast.success(vars.enabled ? 'Verificação em duas etapas ativada' : 'Verificação em duas etapas desativada');
+    },
+    onError: (error: Error) => {
+      const msg = error.message ?? '';
+      if (msg.includes('forbidden_admin_only')) toast.error('Apenas administradores podem alterar a MFA');
+      else if (msg.includes('user_not_found')) toast.error('Perfil do usuário não encontrado');
+      else toast.error('Erro ao atualizar a verificação em duas etapas');
+    },
+  });
+}
