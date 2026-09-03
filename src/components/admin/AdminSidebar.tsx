@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Menu,
   Shield,
+  ShieldCheck,
   History,
   Store,
   Globe,
@@ -38,6 +39,7 @@ const menuItems = [
   { icon: CreditCard, label: 'Planos', path: '/admin/planos' },
   { icon: BarChart3, label: 'Métricas', path: '/admin/metricas' },
   { icon: Globe, label: 'Visitas', path: '/admin/visitas' },
+  { icon: ShieldCheck, label: 'Verificação 2 Etapas', path: '/admin/mfa' },
   { icon: History, label: 'Auditoria', path: '/admin/auditoria' },
   { icon: Settings, label: 'Configurações', path: '/admin/configuracoes' },
 ];
