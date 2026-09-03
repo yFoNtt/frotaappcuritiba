@@ -14,6 +14,7 @@ const AdminMetrics = lazy(() => import("@/pages/admin/Metrics"));
 const AdminVisits = lazy(() => import("@/pages/admin/Visits"));
 const AdminSettings = lazy(() => import("@/pages/admin/Settings"));
 const AdminAuditLogs = lazy(() => import("@/pages/admin/AuditLogs"));
+const AdminMfa = lazy(() => import("@/pages/admin/Mfa"));
 
 const adminRoute = (path: string, Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Route
@@ -39,5 +40,6 @@ export const adminRoutes = (
     {adminRoute("/admin/visitas", AdminVisits)}
     {adminRoute("/admin/configuracoes", AdminSettings)}
     {adminRoute("/admin/auditoria", AdminAuditLogs)}
+    {adminRoute("/admin/mfa", AdminMfa)}
   </>
 );
