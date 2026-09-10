@@ -307,7 +307,10 @@ export default function LocadorSettings() {
                         Receba alertas de vencimentos por e-mail
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={!!notifPrefs.email_alerts}
+                      onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, email_alerts: checked }))}
+                    />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
@@ -317,7 +320,10 @@ export default function LocadorSettings() {
                         Notificações de pagamentos pendentes
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={!!notifPrefs.payment_alerts}
+                      onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, payment_alerts: checked }))}
+                    />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
@@ -327,7 +333,10 @@ export default function LocadorSettings() {
                         Lembretes de revisões e manutenções
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={!!notifPrefs.maintenance_alerts}
+                      onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, maintenance_alerts: checked }))}
+                    />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
@@ -337,7 +346,10 @@ export default function LocadorSettings() {
                         Notificações de interesse em veículos
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={!!notifPrefs.new_messages}
+                      onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, new_messages: checked }))}
+                    />
                   </div>
                 </CardContent>
               </Card>
