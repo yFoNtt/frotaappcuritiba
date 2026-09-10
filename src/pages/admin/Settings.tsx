@@ -100,7 +100,10 @@ export default function AdminSettings() {
                     Receber e-mail quando novos usuários se cadastrarem
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={!!notifPrefs.new_signups}
+                  onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, new_signups: checked }))}
+                />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -110,7 +113,10 @@ export default function AdminSettings() {
                     Receber alertas sobre problemas técnicos
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={!!notifPrefs.system_alerts}
+                  onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, system_alerts: checked }))}
+                />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -120,7 +126,10 @@ export default function AdminSettings() {
                     Receber resumo semanal de métricas
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  checked={!!notifPrefs.weekly_reports}
+                  onCheckedChange={(checked) => setNotifPrefs((prev) => ({ ...prev, weekly_reports: checked }))}
+                />
               </div>
             </CardContent>
           </Card>
@@ -207,8 +216,12 @@ export default function AdminSettings() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <Button onClick={handleSave} size="lg">
-            <Save className="mr-2 h-4 w-4" />
+          <Button onClick={handleSave} size="lg" disabled={updateProfile.isPending}>
+            {updateProfile.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
             Salvar Alterações
           </Button>
         </div>

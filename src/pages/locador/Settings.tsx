@@ -27,6 +27,13 @@ import {
   Loader2
 } from 'lucide-react';
 
+const DEFAULT_LOCADOR_NOTIFICATIONS: Record<string, boolean> = {
+  email_alerts: true,
+  payment_alerts: true,
+  maintenance_alerts: true,
+  new_messages: true,
+};
+
 const formatWhatsapp = (raw: string) => {
   const digits = raw.replace(/\D/g, '').slice(0, 11);
   if (digits.length <= 2) return digits.length ? `(${digits}` : '';
@@ -52,6 +59,9 @@ export default function LocadorSettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Preferências de notificação específicas desta tela (persistidas em profiles.notification_preferences)
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>(DEFAULT_LOCADOR_NOTIFICATIONS);
+
   // Populate form when profile loads
   useEffect(() => {
     if (profile) {
@@ -61,6 +71,9 @@ export default function LocadorSettings() {
       setCompanyName(profile.company_name ?? '');
       setCity(profile.city ?? '');
       setState(profile.state ?? '');
+      if (profile.notification_preferences) {
+        setNotifPrefs((prev) => ({ ...prev, ...profile.notification_preferences }));
+      }
     }
   }, [profile]);
 
@@ -79,6 +92,7 @@ export default function LocadorSettings() {
       company_name: companyName || null,
       city: city || null,
       state: state || null,
+      notification_preferences: notifPrefs,
     });
   };
 
