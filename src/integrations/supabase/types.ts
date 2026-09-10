@@ -802,6 +802,7 @@ export type Database = {
           full_name: string | null
           id: string
           mfa_enabled: boolean
+          notification_preferences: Json
           onboarding_dismissed_at: string | null
           onboarding_tour_seen_at: string | null
           phone: string | null
@@ -824,6 +825,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           mfa_enabled?: boolean
+          notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
           phone?: string | null
@@ -846,6 +848,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           mfa_enabled?: boolean
+          notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
           phone?: string | null
