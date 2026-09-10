@@ -19,6 +19,8 @@ export interface Profile {
   state: string | null;
   onboarding_tour_seen_at: string | null;
   onboarding_dismissed_at: string | null;
+  // Objeto flexível: admin e locador leem/escrevem apenas as chaves que usam.
+  notification_preferences: Record<string, boolean> | null;
   created_at: string;
   updated_at: string;
 }
