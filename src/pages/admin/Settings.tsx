@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,16 +11,35 @@ import {
   Bell, 
   Shield,
   Globe,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { TwoFactorCard } from '@/components/settings/TwoFactorCard';
 import { ConnectedAccountsCard } from '@/components/settings/ConnectedAccountsCard';
 
+// Preferências de notificação específicas desta tela (persistidas em profiles.notification_preferences)
+const DEFAULT_ADMIN_NOTIFICATIONS: Record<string, boolean> = {
+  new_signups: true,
+  system_alerts: true,
+  weekly_reports: true,
+};
 
 export default function AdminSettings() {
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
+
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>(DEFAULT_ADMIN_NOTIFICATIONS);
+
+  // Popula o estado local quando o profile carrega, sem sobrescrever chaves desconhecidas
+  useEffect(() => {
+    if (profile?.notification_preferences) {
+      setNotifPrefs((prev) => ({ ...prev, ...profile.notification_preferences }));
+    }
+  }, [profile]);
+
   const handleSave = () => {
-    toast.success('Configurações salvas com sucesso!');
+    updateProfile.mutate({ notification_preferences: notifPrefs });
   };
 
   return (
