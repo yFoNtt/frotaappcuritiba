@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   isMfaMandatory,
   isMfaRequired,
   isValidMfaCode,
-  isMfaVerified,
-  setMfaVerified,
-  clearMfaVerified,
   isMagicLinkReturn,
   parseMagicLinkError,
   magicLinkErrorMessage,
@@ -79,24 +76,3 @@ describe('MFA - validação de código', () => {
   });
 });
 
-describe('MFA - estado de verificação por sessão', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  it('começa não verificado', () => {
-    expect(isMfaVerified('u1')).toBe(false);
-  });
-
-  it('marca e limpa a verificação do usuário', () => {
-    setMfaVerified('u1');
-    expect(isMfaVerified('u1')).toBe(true);
-    expect(isMfaVerified('u2')).toBe(false);
-    clearMfaVerified('u1');
-    expect(isMfaVerified('u1')).toBe(false);
-  });
-
-  it('retorna false sem userId', () => {
-    expect(isMfaVerified(null)).toBe(false);
-  });
-});

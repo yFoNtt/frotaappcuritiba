@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
 import { InactivityWarningDialog } from '@/components/auth/InactivityWarningDialog';
-import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified, watchMfaVerified } from '@/lib/mfa';
+import { isMfaRequired } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean;
   mfaRequired: boolean;
   mfaVerified: boolean;
-  markMfaVerified: () => void;
+  markMfaVerified: () => Promise<boolean>;
   refreshMfaSettings: () => Promise<void>;
   signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -61,17 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchMfaEnabled = async (userId: string): Promise<boolean> => {
+  const fetchMfaStatus = async (): Promise<{ enabled: boolean; verified: boolean }> => {
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('mfa_enabled')
-        .eq('user_id', userId)
-        .maybeSingle();
-      return data?.mfa_enabled === true;
+      const { data, error } = await supabase.functions.invoke('mfa-session', {
+        body: { action: 'status' },
+      });
+      if (error) throw error;
+      return { enabled: data?.enabled === true, verified: data?.verified === true };
     } catch (error) {
       console.error('Error fetching MFA settings:', error);
-      return false;
+      return { enabled: false, verified: false };
     }
   };
 
@@ -103,10 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialized = false;
 
     const resolveUser = async (userId: string) => {
-      const [r, enabled] = await Promise.all([fetchUserRole(userId), fetchMfaEnabled(userId)]);
+      const [r, mfaStatus] = await Promise.all([
+        fetchUserRole(userId),
+        fetchMfaStatus(),
+      ]);
       setRole(r);
-      setMfaEnabled(enabled);
-      setMfaVerifiedState(isMfaVerified(userId));
+      setMfaEnabled(mfaStatus.enabled);
+      setMfaVerifiedState(mfaStatus.verified);
       setLoading(false);
       await checkBlockedAndSignOut();
     };
@@ -159,14 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 3 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user, checkBlockedAndSignOut]);
-
-  // Sincroniza a verificação de MFA entre abas: quando o usuário confirma
-  // pelo link mágico em uma aba nova, esta aba (onde ele está esperando)
-  // precisa ser avisada para liberar o acesso sem precisar de refresh manual.
-  useEffect(() => {
-    if (!user) return;
-    return watchMfaVerified(user.id, () => setMfaVerifiedState(true));
-  }, [user]);
 
   const signUp = async (email: string, password: string, selectedRole: AppRole, profileData?: ProfileData) => {
     try {
@@ -346,19 +340,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMfaSettings = useCallback(async () => {
     if (user) {
-      setMfaEnabled(await fetchMfaEnabled(user.id));
+      const status = await fetchMfaStatus();
+      setMfaEnabled(status.enabled);
+      setMfaVerifiedState(status.verified);
     }
   }, [user]);
 
-  const markMfaVerified = useCallback(() => {
-    if (user) {
-      setMfaVerified(user.id);
-      setMfaVerifiedState(true);
-    }
+  const markMfaVerified = useCallback(async () => {
+    if (!user) return false;
+    const { data, error } = await supabase.functions.invoke('mfa-session', {
+      body: { action: 'complete' },
+    });
+    const verified = !error && data?.success === true;
+    setMfaVerifiedState(verified);
+    if (verified) setRole(await fetchUserRole(user.id));
+    return verified;
   }, [user]);
 
   const signOut = useCallback(async () => {
-    clearMfaVerified(user?.id);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

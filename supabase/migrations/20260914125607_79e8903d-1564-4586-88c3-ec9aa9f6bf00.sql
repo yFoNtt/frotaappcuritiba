@@ -1,0 +1,1 @@
+DROP FUNCTION public.admin_set_user_mfa(uuid, boolean);

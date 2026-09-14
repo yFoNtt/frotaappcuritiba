@@ -488,7 +488,7 @@ export function useAdminMfaUsers() {
   });
 }
 
-// Enable/disable MFA for any user (admin only) — server-side enforced via RPC
+// Enable/disable MFA for any user (admin only) — server-side enforced.
 export function useSetUserMfa() {
   const queryClient = useQueryClient();
   const { user, role } = useAuth();
@@ -496,9 +496,8 @@ export function useSetUserMfa() {
   return useMutation({
     mutationFn: async ({ userId, enabled }: { userId: string; enabled: boolean }) => {
       if (!user || role !== 'admin') throw new Error('Não autorizado');
-      const { error } = await supabase.rpc('admin_set_user_mfa', {
-        _user_id: userId,
-        _enabled: enabled,
+      const { error } = await supabase.functions.invoke('mfa-session', {
+        body: { action: 'admin-set-enabled', user_id: userId, enabled },
       });
       if (error) throw error;
     },

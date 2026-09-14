@@ -14,7 +14,6 @@ import {
   isMagicLinkReturn,
   parseMagicLinkTokens,
   parseMagicLinkError,
-  setMfaVerified,
   magicLinkErrorMessage,
   MFA_CODE_INPUT_ENABLED,
   MFA_LINK_HYDRATION_TIMEOUT_MS,
@@ -50,6 +49,14 @@ export default function TwoFactor() {
   const sendCode = useCallback(async () => {
     if (!user?.email) return;
     setSending(true);
+    const { error: challengeError } = await supabase.functions.invoke('mfa-session', {
+      body: { action: 'begin' },
+    });
+    if (challengeError) {
+      setSending(false);
+      toast.error('Não foi possível iniciar a verificação. Tente novamente em instantes.');
+      return;
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email: user.email,
       options: {
@@ -90,10 +97,14 @@ export default function TwoFactor() {
 
     let cancelled = false;
 
-    const finish = (userId: string) => {
-      setMfaVerified(userId);
+    const finish = async (_userId: string) => {
+      const verified = await markMfaVerified();
+      if (!verified) {
+        setLinkError('exchange_failed');
+        cleanUrl();
+        return;
+      }
       setLinkDone(true);
-      markMfaVerified();
       cleanUrl();
       toast.success('Verificação concluída!');
     };
@@ -105,17 +116,17 @@ export default function TwoFactor() {
             access_token: tokens.accessToken,
             refresh_token: tokens.refreshToken,
           });
-          if (!cancelled && data?.session?.user && !error) return finish(data.session.user.id);
+           if (!cancelled && data?.session?.user && !error) return await finish(data.session.user.id);
         } else if (tokens?.code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(tokens.code);
-          if (!cancelled && data?.session?.user && !error) return finish(data.session.user.id);
+           if (!cancelled && data?.session?.user && !error) return await finish(data.session.user.id);
         }
 
         // Fallback: o próprio client pode ter consumido a URL (detectSessionInUrl).
         const deadline = Date.now() + MFA_LINK_HYDRATION_TIMEOUT_MS;
         while (!cancelled && Date.now() < deadline) {
           const { data } = await supabase.auth.getSession();
-          if (data.session?.user) return finish(data.session.user.id);
+           if (data.session?.user) return await finish(data.session.user.id);
           await new Promise((r) => setTimeout(r, 400));
         }
         if (!cancelled) {
@@ -136,12 +147,6 @@ export default function TwoFactor() {
       cancelled = true;
     };
   }, [returningFromLink, initialUrl, markMfaVerified]);
-
-  // Se a sessão só aparece depois (SIGNED_IN tardio), marca como verificado.
-  useEffect(() => {
-    if (!returningFromLink || linkError || !linkDone || !user) return;
-    markMfaVerified();
-  }, [returningFromLink, linkError, linkDone, user, markMfaVerified]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -183,7 +188,11 @@ export default function TwoFactor() {
       return;
     }
 
-    markMfaVerified();
+    const verified = await markMfaVerified();
+    if (!verified) {
+      toast.error('Não foi possível confirmar esta sessão. Solicite um novo código.');
+      return;
+    }
     toast.success('Verificação concluída!');
     navigate(dashboardPath, { replace: true });
   };
