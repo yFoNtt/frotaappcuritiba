@@ -1247,6 +1247,7 @@ export type Database = {
       }
       is_current_user_blocked: { Args: never; Returns: boolean }
       is_mfa_session_verified: { Args: never; Returns: boolean }
+      set_own_mfa_enabled: { Args: { _enabled: boolean }; Returns: undefined }
       validate_cnh: { Args: { cnh: string }; Returns: boolean }
       validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
       validate_cpf: { Args: { cpf: string }; Returns: boolean }
