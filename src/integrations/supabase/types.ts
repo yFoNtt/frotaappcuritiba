@@ -620,6 +620,27 @@ export type Database = {
           },
         ]
       }
+      mfa_challenges: {
+        Row: {
+          expires_at: string
+          initial_session_id: string
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          initial_session_id: string
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          initial_session_id?: string
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mileage_records: {
         Row: {
           contract_id: string | null
@@ -802,6 +823,8 @@ export type Database = {
           full_name: string | null
           id: string
           mfa_enabled: boolean
+          mfa_verified_session_id: string | null
+          mfa_verified_until: string | null
           notification_preferences: Json
           onboarding_dismissed_at: string | null
           onboarding_tour_seen_at: string | null
@@ -825,6 +848,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           mfa_enabled?: boolean
+          mfa_verified_session_id?: string | null
+          mfa_verified_until?: string | null
           notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
@@ -848,6 +873,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           mfa_enabled?: boolean
+          mfa_verified_session_id?: string | null
+          mfa_verified_until?: string | null
           notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
@@ -1219,6 +1246,7 @@ export type Database = {
         Returns: string
       }
       is_current_user_blocked: { Args: never; Returns: boolean }
+      is_mfa_session_verified: { Args: never; Returns: boolean }
       validate_cnh: { Args: { cnh: string }; Returns: boolean }
       validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
       validate_cpf: { Args: { cpf: string }; Returns: boolean }
