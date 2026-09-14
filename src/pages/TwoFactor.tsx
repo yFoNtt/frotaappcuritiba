@@ -148,12 +148,6 @@ export default function TwoFactor() {
     };
   }, [returningFromLink, initialUrl, markMfaVerified]);
 
-  // Se a sessão só aparece depois (SIGNED_IN tardio), marca como verificado.
-  useEffect(() => {
-    if (!returningFromLink || linkError || !linkDone || !user) return;
-    markMfaVerified();
-  }, [returningFromLink, linkError, linkDone, user, markMfaVerified]);
-
   useEffect(() => {
     if (secondsLeft <= 0) return;
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
