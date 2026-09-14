@@ -48,16 +48,18 @@ serve(async (req: Request): Promise<Response> => {
     return json({ error: "Invalid or expired session" }, 401, corsHeaders);
   }
 
-  let action: "status" | "begin" | "complete" | "set-enabled";
+  let action: "status" | "begin" | "complete" | "set-enabled" | "admin-set-enabled";
   let enabled: boolean | undefined;
+  let targetUserId: string | undefined;
   try {
     const body = await req.json();
     action = body?.action;
     enabled = body?.enabled;
+    targetUserId = body?.user_id;
   } catch {
     return json({ error: "Invalid request" }, 400, corsHeaders);
   }
-  if (!["status", "begin", "complete", "set-enabled"].includes(action)) {
+  if (!["status", "begin", "complete", "set-enabled", "admin-set-enabled"].includes(action)) {
     return json({ error: "Invalid action" }, 400, corsHeaders);
   }
 
@@ -90,6 +92,28 @@ serve(async (req: Request): Promise<Response> => {
     }).eq("user_id", user.id);
     if (error) return json({ error: "Unable to update verification" }, 500, corsHeaders);
     return json({ success: true, enabled }, 200, corsHeaders);
+  }
+
+  if (action === "admin-set-enabled") {
+    if (typeof enabled !== "boolean" || !targetUserId) {
+      return json({ error: "Invalid setting" }, 400, corsHeaders);
+    }
+    const { data: role, error: roleError } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleError || !role) return json({ error: "Access denied" }, 403, corsHeaders);
+
+    const { data: profile, error } = await admin.from("profiles").update({
+      mfa_enabled: enabled,
+      mfa_verified_session_id: null,
+      mfa_verified_until: null,
+      updated_at: new Date().toISOString(),
+    }).eq("user_id", targetUserId).select("user_id").maybeSingle();
+    if (error || !profile) return json({ error: "User not found" }, 404, corsHeaders);
+    return json({ success: true, user_id: targetUserId, enabled }, 200, corsHeaders);
   }
 
   if (action === "begin") {
