@@ -48,20 +48,49 @@ serve(async (req: Request): Promise<Response> => {
     return json({ error: "Invalid or expired session" }, 401, corsHeaders);
   }
 
-  let action: "begin" | "complete";
+  let action: "status" | "begin" | "complete" | "set-enabled";
+  let enabled: boolean | undefined;
   try {
     const body = await req.json();
     action = body?.action;
+    enabled = body?.enabled;
   } catch {
     return json({ error: "Invalid request" }, 400, corsHeaders);
   }
-  if (action !== "begin" && action !== "complete") {
+  if (!["status", "begin", "complete", "set-enabled"].includes(action)) {
     return json({ error: "Invalid action" }, 400, corsHeaders);
   }
 
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  if (action === "status") {
+    const { data: profile, error } = await admin
+      .from("profiles")
+      .select("mfa_enabled, mfa_verified_session_id, mfa_verified_until")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error) return json({ error: "Unable to check verification" }, 500, corsHeaders);
+    const verified = profile?.mfa_enabled !== true || (
+      profile.mfa_verified_session_id === claims.session_id &&
+      !!profile.mfa_verified_until &&
+      new Date(profile.mfa_verified_until) > new Date()
+    );
+    return json({ enabled: profile?.mfa_enabled === true, verified }, 200, corsHeaders);
+  }
+
+  if (action === "set-enabled") {
+    if (typeof enabled !== "boolean") return json({ error: "Invalid setting" }, 400, corsHeaders);
+    const { error } = await admin.from("profiles").update({
+      mfa_enabled: enabled,
+      mfa_verified_session_id: null,
+      mfa_verified_until: null,
+      updated_at: new Date().toISOString(),
+    }).eq("user_id", user.id);
+    if (error) return json({ error: "Unable to update verification" }, 500, corsHeaders);
+    return json({ success: true, enabled }, 200, corsHeaders);
+  }
 
   if (action === "begin") {
     const { error } = await admin.from("mfa_challenges").upsert({

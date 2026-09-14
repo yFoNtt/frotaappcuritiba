@@ -61,27 +61,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchMfaEnabled = async (userId: string): Promise<boolean> => {
+  const fetchMfaStatus = async (): Promise<{ enabled: boolean; verified: boolean }> => {
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('mfa_enabled')
-        .eq('user_id', userId)
-        .maybeSingle();
-      return data?.mfa_enabled === true;
+      const { data, error } = await supabase.functions.invoke('mfa-session', {
+        body: { action: 'status' },
+      });
+      if (error) throw error;
+      return { enabled: data?.enabled === true, verified: data?.verified === true };
     } catch (error) {
       console.error('Error fetching MFA settings:', error);
-      return false;
+      return { enabled: false, verified: false };
     }
-  };
-
-  const fetchMfaVerified = async (): Promise<boolean> => {
-    const { data, error } = await supabase.rpc('is_mfa_session_verified');
-    if (error) {
-      console.error('Error checking MFA verification:', error);
-      return false;
-    }
-    return data === true;
   };
 
 
@@ -112,14 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialized = false;
 
     const resolveUser = async (userId: string) => {
-      const [r, enabled, verified] = await Promise.all([
+      const [r, mfaStatus] = await Promise.all([
         fetchUserRole(userId),
-        fetchMfaEnabled(userId),
-        fetchMfaVerified(),
+        fetchMfaStatus(),
       ]);
       setRole(r);
-      setMfaEnabled(enabled);
-      setMfaVerifiedState(verified);
+      setMfaEnabled(mfaStatus.enabled);
+      setMfaVerifiedState(mfaStatus.verified);
       setLoading(false);
       await checkBlockedAndSignOut();
     };
@@ -351,7 +340,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMfaSettings = useCallback(async () => {
     if (user) {
-      setMfaEnabled(await fetchMfaEnabled(user.id));
+      const status = await fetchMfaStatus();
+      setMfaEnabled(status.enabled);
+      setMfaVerifiedState(status.verified);
     }
   }, [user]);
 
@@ -362,6 +353,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const verified = !error && data?.success === true;
     setMfaVerifiedState(verified);
+    if (verified) setRole(await fetchUserRole(user.id));
     return verified;
   }, [user]);
 

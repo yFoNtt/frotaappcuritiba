@@ -34,7 +34,9 @@ export function TwoFactorCard() {
   const handleToggle = async (value: boolean) => {
     if (!user || mandatory) return;
     setSaving(true);
-    const { error } = await supabase.rpc('set_own_mfa_enabled', { _enabled: value });
+    const { error } = await supabase.functions.invoke('mfa-session', {
+      body: { action: 'set-enabled', enabled: value },
+    });
     setSaving(false);
 
     if (error) {
