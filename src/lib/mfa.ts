@@ -17,68 +17,6 @@ export function isMfaRequired(role: MfaRole, mfaEnabled: boolean): boolean {
   return isMfaMandatory(role) || mfaEnabled === true;
 }
 
-
-const STORAGE_PREFIX = 'frotaapp:mfa-ok:';
-
-function key(userId: string) {
-  return `${STORAGE_PREFIX}${userId}`;
-}
-
-/**
- * A verificação vale enquanto o navegador estiver aberto (não a aba).
- * Usa localStorage — e não sessionStorage — porque o link mágico de e-mail
- * normalmente abre em uma NOVA aba (especialmente em apps de e-mail no
- * celular), então a aba original precisa enxergar a confirmação feita na
- * aba do link. Ver watchMfaVerified() para o sync cross-tab.
- */
-export function isMfaVerified(userId: string | null | undefined): boolean {
-  if (!userId || typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem(key(userId)) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function setMfaVerified(userId: string) {
-  try {
-    window.localStorage.setItem(key(userId), '1');
-  } catch {
-    /* storage indisponível */
-  }
-}
-
-export function clearMfaVerified(userId?: string | null) {
-  try {
-    if (userId) {
-      window.localStorage.removeItem(key(userId));
-      return;
-    }
-    Object.keys(window.localStorage)
-      .filter((k) => k.startsWith(STORAGE_PREFIX))
-      .forEach((k) => window.localStorage.removeItem(k));
-  } catch {
-    /* storage indisponível */
-  }
-}
-
-/**
- * Observa a confirmação de MFA feita em OUTRA aba (ex.: a aba aberta pelo
- * link mágico do e-mail) e chama `onVerified` quando ela acontecer.
- * Retorna a função de cleanup para remover o listener.
- */
-export function watchMfaVerified(userId: string | null | undefined, onVerified: () => void): () => void {
-  if (!userId || typeof window === 'undefined') return () => {};
-  const targetKey = key(userId);
-  const handler = (e: StorageEvent) => {
-    if (e.key === targetKey && e.newValue === '1') {
-      onVerified();
-    }
-  };
-  window.addEventListener('storage', handler);
-  return () => window.removeEventListener('storage', handler);
-}
-
 /** Códigos são de 6 dígitos numéricos. */
 export function isValidMfaCode(code: string): boolean {
   return /^\d{6}$/.test(code.trim());

@@ -35,14 +35,13 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify the user has admin role
-    const { data: roleData, error: roleError } = await supabaseAuth
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Authorize with the server-side role helper. Never trust client metadata.
+    const { data: isAdmin, error: roleError } = await supabaseAuth.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
 
-    if (roleError || roleData?.role !== "admin") {
+    if (roleError || isAdmin !== true) {
       return new Response(
         JSON.stringify({ error: "Access denied. Admin role required." }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -231,7 +230,7 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in generate-notifications:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: "Unable to generate notifications" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useInactivityTimeout } from './useInactivityTimeout';
 import { InactivityWarningDialog } from '@/components/auth/InactivityWarningDialog';
-import { isMfaRequired, isMfaVerified, setMfaVerified, clearMfaVerified, watchMfaVerified } from '@/lib/mfa';
+import { isMfaRequired } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean;
   mfaRequired: boolean;
   mfaVerified: boolean;
-  markMfaVerified: () => void;
+  markMfaVerified: () => Promise<boolean>;
   refreshMfaSettings: () => Promise<void>;
   signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -75,6 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchMfaVerified = async (): Promise<boolean> => {
+    const { data, error } = await supabase.rpc('is_mfa_session_verified');
+    if (error) {
+      console.error('Error checking MFA verification:', error);
+      return false;
+    }
+    return data === true;
+  };
+
 
   // Checa is_current_user_blocked() e força logout se a conta foi
   // bloqueada pelo admin. Chamado na carga inicial, em toda mudança de
@@ -103,10 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialized = false;
 
     const resolveUser = async (userId: string) => {
-      const [r, enabled] = await Promise.all([fetchUserRole(userId), fetchMfaEnabled(userId)]);
+      const [r, enabled, verified] = await Promise.all([
+        fetchUserRole(userId),
+        fetchMfaEnabled(userId),
+        fetchMfaVerified(),
+      ]);
       setRole(r);
       setMfaEnabled(enabled);
-      setMfaVerifiedState(isMfaVerified(userId));
+      setMfaVerifiedState(verified);
       setLoading(false);
       await checkBlockedAndSignOut();
     };
@@ -159,14 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 3 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user, checkBlockedAndSignOut]);
-
-  // Sincroniza a verificação de MFA entre abas: quando o usuário confirma
-  // pelo link mágico em uma aba nova, esta aba (onde ele está esperando)
-  // precisa ser avisada para liberar o acesso sem precisar de refresh manual.
-  useEffect(() => {
-    if (!user) return;
-    return watchMfaVerified(user.id, () => setMfaVerifiedState(true));
-  }, [user]);
 
   const signUp = async (email: string, password: string, selectedRole: AppRole, profileData?: ProfileData) => {
     try {
@@ -350,15 +355,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const markMfaVerified = useCallback(() => {
-    if (user) {
-      setMfaVerified(user.id);
-      setMfaVerifiedState(true);
-    }
+  const markMfaVerified = useCallback(async () => {
+    if (!user) return false;
+    const { data, error } = await supabase.functions.invoke('mfa-session', {
+      body: { action: 'complete' },
+    });
+    const verified = !error && data?.success === true;
+    setMfaVerifiedState(verified);
+    return verified;
   }, [user]);
 
   const signOut = useCallback(async () => {
-    clearMfaVerified(user?.id);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
