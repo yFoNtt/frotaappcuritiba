@@ -209,31 +209,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // If signup successful and user exists, assign role and create profile
+      // If signup successful and user exists, create the profile first. The MFA
+      // policy intentionally allows only this bootstrap INSERT when no profile
+      // exists; every subsequent read/write remains MFA-gated as configured.
       if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            document_type: profileData?.documentType,
+            document_number: profileData?.documentNumber,
+            cnh_number: profileData?.cnhNumber,
+            cnh_expiry: profileData?.cnhExpiry
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          await supabase.auth.signOut();
+          return { error: new Error('Não foi possível salvar os dados do perfil. Tente entrar novamente.') };
+        }
+
         const { error: roleError } = await supabase.rpc('assign_initial_role', {
           _role: selectedRole,
         });
 
         if (roleError) {
           console.error('Error assigning role:', roleError);
-        }
-
-        // Create profile with document data
-        if (profileData) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: data.user.id,
-              document_type: profileData.documentType,
-              document_number: profileData.documentNumber,
-              cnh_number: profileData.cnhNumber,
-              cnh_expiry: profileData.cnhExpiry
-            });
-
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-          }
+          await supabase.auth.signOut();
+          return { error: new Error('Não foi possível definir o tipo da conta. Tente entrar novamente.') };
         }
 
         // LGPD: registrar consentimento via Edge Function (captura IP + UA)
