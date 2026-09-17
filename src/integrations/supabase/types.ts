@@ -1134,6 +1134,15 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
       }
+      bootstrap_own_profile: {
+        Args: {
+          _cnh_expiry?: string
+          _cnh_number?: string
+          _document_number?: string
+          _document_type?: string
+        }
+        Returns: undefined
+      }
       claim_driver_invite: { Args: { _token: string }; Returns: Json }
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
       cleanup_old_site_visits: { Args: never; Returns: undefined }
