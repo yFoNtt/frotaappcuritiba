@@ -12,13 +12,8 @@
 //   2. `Authorization: Bearer <SERVICE_ROLE_KEY>` — internal tooling
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-seed-token",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
+import { emptyBodySchema, parseJsonBody } from "../_shared/requestValidation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -31,7 +26,7 @@ const TEST_EMAILS = [
 
 const BUCKET = "documents";
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, corsHeaders: Record<string, string>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -75,11 +70,12 @@ async function listAllFilesRecursive(
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
   if (req.method !== "POST") {
-    return json({ error: "method not allowed" }, 405);
+    return json({ error: "method not allowed" }, corsHeaders, 405);
   }
 
   const provided = req.headers.get("x-seed-token") ?? "";
@@ -90,8 +86,11 @@ Deno.serve(async (req) => {
   const tokenOk = !!SEED_TOKEN && provided === SEED_TOKEN;
   const serviceRoleOk = !!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY;
   if (!tokenOk && !serviceRoleOk) {
-    return json({ error: "unauthorized" }, 401);
+    return json({ error: "unauthorized" }, corsHeaders, 401);
   }
+
+  const input = await parseJsonBody(req, emptyBodySchema, { allowEmpty: true });
+  if (!input.success) return json({ error: input.error }, corsHeaders, 400);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -108,7 +107,7 @@ Deno.serve(async (req) => {
       page,
       perPage: 200,
     });
-    if (error) return json({ error: `listUsers: ${error.message}` }, 500);
+    if (error) return json({ error: `listUsers: ${error.message}` }, corsHeaders, 500);
     if (!data.users.length) break;
 
     for (const u of data.users) {
@@ -200,5 +199,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ ok: true, ...results });
+  return json({ ok: true, ...results }, corsHeaders);
 });

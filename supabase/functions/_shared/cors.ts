@@ -1,8 +1,7 @@
 // supabase/functions/_shared/cors.ts
 // Allow-list de CORS compartilhado por todas as Edge Functions do projeto.
 // Substitui "Access-Control-Allow-Origin: *" por um allow-list real:
-// domínio de produção + previews do Lovable (somente HTTPS) + localhost
-// opcional via secret ALLOW_LOCAL_DEV.
+// domínio de produção + origens exatas configuradas + localhost opcional.
 
 const BASE_ALLOWED_HEADERS =
   "authorization, x-client-info, apikey, content-type, x-seed-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
@@ -35,12 +34,6 @@ function isAllowedOrigin(origin: string | null): boolean {
     url = new URL(origin);
   } catch {
     return false;
-  }
-  // HTTPS-only para domínios Lovable — bloqueia spoofing via transporte
-  // inseguro em http://*.lovable.app.
-  if (url.protocol === "https:") {
-    if (url.hostname.endsWith(".lovable.app")) return true;
-    if (url.hostname.endsWith(".lovableproject.com")) return true;
   }
   if (
     ALLOW_LOCAL_DEV &&
