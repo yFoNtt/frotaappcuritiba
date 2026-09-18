@@ -10,13 +10,8 @@
 // ever leaking through to RLS-protected tables for non-service callers.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-seed-token",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
+import { emptyBodySchema, parseJsonBody } from "../_shared/requestValidation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -50,7 +45,7 @@ const MOTORISTAS = [
   },
 ];
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, corsHeaders: Record<string, string>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,12 +53,13 @@ function json(body: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
-    return json({ error: "method not allowed" }, 405);
+    return json({ error: "method not allowed" }, corsHeaders, 405);
   }
 
   // --- Auth: shared secret OR service-role bearer ---------------------------
@@ -78,8 +74,11 @@ Deno.serve(async (req) => {
   const serviceRoleOk = !!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY;
 
   if (!tokenOk && !serviceRoleOk) {
-    return json({ error: "unauthorized" }, 401);
+    return json({ error: "unauthorized" }, corsHeaders, 401);
   }
+
+  const input = await parseJsonBody(req, emptyBodySchema, { allowEmpty: true });
+  if (!input.success) return json({ error: input.error }, corsHeaders, 400);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -88,7 +87,7 @@ Deno.serve(async (req) => {
   // --- Resolve locador user id ----------------------------------------------
   const { data: locadorList, error: locErr } =
     await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  if (locErr) return json({ error: `listUsers: ${locErr.message}` }, 500);
+  if (locErr) return json({ error: `listUsers: ${locErr.message}` }, corsHeaders, 500);
 
   const locador = locadorList.users.find((u) => u.email === LOCADOR_EMAIL);
   if (!locador) {
@@ -96,6 +95,7 @@ Deno.serve(async (req) => {
       {
         error: `locador "${LOCADOR_EMAIL}" not found — create it before seeding motoristas`,
       },
+      corsHeaders,
       500,
     );
   }
@@ -198,5 +198,5 @@ Deno.serve(async (req) => {
     results.push(log);
   }
 
-  return json({ ok: true, locador_id: locadorId, results });
+  return json({ ok: true, locador_id: locadorId, results }, corsHeaders);
 });

@@ -358,34 +358,27 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
 
       // Upload via XHR using a signed upload URL → gives us real progress events.
       // 'aborted' is a sentinel that bubbles up to stop the retry loop entirely.
-      const uploadOnce = (
+      const uploadOnce = async (
         path: string,
       ): Promise<
         | { ok: true }
         | { ok: false; aborted: true }
         | { ok: false; aborted?: false; status: number; message: string; fatal: boolean }
-      > =>
-        new Promise(async (resolve) => {
-          if (signal?.aborted) {
-            resolve({ ok: false, aborted: true });
-            return;
-          }
+      > => {
+        if (signal?.aborted) return { ok: false, aborted: true };
 
-          const { data: signed, error: signErr } = await supabase.storage
-            .from('chat-attachments')
-            .createSignedUploadUrl(path);
+        const { data: signed, error: signErr } = await supabase.storage
+          .from('chat-attachments')
+          .createSignedUploadUrl(path);
 
-          if (signal?.aborted) {
-            resolve({ ok: false, aborted: true });
-            return;
-          }
+        if (signal?.aborted) return { ok: false, aborted: true };
 
-          if (signErr || !signed) {
-            const msg = signErr?.message || 'Falha ao criar URL de upload';
-            resolve({ ok: false, status: 0, message: msg, fatal: isFatalMsg(msg) });
-            return;
-          }
+        if (signErr || !signed) {
+          const msg = signErr?.message || 'Falha ao criar URL de upload';
+          return { ok: false, status: 0, message: msg, fatal: isFatalMsg(msg) };
+        }
 
+        return new Promise((resolve) => {
           const xhr = new XMLHttpRequest();
           const onAbort = () => xhr.abort();
           signal?.addEventListener('abort', onAbort);
@@ -428,6 +421,7 @@ export function useConversation(conversationId: string | null, role: ChatRole) {
           };
           xhr.send(file);
         });
+      };
 
       let lastError: { status: number; message: string } | null = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {

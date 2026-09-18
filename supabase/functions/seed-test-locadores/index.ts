@@ -6,13 +6,8 @@
 // Protected by `x-seed-token` header matching E2E_SEED_TOKEN secret.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-seed-token",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
+import { emptyBodySchema, parseJsonBody } from "../_shared/requestValidation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -47,7 +42,7 @@ const LOCADORES = [
   },
 ] as const;
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, corsHeaders: Record<string, string>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -55,14 +50,18 @@ function json(body: unknown, status = 200) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  if (req.method !== "POST") return json({ error: "method not allowed" }, corsHeaders, 405);
 
   const provided = req.headers.get("x-seed-token") ?? "";
   const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const tokenOk = !!SEED_TOKEN && provided === SEED_TOKEN;
   const serviceRoleOk = !!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY;
-  if (!tokenOk && !serviceRoleOk) return json({ error: "unauthorized" }, 401);
+  if (!tokenOk && !serviceRoleOk) return json({ error: "unauthorized" }, corsHeaders, 401);
+
+  const input = await parseJsonBody(req, emptyBodySchema, { allowEmpty: true });
+  if (!input.success) return json({ error: input.error }, corsHeaders, 400);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -70,7 +69,7 @@ Deno.serve(async (req) => {
 
   const { data: userList, error: listErr } =
     await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  if (listErr) return json({ error: `listUsers: ${listErr.message}` }, 500);
+  if (listErr) return json({ error: `listUsers: ${listErr.message}` }, corsHeaders, 500);
 
   const out: Record<string, unknown>[] = [];
 
@@ -239,5 +238,5 @@ Deno.serve(async (req) => {
     out.push(log);
   }
 
-  return json({ ok: true, results: out });
+  return json({ ok: true, results: out }, corsHeaders);
 });
