@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { emptyBodySchema, parseJsonBody } from "../_shared/requestValidation.ts";
 
 serve(async (req: Request): Promise<Response> => {
   const corsHeaders = buildCorsHeaders(req);
@@ -54,6 +55,14 @@ serve(async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Access denied. Admin role required." }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    const parsedBody = await parseJsonBody(req, emptyBodySchema, { allowEmpty: true });
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ error: parsedBody.error }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     console.log(`Admin user ${user.id} authorized to run CNH expiry check`);

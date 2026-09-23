@@ -1,6 +1,7 @@
 // LGPD: portabilidade — exporta todos os dados do titular em JSON.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { emptyBodySchema, parseJsonBody } from "../_shared/requestValidation.ts";
 
 Deno.serve(async (req) => {
   const corsHeaders = buildCorsHeaders(req);
@@ -34,6 +35,14 @@ Deno.serve(async (req) => {
       });
     }
     const userId = userData.user.id;
+
+    const parsedBody = await parseJsonBody(req, emptyBodySchema, { allowEmpty: true });
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ error: parsedBody.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Tabelas com user_id / locador_id / driver_id — RLS escopa naturalmente
     const fetchTable = async (

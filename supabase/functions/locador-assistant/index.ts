@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { maskPIIDeep, newStats } from "../_shared/maskPII.ts";
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { parseJsonBody, z } from "../_shared/requestValidation.ts";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -83,14 +84,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json().catch(() => ({}));
-    const rawMessages: ChatMessage[] = Array.isArray(body?.messages) ? body.messages : [];
-    if (rawMessages.length === 0) {
+    const parsedBody = await parseJsonBody(req, z.object({
+      messages: z.array(z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      }).strict()).min(1),
+    }).strict());
+    if (!parsedBody.success) {
       return new Response(JSON.stringify({ error: "messages requerido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const rawMessages: ChatMessage[] = parsedBody.data.messages;
 
     // Sanitize + cap history
     const messages: ChatMessage[] = rawMessages
