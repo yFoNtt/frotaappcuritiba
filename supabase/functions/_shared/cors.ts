@@ -16,6 +16,7 @@ const configuredOrigins = [
 
 const STATIC_ALLOWED = new Set<string>([
   "https://frotaappcuritiba.lovable.app",
+  "https://id-preview--d81ac1f4-3e80-40f1-8aa1-0027554cea7e.lovable.app",
   ...configuredOrigins,
 ]);
 

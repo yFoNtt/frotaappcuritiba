@@ -209,15 +209,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // If signup successful and user exists, create the profile first. The MFA
-      // policy intentionally allows only this bootstrap INSERT when no profile
-      // exists; every subsequent read/write remains MFA-gated as configured.
+      // The initial profile creation is ownership-gated in RLS. MFA remains
+      // enforced for subsequent protected reads and updates.
       if (data.user) {
-        const { error: profileError } = await supabase.rpc('bootstrap_own_profile', {
-          _document_type: profileData?.documentType,
-          _document_number: profileData?.documentNumber,
-          _cnh_number: profileData?.cnhNumber,
-          _cnh_expiry: profileData?.cnhExpiry,
+        const { error: profileError } = await supabase.from('profiles').insert({
+          user_id: data.user.id,
+          document_type: profileData?.documentType,
+          document_number: profileData?.documentNumber,
+          cnh_number: profileData?.cnhNumber,
+          cnh_expiry: profileData?.cnhExpiry,
         });
 
         if (profileError) {
