@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { parseJsonBody, z } from '../_shared/requestValidation.ts';
 
 interface ReviewPayload {
   scope: 'vehicles' | 'contracts';
@@ -51,7 +52,14 @@ Deno.serve(async (req) => {
       return json({ error: 'Admin role required' }, 403);
     }
 
-    const body = (await req.json()) as Partial<ReviewPayload>;
+    const parsedBody = await parseJsonBody(req, z.object({
+      scope: z.enum(['vehicles', 'contracts']),
+      unknownCount: z.number().optional(),
+      reviewedIds: z.array(z.string()).max(500).optional(),
+      unknownStatuses: z.array(z.string()).max(50).optional(),
+    }).strict());
+    if (!parsedBody.success) return json({ error: parsedBody.error }, 400);
+    const body: Partial<ReviewPayload> = parsedBody.data;
     const scope = body.scope;
     const reviewedIds = Array.isArray(body.reviewedIds) ? body.reviewedIds.slice(0, 500) : [];
     const unknownCount = Number(body.unknownCount ?? reviewedIds.length);

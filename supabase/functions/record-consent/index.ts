@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { parseJsonBody, z } from "../_shared/requestValidation.ts";
 
 // Versões correntes — mantenha em sincronia com src/lib/consentVersions.ts.
 // O servidor valida que o cliente está aceitando exatamente estas versões,
@@ -47,12 +48,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    let body: { terms_version?: string; privacy_version?: string } = {};
-    try {
-      body = await req.json();
-    } catch {
-      body = {};
+    const parsedBody = await parseJsonBody(req, z.object({
+      terms_version: z.string(),
+      privacy_version: z.string(),
+    }).strict());
+    if (!parsedBody.success) {
+      return new Response(JSON.stringify({ error: parsedBody.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+    const body = parsedBody.data;
 
     const termsVersion = String(body.terms_version ?? "");
     const privacyVersion = String(body.privacy_version ?? "");
