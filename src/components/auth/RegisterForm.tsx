@@ -96,7 +96,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       cnhExpiry: values.role === 'motorista' ? values.cnhExpiry : undefined,
     };
 
-    const { error } = await signUp(values.email, values.password, values.role as AppRole, profileData);
+    const { error, confirmationRequired } = await signUp(values.email, values.password, values.role as AppRole, profileData);
 
     if (error) {
       const weakMsg = getWeakPasswordMessage(error);
@@ -109,7 +109,11 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       return;
     }
 
-    toast.success('Conta criada com sucesso! Faça login para continuar.');
+    toast.success(
+      confirmationRequired
+        ? 'Enviamos um link de confirmação para seu e-mail.'
+        : 'Conta criada com sucesso! Faça login para continuar.'
+    );
     onRegistered();
   };
 

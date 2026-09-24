@@ -24,46 +24,17 @@ export function OAuthRoleSelection() {
     setErrorMessage(null);
 
     try {
-      // Check if role already exists (idempotent)
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const { error: roleError } = await supabase.rpc('initialize_own_account', {
+        _role: selectedRole,
+      });
 
-      if (!existingRole) {
-        const { error: roleError } = await supabase.rpc('assign_initial_role', {
-          _role: selectedRole,
-        });
-
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
-          const msg = roleError.message?.includes('já possui')
-            ? 'Sua conta já possui um tipo definido. Recarregue a página.'
-            : 'Erro ao definir tipo de conta. Tente novamente.';
-          setErrorMessage(msg);
-          setSubmitting(false);
-          setRetryCount((c) => c + 1);
-          return;
-        }
-      }
-
-      // Check if profile already exists (idempotent)
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!existingProfile) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({ user_id: user.id });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          // Non-blocking — role was set, profile can be completed later
-        }
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
+        await refreshRole();
+        setErrorMessage('Erro ao definir tipo de conta. Tente novamente.');
+        setSubmitting(false);
+        setRetryCount((c) => c + 1);
+        return;
       }
 
       // Refresh role in auth context to trigger redirect

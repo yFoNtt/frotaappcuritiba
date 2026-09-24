@@ -1155,6 +1155,10 @@ export type Database = {
           valid: boolean
         }[]
       }
+      get_my_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_public_vehicle: {
         Args: { _vehicle_id: string }
         Returns: {
@@ -1245,6 +1249,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      initialize_own_account: {
+        Args: { _role?: Database["public"]["Enums"]["app_role"] }
+        Returns: Database["public"]["Enums"]["app_role"]
       }
       insert_cnh_alert: {
         Args: { _alert_type: string; _cnh_expiry: string; _user_id: string }
