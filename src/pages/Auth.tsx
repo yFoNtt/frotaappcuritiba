@@ -3,7 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Loader2 } from 'lucide-react';
+import { AlertCircle, Car, Loader2, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
@@ -14,7 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, mfaRequired, mfaVerified, roleError, refreshRole } = useAuth();
 
   const initialMode = location.pathname === '/cadastro' ? 'register' : 'login';
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
@@ -24,6 +26,10 @@ export default function Auth() {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (user && mfaRequired && !mfaVerified && !authLoading) {
+      navigate('/verificacao', { replace: true });
+      return;
+    }
     if (user && role && !authLoading) {
       const params = new URLSearchParams(location.search);
       const redirectParam = params.get('redirect');
@@ -37,7 +43,7 @@ export default function Auth() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [user, role, authLoading, navigate, location.search]);
+  }, [user, role, authLoading, mfaRequired, mfaVerified, navigate, location.search]);
 
   if (authLoading) {
     return (
@@ -47,8 +53,26 @@ export default function Auth() {
     );
   }
 
-  // OAuth user without role — show role selection
-  if (user && !role) {
+  if (user && roleError) {
+    return (
+      <PublicLayout>
+        <div className="container flex min-h-[calc(100vh-16rem)] items-center justify-center py-12">
+          <Alert variant="destructive" className="w-full max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="space-y-4">
+              <p>{roleError}</p>
+              <Button type="button" variant="outline" onClick={() => void refreshRole()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Tentar novamente
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  if (user && !role && !mfaRequired) {
     return (
       <PublicLayout>
         <OAuthRoleSelection />

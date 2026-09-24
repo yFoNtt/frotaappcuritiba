@@ -23,9 +23,10 @@ interface AuthContextType {
   loading: boolean;
   mfaRequired: boolean;
   mfaVerified: boolean;
+  roleError: string | null;
   markMfaVerified: () => Promise<boolean>;
   refreshMfaSettings: () => Promise<void>;
-  signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, role: AppRole, profileData?: ProfileData) => Promise<{ error: Error | null; confirmationRequired?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
@@ -40,24 +41,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaVerified, setMfaVerifiedState] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('get_my_role');
 
       if (error) {
         console.error('Error fetching role:', error);
-        return null;
+        throw error;
       }
-      return data?.role as AppRole | null;
+      return data as AppRole | null;
     } catch (error) {
       console.error('Error fetching role:', error);
-      return null;
+      throw error;
     }
   };
 
@@ -101,16 +99,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let initialized = false;
 
-    const resolveUser = async (userId: string) => {
-      const [r, mfaStatus] = await Promise.all([
-        fetchUserRole(userId),
-        fetchMfaStatus(),
-      ]);
-      setRole(r);
-      setMfaEnabled(mfaStatus.enabled);
-      setMfaVerifiedState(mfaStatus.verified);
-      setLoading(false);
-      await checkBlockedAndSignOut();
+    const resolveUser = async () => {
+      setLoading(true);
+      setRoleError(null);
+      try {
+        await supabase.rpc('initialize_own_account', { _role: null });
+        const [resolvedRole, mfaStatus] = await Promise.all([
+          fetchUserRole(),
+          fetchMfaStatus(),
+        ]);
+        setRole(resolvedRole);
+        setMfaEnabled(mfaStatus.enabled);
+        setMfaVerifiedState(mfaStatus.verified);
+        await checkBlockedAndSignOut();
+      } catch (error) {
+        console.error('Error resolving account:', error);
+        setRole(null);
+        setRoleError('Não foi possível carregar o tipo da sua conta.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     // Set up auth state listener FIRST
@@ -121,14 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Keep loading true until role resolves to prevent UI flash
+          setLoading(true);
           setTimeout(() => {
-            resolveUser(session.user.id);
+            resolveUser();
           }, 0);
         } else {
           setRole(null);
           setMfaEnabled(false);
           setMfaVerifiedState(false);
+          setRoleError(null);
           setLoading(false);
         }
       }
@@ -141,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        resolveUser(session.user.id);
+        resolveUser();
       } else {
         setLoading(false);
       }
@@ -192,13 +201,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error('Não é possível se cadastrar como administrador') };
       }
 
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/login`;
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: redirectUrl,
+          data: { role: selectedRole },
         }
       });
 
@@ -209,31 +219,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // The initial profile creation is ownership-gated in RLS. MFA remains
-      // enforced for subsequent protected reads and updates.
+      if (data.user?.identities?.length === 0) {
+        return { error: new Error('Este email já está cadastrado') };
+      }
+
+      if (!data.session) {
+        return { error: null, confirmationRequired: true };
+      }
+
       if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          document_type: profileData?.documentType,
-          document_number: profileData?.documentNumber,
-          cnh_number: profileData?.cnhNumber,
-          cnh_expiry: profileData?.cnhExpiry,
-        });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          await supabase.auth.signOut();
-          return { error: new Error('Não foi possível salvar os dados do perfil. Tente entrar novamente.') };
-        }
-
-        const { error: roleError } = await supabase.rpc('assign_initial_role', {
+        const { error: bootstrapError } = await supabase.rpc('initialize_own_account', {
           _role: selectedRole,
         });
-
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
+        if (bootstrapError) {
+          console.error('Error initializing account:', bootstrapError);
           await supabase.auth.signOut();
-          return { error: new Error('Não foi possível definir o tipo da conta. Tente entrar novamente.') };
+          return { error: new Error('Não foi possível configurar sua conta. Tente entrar novamente.') };
+        }
+
+        if (profileData) {
+          const { error: profileError } = await supabase.from('profiles').update({
+            document_type: profileData.documentType,
+            document_number: profileData.documentNumber,
+            cnh_number: profileData.cnhNumber,
+            cnh_expiry: profileData.cnhExpiry,
+          }).eq('user_id', data.user.id);
+          if (profileError) {
+            console.error('Error completing profile:', profileError);
+            await supabase.auth.signOut();
+            return { error: new Error('Sua conta foi criada, mas faltou concluir o perfil. Entre novamente para continuar.') };
+          }
         }
 
         // LGPD: registrar consentimento via Edge Function (captura IP + UA)
@@ -333,8 +348,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshRole = useCallback(async () => {
     if (user) {
-      const r = await fetchUserRole(user.id);
-      setRole(r);
+      setRoleError(null);
+      try {
+        const r = await fetchUserRole();
+        setRole(r);
+      } catch {
+        setRole(null);
+        setRoleError('Não foi possível carregar o tipo da sua conta.');
+      }
     }
   }, [user]);
 
@@ -409,6 +430,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         mfaRequired,
         mfaVerified,
+        roleError,
         markMfaVerified,
         refreshMfaSettings,
         signUp,
