@@ -374,7 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const verified = !error && data?.success === true;
     setMfaVerifiedState(verified);
-    if (verified) setRole(await fetchUserRole(user.id));
+    if (verified) setRole(await fetchUserRole());
     return verified;
   }, [user]);
 
