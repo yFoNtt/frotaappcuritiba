@@ -1,6 +1,8 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 import { LazyFallback as Lazy } from "@/components/LazyFallback";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RouteErrorBoundary } from "@/components/ErrorBoundary";
 
 const Index = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
@@ -16,6 +18,7 @@ const Terms = lazy(() => import("@/pages/Terms"));
 const ConsentGate = lazy(() => import("@/pages/ConsentGate"));
 const ClaimInvite = lazy(() => import("@/pages/ClaimInvite"));
 const TwoFactor = lazy(() => import("@/pages/TwoFactor"));
+const CompleteProfile = lazy(() => import("@/pages/CompleteProfile"));
 
 
 export const publicRoutes = (
@@ -35,6 +38,14 @@ export const publicRoutes = (
     <Route path="/consent-required" element={<Lazy><ConsentGate /></Lazy>} />
     <Route path="/convite/:token" element={<Lazy><ClaimInvite /></Lazy>} />
     <Route path="/verificacao" element={<Lazy><TwoFactor /></Lazy>} />
+    <Route
+      path="/completar-perfil"
+      element={
+        <ProtectedRoute allowedRoles={['locador', 'motorista']} allowIncompleteProfile>
+          <RouteErrorBoundary><Lazy><CompleteProfile /></Lazy></RouteErrorBoundary>
+        </ProtectedRoute>
+      }
+    />
 
   </>
 );

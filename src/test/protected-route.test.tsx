@@ -15,6 +15,14 @@ vi.mock('@/hooks/useConsentStatus', () => ({
   useConsentStatus: () => ({ status: 'valid', isLoading: false }),
 }));
 
+vi.mock('@/hooks/useProfile', () => ({
+  useProfile: () => ({
+    data: { document_type: 'cpf', document_number: '123', cnh_number: '123', cnh_expiry: '2030-01-01' },
+    isLoading: false,
+  }),
+  isProfileComplete: () => true,
+}));
+
 
 function renderWithRouter(initialRoute: string, allowedRoles?: ('admin' | 'locador' | 'motorista')[]) {
   return render(
@@ -32,6 +40,7 @@ function renderWithRouter(initialRoute: string, allowedRoles?: ('admin' | 'locad
         <Route path="/admin" element={<div data-testid="admin-page">Admin</div>} />
         <Route path="/locador" element={<div data-testid="locador-page">Locador</div>} />
         <Route path="/motorista" element={<div data-testid="motorista-page">Motorista</div>} />
+        <Route path="/completar-perfil" element={<div data-testid="complete-profile-page">Completar perfil</div>} />
       </Routes>
     </MemoryRouter>
   );

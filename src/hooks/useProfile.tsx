@@ -25,6 +25,20 @@ export interface Profile {
   updated_at: string;
 }
 
+type ProfileRole = 'admin' | 'locador' | 'motorista' | null;
+
+export function isProfileComplete(profile: Profile | null | undefined, role: ProfileRole): boolean {
+  if (role === 'admin') return true;
+  if (!profile) return false;
+  if (role === 'locador') {
+    return !!profile.document_type && !!profile.document_number;
+  }
+  if (role === 'motorista') {
+    return !!profile.cnh_number && !!profile.cnh_expiry;
+  }
+  return false;
+}
+
 
 export function useProfile() {
   const { user } = useAuth();
@@ -45,19 +59,17 @@ export function useProfile() {
         throw error;
       }
 
-      // If no profile exists, create one
+      // Conta antiga sem perfil: usa o mesmo bootstrap idempotente do login.
       if (!data) {
-        const { data: newProfile, error: insertError } = await supabase
+        const { error: bootstrapError } = await supabase.rpc('initialize_own_account', { _role: null });
+        if (bootstrapError) throw bootstrapError;
+        const { data: bootstrappedProfile, error: profileError } = await supabase
           .from('profiles')
-          .insert({ user_id: user.id })
-          .select()
+          .select('*')
+          .eq('user_id', user.id)
           .single();
-
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-          throw insertError;
-        }
-        return newProfile as Profile;
+        if (profileError) throw profileError;
+        return bootstrappedProfile as Profile;
       }
 
       return data as Profile;
