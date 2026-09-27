@@ -115,10 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           resolvedRole = initializedRole as AppRole | null;
         }
-        const [resolvedRole, mfaStatus] = await Promise.all([
-          Promise.resolve(resolvedRole),
-          fetchMfaStatus(),
-        ]);
+        const mfaStatus = await fetchMfaStatus();
         setRole(resolvedRole);
         setMfaEnabled(mfaStatus.enabled);
         setMfaVerifiedState(mfaStatus.verified);

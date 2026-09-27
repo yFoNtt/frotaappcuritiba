@@ -9,9 +9,10 @@ type AppRole = 'admin' | 'locador' | 'motorista';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: AppRole[];
+  allowIncompleteProfile?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles, allowIncompleteProfile = false }: ProtectedRouteProps) {
   const { user, role, loading, mfaRequired, mfaVerified } = useAuth();
   const { status: consentStatus, isLoading: consentLoading } = useConsentStatus();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -48,7 +49,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/consent-required" replace />;
   }
 
-  if (role !== 'admin' && !isProfileComplete(profile, role)) {
+  if (!allowIncompleteProfile && role !== 'admin' && !isProfileComplete(profile, role)) {
     return <Navigate to="/completar-perfil" replace />;
   }
 
