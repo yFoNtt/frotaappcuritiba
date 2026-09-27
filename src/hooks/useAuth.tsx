@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
+import { AuthChangeEvent, User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaVerified, setMfaVerifiedState] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
+  const resolvedUserIdRef = useRef<string | null>(null);
 
 
   const fetchUserRole = async () => {
@@ -97,21 +98,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let initialized = false;
+    let initialSessionHandled = false;
 
-    const resolveUser = async () => {
-      setLoading(true);
+    const resolveUser = async (sessionUser: User) => {
       setRoleError(null);
       try {
-        await supabase.rpc('initialize_own_account', { _role: null });
+        let resolvedRole = await fetchUserRole();
+        if (!resolvedRole) {
+          const { data: initializedRole, error: initializeError } = await supabase.rpc(
+            'initialize_own_account',
+            { _role: null },
+          );
+          if (initializeError) {
+            console.error('Error initializing account:', initializeError);
+            throw initializeError;
+          }
+          resolvedRole = initializedRole as AppRole | null;
+        }
         const [resolvedRole, mfaStatus] = await Promise.all([
-          fetchUserRole(),
+          Promise.resolve(resolvedRole),
           fetchMfaStatus(),
         ]);
         setRole(resolvedRole);
         setMfaEnabled(mfaStatus.enabled);
         setMfaVerifiedState(mfaStatus.verified);
-        await checkBlockedAndSignOut();
+        const blocked = await checkBlockedAndSignOut();
+        if (!blocked) resolvedUserIdRef.current = sessionUser.id;
       } catch (error) {
         console.error('Error resolving account:', error);
         setRole(null);
@@ -121,39 +133,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        initialized = true;
-        setSession(session);
-        setUser(session?.user ?? null);
+    const clearAuthState = () => {
+      resolvedUserIdRef.current = null;
+      setRole(null);
+      setMfaEnabled(false);
+      setMfaVerifiedState(false);
+      setRoleError(null);
+      setLoading(false);
+    };
 
-        if (session?.user) {
-          setLoading(true);
-          setTimeout(() => {
-            resolveUser();
-          }, 0);
-        } else {
-          setRole(null);
-          setMfaEnabled(false);
-          setMfaVerifiedState(false);
-          setRoleError(null);
-          setLoading(false);
-        }
+    const handleSession = (event: AuthChangeEvent, nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        clearAuthState();
+        return;
+      }
+
+      const userChanged = resolvedUserIdRef.current !== nextSession.user.id;
+      const shouldResolve = event === 'INITIAL_SESSION' || userChanged;
+      if (!shouldResolve) return;
+
+      setLoading(true);
+      setTimeout(() => {
+        void resolveUser(nextSession.user);
+      }, 0);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, nextSession) => {
+        if (event === 'INITIAL_SESSION') initialSessionHandled = true;
+        handleSession(event, nextSession);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (initialized) return; // onAuthStateChange já tratou
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        resolveUser();
-      } else {
-        setLoading(false);
-      }
+      if (initialSessionHandled) return;
+      handleSession('INITIAL_SESSION', session);
     });
 
     return () => subscription.unsubscribe();
@@ -385,6 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
     setMfaEnabled(false);
     setMfaVerifiedState(false);
+    resolvedUserIdRef.current = null;
   }, [user]);
 
   // Auto-logout após 60 minutos de inatividade, com aviso 1 minuto antes
