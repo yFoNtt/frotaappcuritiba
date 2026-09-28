@@ -5,6 +5,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 // Mock useAuth
 const mockUseAuth = vi.fn();
+const mockUseProfile = vi.fn();
+const mockIsProfileComplete = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
@@ -16,11 +18,8 @@ vi.mock('@/hooks/useConsentStatus', () => ({
 }));
 
 vi.mock('@/hooks/useProfile', () => ({
-  useProfile: () => ({
-    data: { document_type: 'cpf', document_number: '123', cnh_number: '123', cnh_expiry: '2030-01-01' },
-    isLoading: false,
-  }),
-  isProfileComplete: () => true,
+  useProfile: () => mockUseProfile(),
+  isProfileComplete: (...args: unknown[]) => mockIsProfileComplete(...args),
 }));
 
 
@@ -49,6 +48,8 @@ function renderWithRouter(initialRoute: string, allowedRoles?: ('admin' | 'locad
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseProfile.mockReturnValue({ data: {}, isLoading: false });
+    mockIsProfileComplete.mockReturnValue(true);
   });
 
   it('shows loading spinner while auth is resolving', () => {
@@ -134,5 +135,18 @@ describe('ProtectedRoute', () => {
     });
     renderWithRouter('/protected', ['admin']);
     expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+  });
+
+  it('redirects a locador with an incomplete profile after consent', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: '1', email: 'loc@test.com' },
+      role: 'locador',
+      loading: false,
+      mfaRequired: false,
+      mfaVerified: false,
+    });
+    mockIsProfileComplete.mockReturnValue(false);
+    renderWithRouter('/protected', ['locador']);
+    expect(screen.getByTestId('complete-profile-page')).toBeInTheDocument();
   });
 });

@@ -93,3 +93,11 @@ export const MFA_LINK_HYDRATION_TIMEOUT_MS = 8000;
 
 export const MFA_RESEND_SECONDS = 60;
 
+export function isMfaRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { message?: string; status?: number; context?: { status?: number } };
+  const message = candidate.message?.toLowerCase() ?? '';
+  return candidate.status === 429 || candidate.context?.status === 429 ||
+    message.includes('rate limit') || message.includes('too many requests');
+}
+

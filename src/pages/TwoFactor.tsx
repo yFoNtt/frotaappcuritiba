@@ -18,6 +18,7 @@ import {
   MFA_CODE_INPUT_ENABLED,
   MFA_LINK_HYDRATION_TIMEOUT_MS,
   MFA_RESEND_SECONDS,
+  isMfaRateLimitError,
 } from '@/lib/mfa';
 
 export default function TwoFactor() {
@@ -54,7 +55,9 @@ export default function TwoFactor() {
     });
     if (challengeError) {
       setSending(false);
-      toast.error('Não foi possível iniciar a verificação. Tente novamente em instantes.');
+      toast.error(isMfaRateLimitError(challengeError)
+        ? 'Muitos envios em pouco tempo. Aguarde o contador para tentar novamente.'
+        : 'Não foi possível iniciar a verificação. Tente novamente em instantes.');
       return;
     }
     const { error } = await supabase.auth.signInWithOtp({
@@ -67,13 +70,25 @@ export default function TwoFactor() {
     setSending(false);
 
     if (error) {
-      toast.error('Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.');
+      if (isMfaRateLimitError(error)) setSecondsLeft(MFA_RESEND_SECONDS);
+      toast.error(isMfaRateLimitError(error)
+        ? 'Muitos envios em pouco tempo. Aguarde o contador para tentar novamente.'
+        : 'Não foi possível enviar o e-mail de verificação. Tente novamente em instantes.');
       return;
     }
     setLinkError(null);
     setSecondsLeft(MFA_RESEND_SECONDS);
     toast.success('E-mail de verificação enviado.');
   }, [user?.email]);
+
+  useEffect(() => {
+    if (
+      loading || !user?.email || !mfaRequired || mfaVerified ||
+      returningFromLink || autoSentRef.current
+    ) return;
+    autoSentRef.current = true;
+    void sendCode();
+  }, [loading, mfaRequired, mfaVerified, returningFromLink, sendCode, user?.email]);
 
   // Processa o retorno do link: troca o token por sessão e SÓ ENTÃO limpa a URL.
   useEffect(() => {
@@ -194,7 +209,6 @@ export default function TwoFactor() {
       return;
     }
     toast.success('Verificação concluída!');
-    navigate(dashboardPath, { replace: true });
   };
 
   // Enquanto o link ainda está sendo processado, mostramos o carregamento.
@@ -232,11 +246,11 @@ export default function TwoFactor() {
             <CardDescription>
               {user?.email ? (
                 <>
-                  Enviamos um e-mail para <strong>{user.email}</strong>. Abra a mensagem e toque no botão de acesso
-                  para concluir a entrada.
+                   Enviamos um e-mail para <strong>{user.email}</strong>. Abra o link neste mesmo navegador para
+                   concluir a entrada.
                 </>
               ) : (
-                'Abra o e-mail de verificação e toque no botão de acesso para concluir a entrada.'
+                 'Abra o link de verificação neste mesmo navegador para concluir a entrada.'
               )}
             </CardDescription>
           </CardHeader>

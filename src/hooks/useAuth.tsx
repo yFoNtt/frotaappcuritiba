@@ -9,6 +9,14 @@ import { isMfaRequired } from '@/lib/mfa';
 
 type AppRole = 'admin' | 'locador' | 'motorista';
 
+export function shouldResolveAuthSession(
+  event: AuthChangeEvent,
+  resolvedUserId: string | null,
+  nextUserId: string,
+): boolean {
+  return event === 'INITIAL_SESSION' || resolvedUserId !== nextUserId;
+}
+
 interface ProfileData {
   documentType?: 'cpf' | 'cnpj';
   documentNumber?: string;
@@ -101,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialSessionHandled = false;
 
     const resolveUser = async (sessionUser: User) => {
+      resolvedUserIdRef.current = sessionUser.id;
       setRoleError(null);
       try {
         let resolvedRole = await fetchUserRole();
@@ -123,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!blocked) resolvedUserIdRef.current = sessionUser.id;
       } catch (error) {
         console.error('Error resolving account:', error);
+        resolvedUserIdRef.current = null;
         setRole(null);
         setRoleError('Não foi possível carregar o tipo da sua conta.');
       } finally {
@@ -148,8 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const userChanged = resolvedUserIdRef.current !== nextSession.user.id;
-      const shouldResolve = event === 'INITIAL_SESSION' || userChanged;
+      const shouldResolve = shouldResolveAuthSession(
+        event,
+        resolvedUserIdRef.current,
+        nextSession.user.id,
+      );
       if (!shouldResolve) return;
 
       setLoading(true);
@@ -383,7 +396,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const markMfaVerified = useCallback(async () => {
-    if (!user) return false;
+    const { data: { session: activeSession }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !activeSession?.user) return false;
     const { data, error } = await supabase.functions.invoke('mfa-session', {
       body: { action: 'complete' },
     });
@@ -391,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMfaVerifiedState(verified);
     if (verified) setRole(await fetchUserRole());
     return verified;
-  }, [user]);
+  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();

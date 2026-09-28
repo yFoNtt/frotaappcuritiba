@@ -6,6 +6,7 @@ import {
   isMagicLinkReturn,
   parseMagicLinkError,
   magicLinkErrorMessage,
+  isMfaRateLimitError,
 } from '@/lib/mfa';
 
 describe('MFA - retorno pelo link do e-mail', () => {
@@ -73,6 +74,18 @@ describe('MFA - validação de código', () => {
     expect(isValidMfaCode('1234567')).toBe(false);
     expect(isValidMfaCode('abcdef')).toBe(false);
     expect(isValidMfaCode('')).toBe(false);
+  });
+});
+
+describe('MFA - limite de envio', () => {
+  it('reconhece status 429 e mensagens do provedor', () => {
+    expect(isMfaRateLimitError({ status: 429 })).toBe(true);
+    expect(isMfaRateLimitError({ context: { status: 429 } })).toBe(true);
+    expect(isMfaRateLimitError({ message: 'Email rate limit exceeded' })).toBe(true);
+  });
+
+  it('não classifica falhas comuns como limite de envio', () => {
+    expect(isMfaRateLimitError({ status: 500, message: 'internal' })).toBe(false);
   });
 });
 
