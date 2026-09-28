@@ -396,7 +396,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const markMfaVerified = useCallback(async () => {
-    if (!user) return false;
+    const { data: { session: activeSession }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !activeSession?.user) return false;
     const { data, error } = await supabase.functions.invoke('mfa-session', {
       body: { action: 'complete' },
     });
@@ -404,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMfaVerifiedState(verified);
     if (verified) setRole(await fetchUserRole());
     return verified;
-  }, [user]);
+  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();

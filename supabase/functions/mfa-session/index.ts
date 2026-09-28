@@ -1,8 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { parseJsonBody, z } from "../_shared/requestValidation.ts";
 
-type JwtClaims = { session_id?: string; iat?: number };
+type AuthenticationMethod = { method?: string; timestamp?: number };
+type JwtClaims = { session_id?: string; iat?: number; amr?: AuthenticationMethod[] };
+
+const requestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("status") }).strict(),
+  z.object({ action: z.literal("begin") }).strict(),
+  z.object({ action: z.literal("complete") }).strict(),
+  z.object({ action: z.literal("set-enabled"), enabled: z.boolean() }).strict(),
+  z.object({
+    action: z.literal("admin-set-enabled"),
+    enabled: z.boolean(),
+    user_id: z.string().uuid(),
+  }).strict(),
+]);
 
 function json(body: Record<string, unknown>, status: number, headers: Record<string, string>) {
   return new Response(JSON.stringify(body), {
@@ -48,20 +62,10 @@ serve(async (req: Request): Promise<Response> => {
     return json({ error: "Invalid or expired session" }, 401, corsHeaders);
   }
 
-  let action: "status" | "begin" | "complete" | "set-enabled" | "admin-set-enabled";
-  let enabled: boolean | undefined;
-  let targetUserId: string | undefined;
-  try {
-    const body = await req.json();
-    action = body?.action;
-    enabled = body?.enabled;
-    targetUserId = body?.user_id;
-  } catch {
-    return json({ error: "Invalid request" }, 400, corsHeaders);
-  }
-  if (!["status", "begin", "complete", "set-enabled", "admin-set-enabled"].includes(action)) {
-    return json({ error: "Invalid action" }, 400, corsHeaders);
-  }
+  const parsedBody = await parseJsonBody(req, requestSchema);
+  if (!parsedBody.success) return json({ error: parsedBody.error }, 400, corsHeaders);
+  const body = parsedBody.data;
+  const action = body.action;
 
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -74,30 +78,30 @@ serve(async (req: Request): Promise<Response> => {
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) return json({ error: "Unable to check verification" }, 500, corsHeaders);
-    const verified = profile?.mfa_enabled !== true || (
+    if (!profile) {
+      console.error("[mfa-session] perfil ausente para usuário autenticado");
+      return json({ enabled: false, verified: false }, 200, corsHeaders);
+    }
+    const verified = profile.mfa_enabled !== true || (
       profile.mfa_verified_session_id === claims.session_id &&
       !!profile.mfa_verified_until &&
       new Date(profile.mfa_verified_until) > new Date()
     );
-    return json({ enabled: profile?.mfa_enabled === true, verified }, 200, corsHeaders);
+    return json({ enabled: profile.mfa_enabled === true, verified }, 200, corsHeaders);
   }
 
   if (action === "set-enabled") {
-    if (typeof enabled !== "boolean") return json({ error: "Invalid setting" }, 400, corsHeaders);
     const { error } = await admin.from("profiles").update({
-      mfa_enabled: enabled,
+      mfa_enabled: body.enabled,
       mfa_verified_session_id: null,
       mfa_verified_until: null,
       updated_at: new Date().toISOString(),
     }).eq("user_id", user.id);
     if (error) return json({ error: "Unable to update verification" }, 500, corsHeaders);
-    return json({ success: true, enabled }, 200, corsHeaders);
+    return json({ success: true, enabled: body.enabled }, 200, corsHeaders);
   }
 
   if (action === "admin-set-enabled") {
-    if (typeof enabled !== "boolean" || !targetUserId) {
-      return json({ error: "Invalid setting" }, 400, corsHeaders);
-    }
     const { data: role, error: roleError } = await admin
       .from("user_roles")
       .select("role")
@@ -107,13 +111,13 @@ serve(async (req: Request): Promise<Response> => {
     if (roleError || !role) return json({ error: "Access denied" }, 403, corsHeaders);
 
     const { data: profile, error } = await admin.from("profiles").update({
-      mfa_enabled: enabled,
+      mfa_enabled: body.enabled,
       mfa_verified_session_id: null,
       mfa_verified_until: null,
       updated_at: new Date().toISOString(),
-    }).eq("user_id", targetUserId).select("user_id").maybeSingle();
+    }).eq("user_id", body.user_id).select("user_id").maybeSingle();
     if (error || !profile) return json({ error: "User not found" }, 404, corsHeaders);
-    return json({ success: true, user_id: targetUserId, enabled }, 200, corsHeaders);
+    return json({ success: true, user_id: body.user_id, enabled: body.enabled }, 200, corsHeaders);
   }
 
   if (action === "begin") {
@@ -134,11 +138,18 @@ serve(async (req: Request): Promise<Response> => {
     .maybeSingle();
 
   const issuedAt = new Date(claims.iat * 1000);
+  const requestedAtSeconds = Math.floor(new Date(challenge?.requested_at ?? 0).getTime() / 1000);
+  const hasEmailSecondFactor = claims.amr?.some((method) =>
+    (method.method === "otp" || method.method === "magiclink") &&
+    typeof method.timestamp === "number" &&
+    method.timestamp >= requestedAtSeconds
+  ) === true;
   if (
     challengeError || !challenge ||
     challenge.initial_session_id === claims.session_id ||
     new Date(challenge.expires_at) <= new Date() ||
-    issuedAt < new Date(challenge.requested_at)
+    issuedAt < new Date(challenge.requested_at) ||
+    !hasEmailSecondFactor
   ) {
     return json({ error: "Verification challenge is invalid or expired" }, 403, corsHeaders);
   }
