@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { shouldResolveAuthSession } from '@/hooks/useAuth';
 
 // ============================================================
 // Tests for useAuth logic, auth context behaviour, password
@@ -240,6 +241,28 @@ describe('useAuth - Session State Resolution', () => {
   it('no session but userId still returns unauthenticated', () => {
     const state = resolveAuthState(null, 'u1', 'u@e.com', 'admin', true);
     expect(state.user).toBeNull();
+  });
+});
+
+describe('useAuth - Session Event Resolution', () => {
+  it('resolves the initial session', () => {
+    expect(shouldResolveAuthSession('INITIAL_SESSION', null, 'u1')).toBe(true);
+  });
+
+  it('resolves when the signed-in user changes', () => {
+    expect(shouldResolveAuthSession('SIGNED_IN', 'u1', 'u2')).toBe(true);
+  });
+
+  it('does not resolve again on token refresh for the same user', () => {
+    expect(shouldResolveAuthSession('TOKEN_REFRESHED', 'u1', 'u1')).toBe(false);
+  });
+
+  it('does not resolve again on repeated sign-in for the same user', () => {
+    expect(shouldResolveAuthSession('SIGNED_IN', 'u1', 'u1')).toBe(false);
+  });
+
+  it('updates the same user without showing global loading again', () => {
+    expect(shouldResolveAuthSession('USER_UPDATED', 'u1', 'u1')).toBe(false);
   });
 });
 
