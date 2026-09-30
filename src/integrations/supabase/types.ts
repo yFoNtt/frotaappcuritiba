@@ -825,6 +825,7 @@ export type Database = {
           mfa_enabled: boolean
           mfa_verified_session_id: string | null
           mfa_verified_until: string | null
+          must_change_password: boolean
           notification_preferences: Json
           onboarding_dismissed_at: string | null
           onboarding_tour_seen_at: string | null
@@ -850,6 +851,7 @@ export type Database = {
           mfa_enabled?: boolean
           mfa_verified_session_id?: string | null
           mfa_verified_until?: string | null
+          must_change_password?: boolean
           notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
@@ -875,6 +877,7 @@ export type Database = {
           mfa_enabled?: boolean
           mfa_verified_session_id?: string | null
           mfa_verified_until?: string | null
+          must_change_password?: boolean
           notification_preferences?: Json
           onboarding_dismissed_at?: string | null
           onboarding_tour_seen_at?: string | null
@@ -1126,6 +1129,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_change_user_role: {
+        Args: {
+          _confirm_admin_promotion?: boolean
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _reason: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      admin_delete_user: {
+        Args: { _reason: string; _user_id: string }
+        Returns: undefined
+      }
       admin_set_user_blocked: {
         Args: { _blocked: boolean; _reason?: string; _user_id: string }
         Returns: Json
