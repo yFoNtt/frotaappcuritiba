@@ -25,39 +25,33 @@ import {
   Users,
   Building2,
   UserCog,
-  Pencil,
-  Lock,
-  Unlock,
+  MoreHorizontal,
+  Plus,
 } from 'lucide-react';
 import { useAdminUsers, useAdminStats, useUpdateUserRole, useSetUserBlocked, AdminUser } from '@/hooks/useAdminData';
 import { useAuth } from '@/hooks/useAuth';
-import { EditRoleDialog } from '@/components/admin/EditRoleDialog';
+import { AdminUserActionDialog, UserActionKind } from '@/components/admin/AdminUserActionDialog';
+import { useAdminUserAction } from '@/hooks/useAdminData';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, parseISO } from 'date-fns';
 
 export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [actionState, setActionState] = useState<{ action: UserActionKind; user: AdminUser | null } | null>(null);
 
   const { user: currentUser } = useAuth();
   const { data: users = [], isLoading: usersLoading } = useAdminUsers();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
-  const updateRoleMutation = useUpdateUserRole();
   const setBlockedMutation = useSetUserBlocked();
+  const userActionMutation = useAdminUserAction();
 
   const isLoading = usersLoading || statsLoading;
 
-  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'locador' | 'motorista') => {
-    await updateRoleMutation.mutateAsync({ userId, newRole });
-    setEditingUser(null);
-  };
-
-  const handleToggleBlocked = (u: AdminUser) => {
-    const blocking = !u.blocked_at;
-    const reason = blocking
-      ? (window.prompt('Motivo do bloqueio (opcional):') ?? null)
-      : null;
-    setBlockedMutation.mutate({ userId: u.id, blocked: blocking, reason });
+  const handleAction = async (payload: Parameters<NonNullable<React.ComponentProps<typeof AdminUserActionDialog>['onSubmit']>>[0]) => {
+    if (payload.action === 'block' || payload.action === 'unblock') {
+      await setBlockedMutation.mutateAsync({ userId: payload.user_id, blocked: payload.action === 'block', reason: payload.reason });
+    } else await userActionMutation.mutateAsync(payload);
   };
 
 
@@ -95,11 +89,14 @@ export default function AdminUsers() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
           <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
           <p className="text-muted-foreground">
             Gerencie todos os usuários da plataforma
           </p>
+          </div>
+          <Button onClick={() => setActionState({ action: 'create', user: null })}><Plus className="mr-2 h-4 w-4" />Novo usuário</Button>
         </div>
 
         {/* Stats */}
@@ -245,31 +242,15 @@ export default function AdminUsers() {
                         }
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditingUser(user)}
-                            title="Editar permissão"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={
-                              user.role === 'admin' ||
-                              user.id === currentUser?.id ||
-                              setBlockedMutation.isPending
-                            }
-                            onClick={() => handleToggleBlocked(user)}
-                            title={user.blocked_at ? 'Desbloquear usuário' : 'Bloquear usuário'}
-                          >
-                            {user.blocked_at
-                              ? <Unlock className="h-4 w-4 text-success" />
-                              : <Lock className="h-4 w-4 text-destructive" />}
-                          </Button>
-                        </div>
+                         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Ações de ${user.email}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">
+                           <DropdownMenuItem onSelect={() => setActionState({ action: 'reset', user })}>Enviar link de redefinição</DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => setActionState({ action: 'temporary-password', user })}>Definir senha temporária</DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => setActionState({ action: 'email', user })}>Alterar e-mail</DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => setActionState({ action: 'confirm-email', user })}>Confirmar e-mail</DropdownMenuItem>
+                           <DropdownMenuItem disabled={user.id === currentUser?.id} onSelect={() => setActionState({ action: 'role', user })}>Alterar permissão</DropdownMenuItem>
+                           <DropdownMenuItem disabled={user.role === 'admin' || user.id === currentUser?.id} onSelect={() => setActionState({ action: user.blocked_at ? 'unblock' : 'block', user })}>{user.blocked_at ? 'Desbloquear' : 'Bloquear'}</DropdownMenuItem>
+                           <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={user.role === 'admin' || user.id === currentUser?.id} onSelect={() => setActionState({ action: 'delete', user })}>Excluir usuário</DropdownMenuItem>
+                         </DropdownMenuContent></DropdownMenu>
                       </TableCell>
 
                     </TableRow>
@@ -290,13 +271,7 @@ export default function AdminUsers() {
           </CardContent>
         </Card>
 
-        <EditRoleDialog
-          open={!!editingUser}
-          onOpenChange={(open) => !open && setEditingUser(null)}
-          user={editingUser}
-          onSave={handleUpdateRole}
-          isLoading={updateRoleMutation.isPending}
-        />
+        {actionState && <AdminUserActionDialog open action={actionState.action} user={actionState.user} pending={userActionMutation.isPending || setBlockedMutation.isPending} onOpenChange={(open) => !open && setActionState(null)} onSubmit={handleAction} />}
       </div>
     </AdminLayout>
   );

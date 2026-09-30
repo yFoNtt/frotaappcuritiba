@@ -18,6 +18,7 @@ const profile = {
   onboarding_tour_seen_at: null,
   onboarding_dismissed_at: null,
   notification_preferences: null,
+  must_change_password: false,
   created_at: '2026-01-01',
   updated_at: '2026-01-01',
 } satisfies Profile;

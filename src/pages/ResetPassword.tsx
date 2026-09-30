@@ -91,6 +91,14 @@ export default function ResetPassword() {
         console.error('Update password error:', error);
         toast.error(translateAuthError(error, 'update'));
       } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ must_change_password: false })
+            .eq('user_id', user.id);
+          if (profileError) throw profileError;
+        }
         setSuccess(true);
         toast.success('Senha atualizada com sucesso!');
 

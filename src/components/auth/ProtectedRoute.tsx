@@ -10,9 +10,10 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: AppRole[];
   allowIncompleteProfile?: boolean;
+  allowPasswordChange?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles, allowIncompleteProfile = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles, allowIncompleteProfile = false, allowPasswordChange = false }: ProtectedRouteProps) {
   const { user, role, loading, mfaRequired, mfaVerified } = useAuth();
   const { status: consentStatus, isLoading: consentLoading } = useConsentStatus();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -42,6 +43,10 @@ export function ProtectedRoute({ children, allowedRoles, allowIncompleteProfile 
       const redirectPath = role === 'admin' ? '/admin' : role === 'locador' ? '/locador' : role === 'motorista' ? '/motorista' : '/login';
       return <Navigate to={redirectPath} replace />;
     }
+  }
+
+  if (!allowPasswordChange && profile?.must_change_password) {
+    return <Navigate to="/redefinir-senha" replace />;
   }
 
   // LGPD gate — admins ficam isentos para evitar lockout em manutenção.
