@@ -13,6 +13,39 @@ export interface AdminUser {
   blocked_reason: string | null;
 }
 
+export type AdminUserAction =
+  | { action: 'create_user'; email: string; full_name: string; role: 'locador' | 'motorista'; mode: 'invite' | 'temporary_password'; temporary_password?: string; reason: string }
+  | { action: 'send_password_reset' | 'confirm_email' | 'delete_user'; user_id: string; reason: string }
+  | { action: 'set_temporary_password'; user_id: string; temporary_password: string; reason: string }
+  | { action: 'update_email'; user_id: string; email: string; reason: string }
+  | { action: 'change_role'; user_id: string; role: 'admin' | 'locador' | 'motorista'; confirm_admin_promotion: boolean; reason: string };
+
+export function useAdminUserAction() {
+  const queryClient = useQueryClient();
+  const { user, role } = useAuth();
+  return useMutation({
+    mutationFn: async (payload: AdminUserAction) => {
+      if (!user || role !== 'admin') throw new Error('Não autorizado');
+      const { data, error } = await supabase.functions.invoke('admin-users', { body: payload });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+      toast.success('Ação concluída com sucesso');
+    },
+    onError: (error: Error) => {
+      const message = error.message ?? '';
+      if (message.includes('MFA')) toast.error('Confirme a verificação em duas etapas antes de continuar');
+      else if (message.includes('last_admin')) toast.error('O último administrador não pode perder essa permissão');
+      else if (message.includes('cannot_')) toast.error('Esta ação não é permitida para essa conta');
+      else toast.error('Não foi possível concluir a ação');
+    },
+  });
+}
+
 export interface PlatformStats {
   totalUsers: number;
   totalLocadores: number;
@@ -151,10 +184,12 @@ export function useUpdateUserRole() {
         throw new Error('Não autorizado');
       }
 
-      const { error } = await supabase
-        .from('user_roles')
-        .update({ role: newRole })
-        .eq('user_id', userId);
+      const { error } = await supabase.rpc('admin_change_user_role', {
+        _user_id: userId,
+        _new_role: newRole,
+        _reason: 'Alteração realizada no painel administrativo',
+        _confirm_admin_promotion: newRole === 'admin',
+      });
 
       if (error) {
         console.error('Error updating user role:', error);

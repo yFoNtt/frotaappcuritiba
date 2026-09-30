@@ -40,6 +40,7 @@ function renderWithRouter(initialRoute: string, allowedRoles?: ('admin' | 'locad
         <Route path="/locador" element={<div data-testid="locador-page">Locador</div>} />
         <Route path="/motorista" element={<div data-testid="motorista-page">Motorista</div>} />
         <Route path="/completar-perfil" element={<div data-testid="complete-profile-page">Completar perfil</div>} />
+        <Route path="/redefinir-senha" element={<div data-testid="reset-password-page">Trocar senha</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -148,5 +149,12 @@ describe('ProtectedRoute', () => {
     mockIsProfileComplete.mockReturnValue(false);
     renderWithRouter('/protected', ['locador']);
     expect(screen.getByTestId('complete-profile-page')).toBeInTheDocument();
+  });
+
+  it('redirects a user with a temporary password to password change', () => {
+    mockUseAuth.mockReturnValue({ user: { id: '1' }, role: 'locador', loading: false });
+    mockUseProfile.mockReturnValue({ data: { must_change_password: true }, isLoading: false });
+    renderWithRouter('/protected', ['locador']);
+    expect(screen.getByTestId('reset-password-page')).toBeInTheDocument();
   });
 });

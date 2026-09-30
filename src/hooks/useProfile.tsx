@@ -21,6 +21,7 @@ export interface Profile {
   onboarding_dismissed_at: string | null;
   // Objeto flexível: admin e locador leem/escrevem apenas as chaves que usam.
   notification_preferences: Record<string, boolean> | null;
+  must_change_password: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -109,14 +110,22 @@ export function useUpdateProfile() {
 }
 
 export function useUpdatePassword() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ newPassword }: { newPassword: string }) => {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
       if (error) throw error;
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ must_change_password: false })
+        .eq('user_id', user?.id ?? '');
+      if (profileError) throw profileError;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
       toast.success('Senha alterada com sucesso!');
     },
     onError: (error) => {
