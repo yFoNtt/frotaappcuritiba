@@ -23,8 +23,6 @@ const schema = z.object({
   reason: z.string().trim().min(3, 'Informe o motivo').max(500),
   confirmPromotion: z.boolean().default(false),
 }).superRefine((data, ctx) => {
-  if (!data.email && (data.mode === 'invite' || data.mode === 'temporary_password')) ctx.addIssue({ code: 'custom', path: ['email'], message: 'Informe o e-mail' });
-  if (!data.fullName && (data.mode === 'invite' || data.mode === 'temporary_password')) ctx.addIssue({ code: 'custom', path: ['fullName'], message: 'Informe o nome' });
   if (data.email && !z.string().email().safeParse(data.email).success) ctx.addIssue({ code: 'custom', path: ['email'], message: 'E-mail inválido' });
   if (data.mode === 'temporary_password' && data.temporaryPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(data.temporaryPassword)) {
     ctx.addIssue({ code: 'custom', path: ['temporaryPassword'], message: 'Use 8 caracteres, maiúscula, minúscula, número e especial' });
@@ -59,11 +57,20 @@ export function AdminUserActionDialog({ open, action, user, pending, onOpenChang
 
   const submit = async (values: Values) => {
     if (action === 'create') {
+      if (!values.email) return form.setError('email', { message: 'Informe o e-mail' });
+      if (!values.fullName?.trim()) return form.setError('fullName', { message: 'Informe o nome' });
+      if (values.mode === 'temporary_password' && !values.temporaryPassword) return form.setError('temporaryPassword', { message: 'Informe a senha temporária' });
       await onSubmit({ action: 'create_user', email: values.email ?? '', full_name: values.fullName ?? '', role: values.role === 'admin' ? 'motorista' : values.role, mode: values.mode, temporary_password: values.temporaryPassword || undefined, reason: values.reason });
     } else if (user) {
       if (action === 'reset') await onSubmit({ action: 'send_password_reset', user_id: user.id, reason: values.reason });
-      if (action === 'temporary-password') await onSubmit({ action: 'set_temporary_password', user_id: user.id, temporary_password: values.temporaryPassword ?? '', reason: values.reason });
-      if (action === 'email') await onSubmit({ action: 'update_email', user_id: user.id, email: values.email ?? '', reason: values.reason });
+      if (action === 'temporary-password') {
+        if (!values.temporaryPassword) return form.setError('temporaryPassword', { message: 'Informe a senha temporária' });
+        await onSubmit({ action: 'set_temporary_password', user_id: user.id, temporary_password: values.temporaryPassword, reason: values.reason });
+      }
+      if (action === 'email') {
+        if (!values.email) return form.setError('email', { message: 'Informe o e-mail' });
+        await onSubmit({ action: 'update_email', user_id: user.id, email: values.email, reason: values.reason });
+      }
       if (action === 'confirm-email') await onSubmit({ action: 'confirm_email', user_id: user.id, reason: values.reason });
       if (action === 'role') await onSubmit({ action: 'change_role', user_id: user.id, role: values.role, confirm_admin_promotion: values.confirmPromotion, reason: values.reason });
       if (action === 'delete') await onSubmit({ action: 'delete_user', user_id: user.id, reason: values.reason });
