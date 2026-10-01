@@ -23,6 +23,8 @@ const schema = z.object({
   reason: z.string().trim().min(3, 'Informe o motivo').max(500),
   confirmPromotion: z.boolean().default(false),
 }).superRefine((data, ctx) => {
+  if (!data.email && (data.mode === 'invite' || data.mode === 'temporary_password')) ctx.addIssue({ code: 'custom', path: ['email'], message: 'Informe o e-mail' });
+  if (!data.fullName && (data.mode === 'invite' || data.mode === 'temporary_password')) ctx.addIssue({ code: 'custom', path: ['fullName'], message: 'Informe o nome' });
   if (data.email && !z.string().email().safeParse(data.email).success) ctx.addIssue({ code: 'custom', path: ['email'], message: 'E-mail inválido' });
   if (data.mode === 'temporary_password' && data.temporaryPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(data.temporaryPassword)) {
     ctx.addIssue({ code: 'custom', path: ['temporaryPassword'], message: 'Use 8 caracteres, maiúscula, minúscula, número e especial' });
