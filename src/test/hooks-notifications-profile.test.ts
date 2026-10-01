@@ -53,6 +53,7 @@ const mockProfile: Profile = {
   city: 'São Paulo', state: 'SP',
   onboarding_tour_seen_at: null, onboarding_dismissed_at: null,
   notification_preferences: null,
+  must_change_password: false,
 
 
   created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',

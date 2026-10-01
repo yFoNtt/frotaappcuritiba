@@ -28,7 +28,7 @@ import {
   MoreHorizontal,
   Plus,
 } from 'lucide-react';
-import { useAdminUsers, useAdminStats, useUpdateUserRole, useSetUserBlocked, AdminUser } from '@/hooks/useAdminData';
+import { useAdminUsers, useAdminStats, useSetUserBlocked, AdminUser, AdminUserAction } from '@/hooks/useAdminData';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminUserActionDialog, UserActionKind } from '@/components/admin/AdminUserActionDialog';
 import { useAdminUserAction } from '@/hooks/useAdminData';
@@ -48,10 +48,12 @@ export default function AdminUsers() {
 
   const isLoading = usersLoading || statsLoading;
 
-  const handleAction = async (payload: Parameters<NonNullable<React.ComponentProps<typeof AdminUserActionDialog>['onSubmit']>>[0]) => {
+  const handleAction = async (payload: AdminUserAction | { action: 'block' | 'unblock'; user_id: string; reason: string }) => {
     if (payload.action === 'block' || payload.action === 'unblock') {
       await setBlockedMutation.mutateAsync({ userId: payload.user_id, blocked: payload.action === 'block', reason: payload.reason });
-    } else await userActionMutation.mutateAsync(payload);
+    } else {
+      await userActionMutation.mutateAsync(payload as AdminUserAction);
+    }
   };
 
 
