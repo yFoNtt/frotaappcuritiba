@@ -72,10 +72,11 @@ serve(async (req: Request) => {
   }
 
   const audit = async (targetId: string, action: string, reason: string, details: Record<string, unknown> = {}) => {
-    await admin.from("audit_logs").insert({
+    const { error } = await admin.from("audit_logs").insert({
       table_name: "auth.users", record_id: targetId, action, changed_by: caller.id,
       new_data: { target_user_id: targetId, reason, ...details },
     });
+    if (error) throw new Error("audit_write_failed");
   };
 
   try {
@@ -120,7 +121,8 @@ serve(async (req: Request) => {
       if (body.user_id === caller.id) return json({ error: "cannot_change_own_password" }, 400, corsHeaders);
       const { error } = await admin.auth.admin.updateUserById(body.user_id, { password: body.temporary_password });
       if (error) return json({ error: error.message }, 400, corsHeaders);
-      await admin.from("profiles").update({ must_change_password: true }).eq("user_id", body.user_id);
+      const { error: profileError } = await admin.from("profiles").update({ must_change_password: true }).eq("user_id", body.user_id);
+      if (profileError) throw new Error("profile_update_failed");
       await audit(body.user_id, "ADMIN_TEMPORARY_PASSWORD", body.reason);
     } else if (body.action === "update_email") {
       const { error } = await admin.auth.admin.updateUserById(body.user_id, { email: body.email, email_confirm: false });
