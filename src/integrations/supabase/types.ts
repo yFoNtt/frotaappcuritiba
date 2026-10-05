@@ -1275,6 +1275,7 @@ export type Database = {
         Returns: string
       }
       is_current_user_blocked: { Args: never; Returns: boolean }
+      is_locador: { Args: { _user_id: string }; Returns: boolean }
       validate_cnh: { Args: { cnh: string }; Returns: boolean }
       validate_cnpj: { Args: { cnpj: string }; Returns: boolean }
       validate_cpf: { Args: { cpf: string }; Returns: boolean }
