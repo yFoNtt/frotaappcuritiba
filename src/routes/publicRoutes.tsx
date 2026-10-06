@@ -29,7 +29,7 @@ export const publicRoutes = (
     <Route path="/login" element={<Lazy><Auth /></Lazy>} />
     <Route path="/cadastro" element={<Lazy><Auth /></Lazy>} />
     <Route path="/esqueci-senha" element={<Lazy><ForgotPassword /></Lazy>} />
-    <Route path="/redefinir-senha" element={<ProtectedRoute allowPasswordChange allowIncompleteProfile><RouteErrorBoundary><Lazy><ResetPassword /></Lazy></RouteErrorBoundary></ProtectedRoute>} />
+    <Route path="/redefinir-senha" element={<RouteErrorBoundary><Lazy><ResetPassword /></Lazy></RouteErrorBoundary>} />
     <Route path="/como-funciona" element={<Lazy><HowItWorks /></Lazy>} />
     <Route path="/para-locadores" element={<Lazy><ForRenters /></Lazy>} />
     <Route path="/instalar" element={<Lazy><Install /></Lazy>} />

@@ -25,7 +25,7 @@ const schema = z.object({
   confirmPromotion: z.boolean().default(false),
 }).superRefine((data, ctx) => {
   if (data.email && !z.string().email().safeParse(data.email).success) ctx.addIssue({ code: 'custom', path: ['email'], message: 'E-mail inválido' });
-  if (data.mode === 'temporary_password' && data.temporaryPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(data.temporaryPassword)) {
+  if (data.temporaryPassword && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(data.temporaryPassword)) {
     ctx.addIssue({ code: 'custom', path: ['temporaryPassword'], message: 'Use 8 caracteres, maiúscula, minúscula, número e especial' });
   }
 });
@@ -74,7 +74,10 @@ export function AdminUserActionDialog({ open, action, user, pending, onOpenChang
         await onSubmit({ action: 'update_email', user_id: user.id, email: values.email, reason: values.reason });
       }
       if (action === 'confirm-email') await onSubmit({ action: 'confirm_email', user_id: user.id, reason: values.reason });
-      if (action === 'role') await onSubmit({ action: 'change_role', user_id: user.id, role: values.role, confirm_admin_promotion: values.confirmPromotion, reason: values.reason });
+      if (action === 'role') {
+        if (values.role === 'admin' && !values.confirmPromotion) return form.setError('confirmPromotion', { message: 'Confirme a promoção para administrador' });
+        await onSubmit({ action: 'change_role', user_id: user.id, role: values.role, confirm_admin_promotion: values.confirmPromotion, reason: values.reason });
+      }
       if (action === 'delete') await onSubmit({ action: 'delete_user', user_id: user.id, reason: values.reason });
       if (action === 'block' || action === 'unblock') await onSubmit({ action, user_id: user.id, reason: values.reason });
     }
@@ -101,7 +104,7 @@ export function AdminUserActionDialog({ open, action, user, pending, onOpenChang
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>{titles[action]}</AlertDialogTitle><AlertDialogDescription>{action === 'delete' ? `A conta ${user?.email ?? ''} será excluída e seus dados pessoais serão anonimizados. Esta ação não pode ser desfeita.` : `A conta ${user?.email ?? ''} perderá o acesso ao sistema.`}</AlertDialogDescription></AlertDialogHeader>
           {content}
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={pending} onClick={form.handleSubmit(submit)}>{pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={pending} onClick={(event) => { event.preventDefault(); void form.handleSubmit(submit)(); }}>{pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     );
