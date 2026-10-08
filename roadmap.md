@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Autenticação e administração — execução sequencial
+- [ ] Revisar e corrigir o SQL de vínculos por contrato e retenção de histórico; entregar diagnóstico e minuta, sem aplicação ao banco.
 - [ ] Etapa 3: comprovar revogação de sessões na senha temporária e testes reais de não-admin, exclusão protegida e primeiro consentimento.
 - [ ] Etapa 3: validar conclusão da troca obrigatória com MFA ativo sem enfraquecer as policies de perfil.
 - [ ] Etapa 4: permissões administrativas aplicadas; completar hooks, formulários, telas e regressão de isolamento/auditoria após fechar a Etapa 3.
