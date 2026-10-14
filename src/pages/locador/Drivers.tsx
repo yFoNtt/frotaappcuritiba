@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Pagination,
   PaginationContent,
@@ -41,13 +42,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Plus, 
@@ -72,8 +66,6 @@ import {
   useCreateDriver, 
   useUpdateDriver, 
   useDeleteDriver,
-  useAssignVehicle,
-  useUnassignVehicle,
   useGenerateDriverInvite,
   Driver,
   DriverInsert 
@@ -94,7 +86,6 @@ const driverSchema = z.object({
     const expiryDate = new Date(date);
     return expiryDate > new Date();
   }, 'CNH deve estar válida'),
-  vehicle_id: z.string().optional(),
 });
 
 const ITEMS_PER_PAGE = 10;
@@ -107,7 +98,7 @@ export default function LocadorDrivers() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<Driver | null>(null);
-  const [assigningDriver, setAssigningDriver] = useState<Driver | null>(null);
+  const navigate = useNavigate();
   const [invitingDriver, setInvitingDriver] = useState<Driver | null>(null);
   const [inviteLink, setInviteLink] = useState('');
   const generateInvite = useGenerateDriverInvite();
@@ -144,8 +135,6 @@ export default function LocadorDrivers() {
   const createDriver = useCreateDriver();
   const updateDriver = useUpdateDriver();
   const deleteDriver = useDeleteDriver();
-  const assignVehicle = useAssignVehicle();
-  const unassignVehicle = useUnassignVehicle();
 
   const form = useForm<DriverFormData>({
     resolver: zodResolver(driverSchema),
@@ -155,7 +144,7 @@ export default function LocadorDrivers() {
       phone: '',
       cnh_number: '',
       cnh_expiry: '',
-      vehicle_id: '',
+
     },
   });
 
@@ -189,10 +178,6 @@ export default function LocadorDrivers() {
     return pages;
   };
 
-  const availableVehicles = useMemo(() => {
-    return vehicles.filter(v => v.status === 'available' && !v.current_driver_id);
-  }, [vehicles]);
-
   const stats = useMemo(() => ({
     total: drivers.length,
     withVehicle: drivers.filter(d => d.vehicle_id).length,
@@ -222,7 +207,7 @@ export default function LocadorDrivers() {
       phone: '',
       cnh_number: '',
       cnh_expiry: '',
-      vehicle_id: '',
+
     });
     setEditingDriver(null);
     setIsAddDialogOpen(true);
@@ -235,7 +220,7 @@ export default function LocadorDrivers() {
       phone: driver.phone || '',
       cnh_number: driver.cnh_number,
       cnh_expiry: driver.cnh_expiry,
-      vehicle_id: driver.vehicle_id || '',
+
     });
     setEditingDriver(driver);
     setIsAddDialogOpen(true);
@@ -248,21 +233,25 @@ export default function LocadorDrivers() {
       phone: data.phone || undefined,
       cnh_number: data.cnh_number,
       cnh_expiry: data.cnh_expiry,
-      vehicle_id: data.vehicle_id || null,
+
     };
 
-    if (editingDriver) {
-      await updateDriver.mutateAsync({ 
-        id: editingDriver.id, 
-        updates: driverData 
-      });
-    } else {
-      await createDriver.mutateAsync(driverData);
+    try {
+      if (editingDriver) {
+        await updateDriver.mutateAsync({ 
+          id: editingDriver.id, 
+          updates: driverData 
+        });
+      } else {
+        await createDriver.mutateAsync(driverData);
+      }
+  
+      setIsAddDialogOpen(false);
+      setEditingDriver(null);
+      form.reset();
+    } catch {
+      // The mutation reports a safe message; keep the form open.
     }
-
-    setIsAddDialogOpen(false);
-    setEditingDriver(null);
-    form.reset();
   };
 
   const handleDelete = async () => {
@@ -272,23 +261,11 @@ export default function LocadorDrivers() {
     }
   };
 
-  const handleAssignVehicle = async (vehicleId: string) => {
-    if (assigningDriver) {
-      await assignVehicle.mutateAsync({ 
-        driverId: assigningDriver.id, 
-        vehicleId 
-      });
-      setAssigningDriver(null);
-    }
-  };
-
-  const handleUnassignVehicle = async (driver: Driver) => {
-    if (driver.vehicle_id) {
-      await unassignVehicle.mutateAsync({ 
-        driverId: driver.id, 
-        vehicleId: driver.vehicle_id 
-      });
-    }
+  const handleContractLink = (linked: boolean) => {
+    toast.info(linked
+      ? 'Para desvincular, encerre o contrato'
+      : 'Para vincular um veículo, crie e ative um contrato');
+    navigate('/locador/contratos');
   };
 
   if (driversLoading || vehiclesLoading) {
@@ -438,11 +415,11 @@ export default function LocadorDrivers() {
                             </Button>
                           )}
                           {driver.vehicle_id ? (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
-                              {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleContractLink(true)} title="Para desvincular, encerre o contrato" aria-label="Para desvincular, encerre o contrato">
+                              <Unlink className="h-4 w-4 text-warning" />
                             </Button>
                           ) : (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAssigningDriver(driver)} disabled={availableVehicles.length === 0} title="Vincular veículo">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleContractLink(false)} title="Para vincular um veículo, crie e ative um contrato" aria-label="Para vincular um veículo, crie e ative um contrato">
                               <LinkIcon className="h-4 w-4 text-success" />
                             </Button>
                           )}
@@ -528,11 +505,11 @@ export default function LocadorDrivers() {
                                   </Button>
                                 )}
                                 {driver.vehicle_id ? (
-                                  <Button variant="ghost" size="icon" onClick={() => handleUnassignVehicle(driver)} disabled={unassignVehicle.isPending} title="Desvincular veículo">
-                                    {unassignVehicle.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4 text-warning" />}
+                                  <Button variant="ghost" size="icon" onClick={() => handleContractLink(true)} title="Para desvincular, encerre o contrato" aria-label="Para desvincular, encerre o contrato">
+                                    <Unlink className="h-4 w-4 text-warning" />
                                   </Button>
                                 ) : (
-                                  <Button variant="ghost" size="icon" onClick={() => setAssigningDriver(driver)} disabled={availableVehicles.length === 0} title={availableVehicles.length === 0 ? 'Nenhum veículo disponível' : 'Vincular veículo'}>
+                                  <Button variant="ghost" size="icon" onClick={() => handleContractLink(false)} title="Para vincular um veículo, crie e ative um contrato" aria-label="Para vincular um veículo, crie e ative um contrato">
                                     <LinkIcon className="h-4 w-4 text-success" />
                                   </Button>
                                 )}
@@ -704,35 +681,13 @@ export default function LocadorDrivers() {
                   />
                 </div>
 
-                {!editingDriver && availableVehicles.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="vehicle_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Veículo (opcional)</FormLabel>
-                        <Select 
-                          onValueChange={(value) => field.onChange(value === 'none' ? '' : value)} 
-                          value={field.value || 'none'}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um veículo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhum</SelectItem>
-                            {availableVehicles.map(v => (
-                              <SelectItem key={v.id} value={v.id}>
-                                {v.brand} {v.model} - {v.plate}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {editingDriver?.vehicle_id && (
+                  <div className="space-y-1 text-sm">
+                    <Label>Veículo atual</Label>
+                    <p className="text-muted-foreground">
+                      {getVehicleInfo(editingDriver.vehicle_id)?.brand} {getVehicleInfo(editingDriver.vehicle_id)?.model}
+                    </p>
+                  </div>
                 )}
 
                 <DialogFooter>
@@ -755,54 +710,6 @@ export default function LocadorDrivers() {
                 </DialogFooter>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Assign Vehicle Dialog */}
-        <Dialog open={!!assigningDriver} onOpenChange={(open) => !open && setAssigningDriver(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Vincular Veículo</DialogTitle>
-              <DialogDescription>
-                Selecione um veículo para vincular a {assigningDriver?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-4">
-              {availableVehicles.map(vehicle => (
-                <button
-                  key={vehicle.id}
-                  onClick={() => handleAssignVehicle(vehicle.id)}
-                  disabled={assignVehicle.isPending}
-                  className="flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted disabled:opacity-50"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted">
-                    {vehicle.images?.[0] ? (
-                      <img
-                        src={vehicle.images[0]}
-                        alt={`${vehicle.brand} ${vehicle.model}`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <Car className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{vehicle.brand} {vehicle.model}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {vehicle.plate} • R$ {Number(vehicle.weekly_price).toLocaleString('pt-BR')}/semana
-                    </p>
-                  </div>
-                  {assignVehicle.isPending && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                </button>
-              ))}
-              {availableVehicles.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  Nenhum veículo disponível para vincular.
-                </p>
-              )}
-            </div>
           </DialogContent>
         </Dialog>
 

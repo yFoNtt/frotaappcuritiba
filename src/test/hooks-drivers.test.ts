@@ -169,11 +169,6 @@ describe('Driver Data Hooks - Logic Tests', () => {
       expect(updated.status).toBe('inactive');
     });
 
-    it('updates vehicle assignment', () => {
-      const updated = mergeDriverUpdate(mockDrivers[1], { vehicle_id: 'v2' });
-      expect(updated.vehicle_id).toBe('v2');
-    });
-
     it('sets updated_at timestamp', () => {
       const before = new Date().toISOString();
       const updated = mergeDriverUpdate(mockDrivers[0], { name: 'X' });

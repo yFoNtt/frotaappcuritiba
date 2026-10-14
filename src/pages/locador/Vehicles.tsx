@@ -34,6 +34,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getBusinessErrorMessage } from '@/lib/businessErrors';
 
 const statusLabels: Record<string, string> = {
   available: 'Disponível',
@@ -94,7 +95,7 @@ export default function LocadorVehicles() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('Erro ao atualizar status. Tente novamente.');
+      toast.error(getBusinessErrorMessage(error, 'Erro ao atualizar status. Tente novamente.'));
     } finally {
       setUpdatingStatusId(null);
     }

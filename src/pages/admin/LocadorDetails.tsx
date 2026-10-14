@@ -48,7 +48,7 @@ const statusColors: Record<string, string> = {
   paid: 'bg-success/10 text-success border-success/20',
   overdue: 'bg-destructive/10 text-destructive border-destructive/20',
   cancelled: 'bg-muted text-muted-foreground',
-  completed: 'bg-muted text-muted-foreground',
+  ended: 'bg-muted text-muted-foreground',
 };
 
 const statusLabels: Record<string, string> = {
@@ -61,7 +61,7 @@ const statusLabels: Record<string, string> = {
   paid: 'Pago',
   overdue: 'Atrasado',
   cancelled: 'Cancelado',
-  completed: 'Concluído',
+  ended: 'Encerrado',
 };
 
 export default function LocadorDetails() {

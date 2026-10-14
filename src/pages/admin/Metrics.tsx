@@ -319,7 +319,7 @@ export default function AdminMetrics() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        Esperado: <strong>active</strong>, <strong>completed</strong>,{' '}
+                        Esperado: <strong>active</strong>, <strong>ended</strong>,{' '}
                         <strong>cancelled</strong> ou <strong>pending</strong>. Demais valores
                         não são contabilizados em "Contratos Ativos" ou na distribuição.
                       </TooltipContent>

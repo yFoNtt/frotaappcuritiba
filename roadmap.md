@@ -1,5 +1,10 @@
 # Roadmap
 
+## Código cliente — vínculo somente por contrato
+- [ ] Remover vínculo manual e direcionar para Contratos, preservando leitura do veículo atual.
+- [ ] Centralizar mensagens de negócio e harmonizar contratos encerrados como ended.
+- [ ] Validar ativação/formulário, rodar lint e testes e conferir navegação.
+
 ## Autenticação e administração — execução sequencial
 - [x] Revisar e corrigir o SQL de vínculos por contrato e retenção de histórico; diagnóstico, minuta bloqueada e revisão entregues sem aplicação ao banco.
 - [ ] Etapa 3: comprovar revogação de sessões na senha temporária e testes reais de não-admin, exclusão protegida e primeiro consentimento.

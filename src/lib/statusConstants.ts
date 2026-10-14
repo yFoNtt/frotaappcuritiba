@@ -26,7 +26,7 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatusValue, string> = {
 
 export const CONTRACT_STATUS = {
   ACTIVE: 'active',
-  COMPLETED: 'completed',
+  ENDED: 'ended',
   CANCELLED: 'cancelled',
   PENDING: 'pending',
 } as const;
@@ -35,14 +35,14 @@ export type ContractStatusValue = typeof CONTRACT_STATUS[keyof typeof CONTRACT_S
 
 export const CONTRACT_STATUS_VALUES: readonly ContractStatusValue[] = Object.freeze([
   CONTRACT_STATUS.ACTIVE,
-  CONTRACT_STATUS.COMPLETED,
+  CONTRACT_STATUS.ENDED,
   CONTRACT_STATUS.CANCELLED,
   CONTRACT_STATUS.PENDING,
 ]);
 
 export const CONTRACT_STATUS_LABELS: Record<ContractStatusValue, string> = {
   active: 'Ativos',
-  completed: 'Finalizados',
+  ended: 'Finalizados',
   cancelled: 'Cancelados',
   pending: 'Pendentes',
 };
