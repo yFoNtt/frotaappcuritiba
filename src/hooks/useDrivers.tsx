@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { sanitizeFields } from '@/lib/sanitize';
+import { getBusinessErrorMessage } from '@/lib/businessErrors';
 
 export interface Driver {
   id: string;
@@ -28,7 +29,6 @@ export interface DriverInsert {
   phone?: string;
   cnh_number: string;
   cnh_expiry: string;
-  vehicle_id?: string | null;
   status?: 'active' | 'inactive' | 'pending';
 }
 
@@ -38,7 +38,6 @@ export interface DriverUpdate {
   phone?: string;
   cnh_number?: string;
   cnh_expiry?: string;
-  vehicle_id?: string | null;
   status?: 'active' | 'inactive' | 'pending';
 }
 
@@ -100,9 +99,9 @@ export function useCreateDriver() {
     },
     onError: (error: Error) => {
       if (error.message.includes('unique')) {
-        toast.error('Já existe um motorista com este email ou CNH.');
+        toast.error(getBusinessErrorMessage(error, 'Já existe um motorista com este email ou CNH.'));
       } else {
-        toast.error('Erro ao cadastrar motorista. Tente novamente.');
+        toast.error(getBusinessErrorMessage(error, 'Erro ao cadastrar motorista. Tente novamente.'));
       }
     },
   });
@@ -134,8 +133,8 @@ export function useUpdateDriver() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success('Motorista atualizado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao atualizar motorista. Tente novamente.');
+    onError: (error) => {
+      toast.error(getBusinessErrorMessage(error, 'Erro ao atualizar motorista. Tente novamente.'));
     },
   });
 }
@@ -190,94 +189,8 @@ export function useDeleteDriver() {
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
       toast.success('Motorista removido com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao remover motorista. Tente novamente.');
-    },
-  });
-}
-
-// Assign vehicle to driver
-export function useAssignVehicle() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ driverId, vehicleId }: { driverId: string; vehicleId: string | null }) => {
-      // First, update the driver's vehicle_id
-      const { error: driverError } = await supabase
-        .from('drivers')
-        .update({ vehicle_id: vehicleId })
-        .eq('id', driverId);
-
-      if (driverError) {
-        console.error('Error assigning vehicle to driver:', driverError);
-        throw driverError;
-      }
-
-      // If assigning a vehicle, update the vehicle's current_driver_id and status
-      if (vehicleId) {
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ 
-            current_driver_id: driverId,
-            status: 'rented' 
-          })
-          .eq('id', vehicleId);
-
-        if (vehicleError) {
-          console.error('Error updating vehicle:', vehicleError);
-          throw vehicleError;
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drivers'] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast.success('Veículo vinculado com sucesso!');
-    },
-    onError: () => {
-      toast.error('Erro ao vincular veículo. Tente novamente.');
-    },
-  });
-}
-
-// Unassign vehicle from driver
-export function useUnassignVehicle() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ driverId, vehicleId }: { driverId: string; vehicleId: string }) => {
-      // Update driver to remove vehicle
-      const { error: driverError } = await supabase
-        .from('drivers')
-        .update({ vehicle_id: null })
-        .eq('id', driverId);
-
-      if (driverError) {
-        console.error('Error unassigning vehicle from driver:', driverError);
-        throw driverError;
-      }
-
-      // Update vehicle to remove driver and set as available
-      const { error: vehicleError } = await supabase
-        .from('vehicles')
-        .update({ 
-          current_driver_id: null,
-          status: 'available' 
-        })
-        .eq('id', vehicleId);
-
-      if (vehicleError) {
-        console.error('Error updating vehicle:', vehicleError);
-        throw vehicleError;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drivers'] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      toast.success('Veículo desvinculado com sucesso!');
-    },
-    onError: () => {
-      toast.error('Erro ao desvincular veículo. Tente novamente.');
+    onError: (error) => {
+      toast.error(getBusinessErrorMessage(error, 'Erro ao remover motorista. Tente novamente.'));
     },
   });
 }

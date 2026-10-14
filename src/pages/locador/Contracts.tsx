@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getContractActivationError, canTransitionContract } from '@/lib/contractRules';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -193,6 +194,13 @@ export default function LocadorContracts() {
   };
 
   const handleSubmit = async (data: ContractFormData) => {
+    const eligibilityError = getContractActivationError(
+      getVehicleInfo(data.vehicle_id), getDriverInfo(data.driver_id),
+    );
+    if (eligibilityError) {
+      form.setError(eligibilityError.field, { message: eligibilityError.message });
+      return;
+    }
     const contractData: ContractInsert = {
       driver_id: data.driver_id,
       vehicle_id: data.vehicle_id,
@@ -207,13 +215,17 @@ export default function LocadorContracts() {
       status: 'active',
     };
 
-    await createContract.mutateAsync(contractData);
-    setIsFormOpen(false);
-    form.reset();
+    try {
+      await createContract.mutateAsync(contractData);
+      setIsFormOpen(false);
+      form.reset();
+    } catch {
+      // The hook reports a safe business error; retain the user's input.
+    }
   };
 
   const handleEndContract = async () => {
-    if (endingContract) {
+    if (endingContract && canTransitionContract(endingContract.status, 'ended')) {
       await endContract.mutateAsync({
         id: endingContract.id,
         endDate: new Date().toISOString().split('T')[0],
@@ -223,7 +235,7 @@ export default function LocadorContracts() {
   };
 
   const handleCancelContract = async () => {
-    if (cancellingContract && cancellationReason.trim()) {
+    if (cancellingContract && canTransitionContract(cancellingContract.status, 'cancelled') && cancellationReason.trim()) {
       await cancelContract.mutateAsync({
         id: cancellingContract.id,
         reason: cancellationReason,
@@ -236,6 +248,10 @@ export default function LocadorContracts() {
   // Auto-fill weekly price when vehicle is selected
   const selectedVehicleId = form.watch('vehicle_id');
   const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+  const selectedDriverId = form.watch('driver_id');
+  const selectedDriver = drivers.find(d => d.id === selectedDriverId);
+  const activationError = selectedVehicleId && selectedDriverId
+    ? getContractActivationError(selectedVehicle, selectedDriver) : null;
 
   if (contractsLoading || driversLoading || vehiclesLoading) {
     return (
@@ -704,6 +720,9 @@ export default function LocadorContracts() {
                   )}
                 />
 
+                {activationError && (
+                  <p role="alert" className="text-sm text-destructive">{activationError.message}</p>
+                )}
                 <DialogFooter>
                   <Button 
                     type="button" 
@@ -712,7 +731,7 @@ export default function LocadorContracts() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createContract.isPending}>
+                  <Button type="submit" disabled={createContract.isPending || !!activationError}>
                     {createContract.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}

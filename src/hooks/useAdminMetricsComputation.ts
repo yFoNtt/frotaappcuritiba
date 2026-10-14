@@ -47,7 +47,7 @@ export function useAdminMetricsComputation({
 
     const totalContracts = filteredContracts.length;
     const activeContractsCount = cCounts[CONTRACT_STATUS.ACTIVE];
-    const completedContractsCount = cCounts[CONTRACT_STATUS.COMPLETED];
+    const completedContractsCount = cCounts[CONTRACT_STATUS.ENDED];
     const cancelledContractsCount = cCounts[CONTRACT_STATUS.CANCELLED];
     const pendingContractsCount = cCounts[CONTRACT_STATUS.PENDING];
 
@@ -69,7 +69,7 @@ export function useAdminMetricsComputation({
 
     const contractStatusData = [
       { name: CONTRACT_STATUS_LABELS.active, value: activeContractsCount, color: 'hsl(var(--success))' },
-      { name: CONTRACT_STATUS_LABELS.completed, value: completedContractsCount, color: 'hsl(var(--muted-foreground))' },
+      { name: CONTRACT_STATUS_LABELS.ended, value: completedContractsCount, color: 'hsl(var(--muted-foreground))' },
       { name: CONTRACT_STATUS_LABELS.cancelled, value: cancelledContractsCount, color: 'hsl(var(--destructive))' },
     ];
 

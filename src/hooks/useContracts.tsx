@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { sanitizeFields } from '@/lib/sanitize';
+import { getBusinessErrorMessage } from '@/lib/businessErrors';
 
 export interface Contract {
   id: string;
@@ -137,7 +138,7 @@ export function useCreateContract() {
       toast.success('Contrato criado com sucesso!');
     },
     onError: (error: Error) => {
-      toast.error('Erro ao criar contrato. Tente novamente.');
+      toast.error(getBusinessErrorMessage(error, 'Erro ao criar contrato. Tente novamente.'));
       console.error(error);
     },
   });
@@ -168,8 +169,8 @@ export function useUpdateContract() {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast.success('Contrato atualizado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao atualizar contrato. Tente novamente.');
+    onError: (error) => {
+      toast.error(getBusinessErrorMessage(error, 'Erro ao atualizar contrato. Tente novamente.'));
     },
   });
 }
@@ -203,8 +204,8 @@ export function useEndContract() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success('Contrato encerrado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao encerrar contrato. Tente novamente.');
+    onError: (error) => {
+      toast.error(getBusinessErrorMessage(error, 'Erro ao encerrar contrato. Tente novamente.'));
     },
   });
 }
@@ -239,8 +240,8 @@ export function useCancelContract() {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success('Contrato cancelado.');
     },
-    onError: () => {
-      toast.error('Erro ao cancelar contrato. Tente novamente.');
+    onError: (error) => {
+      toast.error(getBusinessErrorMessage(error, 'Erro ao cancelar contrato. Tente novamente.'));
     },
   });
 }

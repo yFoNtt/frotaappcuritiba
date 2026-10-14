@@ -34,6 +34,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { getBusinessErrorMessage } from '@/lib/businessErrors';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Vehicle } from '@/hooks/useVehicles';
@@ -330,7 +331,7 @@ export function VehicleForm({ open, onOpenChange, vehicle }: VehicleFormProps) {
       handleClose();
     } catch (error) {
       console.error('Error saving vehicle:', error);
-      toast.error(isEditing ? 'Erro ao atualizar veículo.' : 'Erro ao cadastrar veículo.');
+      toast.error(getBusinessErrorMessage(error, isEditing ? 'Erro ao atualizar veículo.' : 'Erro ao cadastrar veículo.'));
     } finally {
       setIsSubmitting(false);
     }

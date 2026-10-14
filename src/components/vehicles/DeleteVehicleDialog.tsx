@@ -12,6 +12,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getBusinessErrorMessage } from '@/lib/businessErrors';
 import { Loader2 } from 'lucide-react';
 import type { Vehicle } from '@/hooks/useVehicles';
 
@@ -58,7 +59,7 @@ export function DeleteVehicleDialog({ vehicle, open, onOpenChange }: DeleteVehic
       onOpenChange(false);
     } catch (error) {
       console.error('Error deleting vehicle:', error);
-      toast.error('Erro ao excluir veículo. Tente novamente.');
+      toast.error(getBusinessErrorMessage(error, 'Erro ao excluir veículo. Tente novamente.'));
     } finally {
       setIsDeleting(false);
     }
