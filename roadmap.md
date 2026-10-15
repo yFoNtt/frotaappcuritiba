@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Código cliente — vínculo somente por contrato
-- [ ] Remover vínculo manual e direcionar para Contratos, preservando leitura do veículo atual.
-- [ ] Centralizar mensagens de negócio e harmonizar contratos encerrados como ended.
-- [ ] Validar ativação/formulário, rodar lint e testes e conferir navegação.
+- [x] Remover vínculo manual e direcionar para Contratos, preservando leitura do veículo atual.
+- [x] Centralizar mensagens de negócio e harmonizar contratos encerrados como ended.
+- [x] Validar ativação/formulário e navegação por testes: 522 testes passam; lint sem erros, 3 avisos anteriores.
+- [ ] Conferir fluxo com dados reais no preview — bloqueado por ausência de sessão autorizada de locador; login solicitado ao usuário.
 
 ## Autenticação e administração — execução sequencial
 - [x] Revisar e corrigir o SQL de vínculos por contrato e retenção de histórico; diagnóstico, minuta bloqueada e revisão entregues sem aplicação ao banco.
