@@ -31,8 +31,8 @@ describe('Contract form activation checks', () => {
     render(<Contracts />);
     fireEvent.click(screen.getByRole('button', { name: 'Novo Contrato' }));
     const selects = screen.getAllByRole('combobox');
-    fireEvent.change(selects[1], { target: { value: 'd1' } });
-    fireEvent.change(selects[2], { target: { value: 'v1' } });
+    fireEvent.change(selects[0], { target: { value: 'd1' } });
+    fireEvent.change(selects[1], { target: { value: 'v1' } });
     fireEvent.change(screen.getByLabelText('Data de Início'), { target: { value: '2026-10-14' } });
   }
   it('does not submit an active contract with expired CNH', () => {
