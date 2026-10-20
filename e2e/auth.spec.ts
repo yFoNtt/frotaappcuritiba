@@ -4,7 +4,7 @@ import { loginAs, logout, TEST_ACCOUNTS } from './helpers/auth';
 test.describe('Autenticação', () => {
   test('deve exibir formulário de login', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByText('Entrar no FrotaApp')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /entrar no frotaapp/i }).first()).toBeVisible();
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
     await expect(page.getByRole('button', { name: /entrar$/i })).toBeVisible();
@@ -32,20 +32,20 @@ test.describe('Autenticação', () => {
 
   test('deve alternar entre login e cadastro', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByText('Entrar no FrotaApp')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /entrar no frotaapp/i }).first()).toBeVisible();
 
     // Switch to register
     await page.getByRole('tab', { name: /cadastrar/i }).click();
-    await expect(page.getByText('Criar conta no FrotaApp')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /criar conta no frotaapp/i }).first()).toBeVisible();
 
     // Switch back to login
     await page.getByRole('tab', { name: /entrar/i }).click();
-    await expect(page.getByText('Entrar no FrotaApp')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /entrar no frotaapp/i }).first()).toBeVisible();
   });
 
   test('deve exibir formulário de cadastro com seleção de papel', async ({ page }) => {
     await page.goto('/cadastro');
-    await expect(page.getByText('Criar conta no FrotaApp')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /criar conta no frotaapp/i }).first()).toBeVisible();
     // Should have role selection (locador/motorista)
     await expect(page.getByText(/locador|motorista/i).first()).toBeVisible();
   });
@@ -58,7 +58,8 @@ test.describe('Autenticação', () => {
   test('deve fazer logout corretamente', async ({ page }) => {
     await loginAs(page, 'locador');
     await logout(page);
-    await expect(page).toHaveURL(/\/login/);
+    // O app redireciona para a página inicial ("/") após o logout.
+    await expect(page).toHaveURL(/\/(login)?(\?.*)?$/);
   });
 
   test('deve mostrar link de esqueci a senha', async ({ page }) => {

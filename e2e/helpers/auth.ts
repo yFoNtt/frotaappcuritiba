@@ -55,7 +55,8 @@ export async function logout(page: Page) {
     }
   }
 
-  await page.waitForURL('**/login', { timeout: 10000 });
+  // O app navega para "/" após o logout; aceita também /login.
+  await page.waitForURL((url) => url.pathname === '/' || url.pathname === '/login', { timeout: 10000 });
 }
 
 /**

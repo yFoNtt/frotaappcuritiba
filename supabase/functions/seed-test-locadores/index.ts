@@ -71,7 +71,20 @@ Deno.serve(async (req) => {
     await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
   if (listErr) return json({ error: `listUsers: ${listErr.message}` }, corsHeaders, 500);
 
-  const out: Record<string, unknown>[] = [];
+  // Limpa tentativas de login APENAS das 4 contas de teste (lista fechada).
+  // Não altera o limite de tentativas nem registros de outros e-mails.
+  const TEST_LOGIN_EMAILS = [
+    "locador.teste.a@frotaapp.dev",
+    "locador.teste.b@frotaapp.dev",
+    "motorista.teste.a@frotaapp.dev",
+    "motorista.teste.b@frotaapp.dev",
+  ];
+  const { error: attemptsErr } = await admin
+    .from("login_attempts")
+    .delete()
+    .in("email", TEST_LOGIN_EMAILS);
+
+  const out: Record<string, unknown>[] = [{ login_attempts_cleanup: attemptsErr ? attemptsErr.message : "ok" }];
 
   for (const loc of LOCADORES) {
     const log: Record<string, unknown> = { email: loc.email };
