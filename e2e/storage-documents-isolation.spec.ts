@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 import { loginViaApi, SUPABASE_URL, SUPABASE_ANON_KEY } from './helpers/supabase-rest';
 
 /**
@@ -19,9 +20,9 @@ import { loginViaApi, SUPABASE_URL, SUPABASE_ANON_KEY } from './helpers/supabase
  * `motorista-isolation.spec.ts`.
  */
 
-const A = { email: 'locador.teste.a@frotaapp.dev', password: 'Teste@123456' };
-const B = { email: 'locador.teste.b@frotaapp.dev', password: 'Teste@123456' };
-const MOTORISTA = { email: 'motorista.teste.a@frotaapp.dev', password: 'Teste@123456' };
+const A = testAccount('locador.teste.a@frotaapp.dev');
+const B = testAccount('locador.teste.b@frotaapp.dev');
+const MOTORISTA = testAccount('motorista.teste.a@frotaapp.dev');
 
 const BUCKET = 'documents';
 

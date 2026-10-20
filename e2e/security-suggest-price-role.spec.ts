@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { derivePassword } from './helpers/testPasswords';
 import { loginViaApi, SUPABASE_URL, SUPABASE_ANON_KEY } from './helpers/supabase-rest';
 
 /**
@@ -41,7 +42,7 @@ test('suggest-vehicle-price: anon recebe 401', async () => {
 });
 
 test('suggest-vehicle-price: motorista recebe 403 (role check server-side)', async () => {
-  const m = await loginViaApi('motorista.teste.a@frotaapp.dev', 'Teste@123456');
+  const m = await loginViaApi('motorista.teste.a@frotaapp.dev', derivePassword('motorista.teste.a@frotaapp.dev'));
   const res = await callSuggest(m.accessToken);
   expect(
     res.status,
@@ -50,7 +51,7 @@ test('suggest-vehicle-price: motorista recebe 403 (role check server-side)', asy
 });
 
 test('suggest-vehicle-price: locador passa do gate de autorização', async () => {
-  const l = await loginViaApi('locador.teste.a@frotaapp.dev', 'Teste@123456');
+  const l = await loginViaApi('locador.teste.a@frotaapp.dev', derivePassword('locador.teste.a@frotaapp.dev'));
   const res = await callSuggest(l.accessToken);
   // Aceitamos 200 (sucesso) ou 402/429/500 (limites/erros downstream do gateway),
   // mas NUNCA 401/403 — que indicariam regressão no gate de role.

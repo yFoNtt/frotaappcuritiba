@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 import { loginViaApi, restGet } from './helpers/supabase-rest';
 
 /**
@@ -12,8 +13,8 @@ import { loginViaApi, restGet } from './helpers/supabase-rest';
  *   nem placa nem renavam.
  */
 
-const MOTORISTA = { email: 'motorista.teste.a@frotaapp.dev', password: 'Teste@123456' };
-const LOCADOR_B = { email: 'locador.teste.b@frotaapp.dev', password: 'Teste@123456' };
+const MOTORISTA = testAccount('motorista.teste.a@frotaapp.dev');
+const LOCADOR_B = testAccount('locador.teste.b@frotaapp.dev');
 
 test('motorista sem contrato ativo não vê vehicles via SELECT direto', async () => {
   const m = await loginViaApi(MOTORISTA.email, MOTORISTA.password);
