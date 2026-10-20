@@ -26,7 +26,8 @@ test.describe('Auth — proteção de rotas', () => {
 test.describe('Auth — login', () => {
   test('senha incorreta exibe mensagem de erro', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_ACCOUNTS.locador.email);
+    // E-mail fictício: evita acumular tentativas falhas na conta de teste real.
+    await page.fill('input[type="email"]', 'invalido.teste@frotaapp.invalid');
     await page.fill('input[type="password"]', 'ErradaErrada@1');
     await page.click('button[type="submit"]');
     await expect(page.getByText(/incorret|inválid|erro/i).first()).toBeVisible({ timeout: 10000 });
