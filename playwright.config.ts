@@ -27,10 +27,16 @@ export default defineConfig({
     },
   ],
   outputDir: 'e2e/test-results',
-  webServer: process.env.BASE_URL ? undefined : {
-    command: process.env.CI ? 'npm run preview' : 'npm run dev',
-    url: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Start a local server unless BASE_URL points to an external (non-localhost) host.
+  webServer:
+    process.env.BASE_URL && !/localhost|127\.0\.0\.1/.test(process.env.BASE_URL)
+      ? undefined
+      : {
+          command: process.env.CI
+            ? 'npm run preview -- --port 4173 --strictPort'
+            : 'npm run dev',
+          url: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+        },
 });
