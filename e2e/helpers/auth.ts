@@ -46,11 +46,13 @@ export async function loginAs(page: Page, role: AccountRole) {
  * após o login, para não cobrir botões da tela. Não altera o app.
  */
 export async function dismissWelcomeTour(page: Page) {
-  const dialog = page.getByRole('dialog', { name: /bem-vindo ao frotaapp/i });
+  const dialog = page.getByRole('dialog').filter({
+    has: page.getByRole('heading', { name: /^bem-vindo ao frotaapp$/i }),
+  });
   // A janela abre alguns instantes após o carregamento do painel.
-  const appeared = await dialog.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+  const appeared = await dialog.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
   if (appeared) {
-    await page.keyboard.press('Escape');
+    await dialog.getByRole('button', { name: /close|fechar/i }).click();
     await expect(dialog).toBeHidden({ timeout: 5000 });
   }
 }
@@ -62,6 +64,7 @@ export async function logout(page: Page) {
   // Look for logout/sair button
   await dismissWelcomeTour(page);
   const logoutButton = page.getByRole('button', { name: /^sair$/i }).first();
+  await logoutButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await logoutButton.isVisible()) {
     await logoutButton.click();
     // Confirm logout dialog if present
