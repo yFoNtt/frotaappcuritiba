@@ -822,6 +822,7 @@ export type Database = {
           document_type: string | null
           full_name: string | null
           id: string
+          is_test_account: boolean
           mfa_enabled: boolean
           mfa_verified_session_id: string | null
           mfa_verified_until: string | null
@@ -848,6 +849,7 @@ export type Database = {
           document_type?: string | null
           full_name?: string | null
           id?: string
+          is_test_account?: boolean
           mfa_enabled?: boolean
           mfa_verified_session_id?: string | null
           mfa_verified_until?: string | null
@@ -874,6 +876,7 @@ export type Database = {
           document_type?: string | null
           full_name?: string | null
           id?: string
+          is_test_account?: boolean
           mfa_enabled?: boolean
           mfa_verified_session_id?: string | null
           mfa_verified_until?: string | null

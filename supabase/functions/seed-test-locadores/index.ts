@@ -106,11 +106,28 @@ Deno.serve(async (req) => {
       { onConflict: "user_id,role", ignoreDuplicates: true },
     );
 
-    // profile
+    // profile — conta de teste marcada (sem CPF/CNPJ inventado)
     const { data: existingProfile } = await admin
       .from("profiles").select("id").eq("user_id", userId).maybeSingle();
     if (!existingProfile) {
-      await admin.from("profiles").insert({ user_id: userId, full_name: loc.name });
+      const { error: pErr } = await admin.from("profiles")
+        .insert({ user_id: userId, full_name: loc.name, is_test_account: true });
+      if (pErr) log.warn_profile = pErr.message;
+    } else {
+      const { error: pErr } = await admin.from("profiles")
+        .update({ is_test_account: true }).eq("user_id", userId);
+      if (pErr) log.warn_profile = pErr.message;
+    }
+
+    // aceite dos termos v1.0 (restabelecido a cada execução)
+    const { data: validConsent } = await admin.from("consents").select("id")
+      .eq("user_id", userId).eq("terms_version", "1.0").eq("privacy_version", "1.0")
+      .is("revoked_at", null).limit(1).maybeSingle();
+    if (!validConsent) {
+      const { error: cErr } = await admin.from("consents").insert({
+        user_id: userId, terms_version: "1.0", privacy_version: "1.0", user_agent: "e2e-seed",
+      });
+      if (cErr) log.warn_consent = cErr.message;
     }
 
     // vehicle (unique per locador by plate)

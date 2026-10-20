@@ -157,12 +157,33 @@ Deno.serve(async (req) => {
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
+    const profileData = {
+      full_name: m.name,
+      cnh_number: m.cnh_number, // mesmo número fictício já usado no seed de drivers
+      cnh_expiry: "2030-12-31",
+      is_test_account: true,
+    };
     if (!existingProfile) {
       const { error: pErr } = await admin
         .from("profiles")
-        .insert({ user_id: userId, full_name: m.name, mfa_enabled: false });
+        .insert({ user_id: userId, mfa_enabled: false, ...profileData });
       if (pErr) log.warn_profile = pErr.message;
       else log.profile_created = true;
+    } else {
+      const { error: pErr } = await admin
+        .from("profiles").update(profileData).eq("user_id", userId);
+      if (pErr) log.warn_profile = pErr.message;
+    }
+
+    // ---- Aceite dos termos v1.0 (restabelecido a cada execução) ------------
+    const { data: validConsent } = await admin.from("consents").select("id")
+      .eq("user_id", userId).eq("terms_version", "1.0").eq("privacy_version", "1.0")
+      .is("revoked_at", null).limit(1).maybeSingle();
+    if (!validConsent) {
+      const { error: cErr } = await admin.from("consents").insert({
+        user_id: userId, terms_version: "1.0", privacy_version: "1.0", user_agent: "e2e-seed",
+      });
+      if (cErr) log.warn_consent = cErr.message;
     }
 
     // ---- Ensure driver row linked to test locador --------------------------

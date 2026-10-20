@@ -22,6 +22,7 @@ export interface Profile {
   // Objeto flexível: admin e locador leem/escrevem apenas as chaves que usam.
   notification_preferences: Record<string, boolean> | null;
   must_change_password: boolean;
+  is_test_account?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +33,9 @@ export function isProfileComplete(profile: Profile | null | undefined, role: Pro
   if (role === 'admin') return true;
   if (!profile) return false;
   if (role === 'locador') {
+    // Contas de teste (flag definida só pelo seed, protegida por trigger)
+    // dispensam CPF/CNPJ para não exigir documento real.
+    if (profile.is_test_account) return true;
     return !!profile.document_type && !!profile.document_number;
   }
   if (role === 'motorista') {
