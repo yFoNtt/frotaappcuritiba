@@ -4,8 +4,8 @@ import { testAccount } from './testPasswords';
 // Contas criadas pelas funções de seed (seed-test-locadores / seed-test-motoristas).
 // A senha é derivada de E2E_SEED_TOKEN no momento do acesso; sem o token, um erro claro é lançado.
 export const TEST_ACCOUNTS = {
-  locador: { ...withDashboard('locador.teste.a@frotaapp.dev', '/locador') },
-  motorista: { ...withDashboard('motorista.teste.a@frotaapp.dev', '/motorista') },
+  locador: withDashboard('locador.teste.a@frotaapp.dev', '/locador'),
+  motorista: withDashboard('motorista.teste.a@frotaapp.dev', '/motorista'),
 };
 
 function withDashboard(email: string, dashboardUrl: string) {
