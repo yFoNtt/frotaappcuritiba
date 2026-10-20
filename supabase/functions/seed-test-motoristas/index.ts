@@ -52,6 +52,20 @@ function json(body: unknown, corsHeaders: Record<string, string>, status = 200) 
   });
 }
 
+function summarize(logs: Record<string, unknown>[]) {
+  // Resposta apenas com contagens e status — nunca senhas, tokens, hashes ou IDs.
+  const accounts = logs.filter((l) => "email" in l);
+  const issues = accounts.reduce((n, l) =>
+    n + Object.keys(l).filter((k) => k.startsWith("warn") || k.startsWith("error")).length, 0);
+  return {
+    accounts_total: accounts.length,
+    accounts_created: accounts.filter((l) => l.created).length,
+    accounts_updated: accounts.filter((l) => l.updated).length,
+    accounts_failed: accounts.filter((l) => l.error).length,
+    issues,
+  };
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") {
@@ -138,7 +152,6 @@ Deno.serve(async (req) => {
       }
       log.updated = true;
     }
-    log.password = password;
 
     // ---- Ensure motorista role ---------------------------------------------
     const { error: roleErr } = await admin
@@ -235,5 +248,5 @@ Deno.serve(async (req) => {
     results.push(log);
   }
 
-  return json({ ok: true, locador_id: locadorId, results }, corsHeaders);
+  return json({ ok: true, ...summarize(results) }, corsHeaders);
 });

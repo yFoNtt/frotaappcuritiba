@@ -22,7 +22,8 @@ test.describe('Autenticação', () => {
 
   test('deve mostrar erro com senha incorreta', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_ACCOUNTS.locador.email);
+    // E-mail fictício: evita acumular tentativas falhas na conta de teste real.
+    await page.fill('input[type="email"]', 'invalido.teste@frotaapp.invalid');
     await page.fill('input[type="password"]', 'SenhaErrada@123');
     await page.click('button[type="submit"]');
 
@@ -64,7 +65,7 @@ test.describe('Autenticação', () => {
 
   test('deve mostrar link de esqueci a senha', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByText(/esquec/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /esquec/i }).first()).toBeVisible();
   });
 
   test('deve validar campos obrigatórios no cadastro', async ({ page }) => {
