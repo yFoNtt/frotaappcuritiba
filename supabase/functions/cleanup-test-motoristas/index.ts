@@ -120,8 +120,10 @@ Deno.serve(async (req) => {
     page += 1;
   }
 
+  // Never return user IDs or credentials — counts/status only.
   const results: Record<string, unknown> = {
-    users: targetByEmail,
+    users_found: targetIds.length,
+    users_total: TEST_EMAILS.length,
     storage_deleted: 0,
     storage_skipped: 0,
     documents_deleted: 0,
