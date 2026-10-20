@@ -27,9 +27,10 @@ export default defineConfig({
     },
   ],
   outputDir: 'e2e/test-results',
-  // Start a local server unless BASE_URL points to an external (non-localhost) host.
+  // In CI, always start the built preview on 4173. Locally, a provided BASE_URL
+  // means an externally managed server, so no competing server is started.
   webServer:
-    process.env.BASE_URL && !/localhost|127\.0\.0\.1/.test(process.env.BASE_URL)
+    process.env.BASE_URL && !process.env.CI
       ? undefined
       : {
           command: process.env.CI
