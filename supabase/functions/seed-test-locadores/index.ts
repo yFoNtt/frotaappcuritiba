@@ -49,6 +49,20 @@ function json(body: unknown, corsHeaders: Record<string, string>, status = 200) 
   });
 }
 
+function summarize(logs: Record<string, unknown>[]) {
+  // Resposta apenas com contagens e status — nunca senhas, tokens, hashes ou IDs.
+  const accounts = logs.filter((l) => "email" in l);
+  const issues = accounts.reduce((n, l) =>
+    n + Object.keys(l).filter((k) => k.startsWith("warn") || k.startsWith("error")).length, 0);
+  return {
+    accounts_total: accounts.length,
+    accounts_created: accounts.filter((l) => l.created).length,
+    accounts_updated: accounts.filter((l) => l.updated).length,
+    accounts_failed: accounts.filter((l) => l.error).length,
+    issues,
+  };
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -84,7 +98,7 @@ Deno.serve(async (req) => {
     .delete()
     .in("email", TEST_LOGIN_EMAILS);
 
-  const out: Record<string, unknown>[] = [{ login_attempts_cleanup: attemptsErr ? attemptsErr.message : "ok" }];
+  const out: Record<string, unknown>[] = [];
 
   for (const loc of LOCADORES) {
     const log: Record<string, unknown> = { email: loc.email };
@@ -111,7 +125,6 @@ Deno.serve(async (req) => {
       log.updated = true;
     }
     log.user_id = userId;
-    log.password = password;
 
     // role
     await admin.from("user_roles").upsert(
@@ -268,5 +281,9 @@ Deno.serve(async (req) => {
     out.push(log);
   }
 
-  return json({ ok: true, results: out }, corsHeaders);
+  return json({
+    ok: true,
+    login_attempts_cleanup: attemptsErr ? "error" : "ok",
+    ...summarize(out),
+  }, corsHeaders);
 });

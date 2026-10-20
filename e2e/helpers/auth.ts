@@ -38,6 +38,23 @@ export async function loginAs(page: Page, role: AccountRole) {
   // Wait for redirect to dashboard
   await page.waitForURL(`**${account.dashboardUrl}**`, { timeout: 15000 });
   await expect(page).toHaveURL(new RegExp(account.dashboardUrl));
+  await dismissWelcomeTour(page);
+}
+
+/**
+ * Fecha a janela de boas-vindas ("Bem-vindo ao FrotaApp") se ela aparecer
+ * após o login, para não cobrir botões da tela. Não altera o app.
+ */
+export async function dismissWelcomeTour(page: Page) {
+  const dialog = page.getByRole('dialog').filter({
+    has: page.getByRole('heading', { name: /^bem-vindo ao frotaapp$/i }),
+  });
+  // A janela abre alguns instantes após o carregamento do painel.
+  const appeared = await dialog.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
+  if (appeared) {
+    await dialog.getByRole('button', { name: /close|fechar/i }).click();
+    await expect(dialog).toBeHidden({ timeout: 5000 });
+  }
 }
 
 /**
@@ -45,11 +62,13 @@ export async function loginAs(page: Page, role: AccountRole) {
  */
 export async function logout(page: Page) {
   // Look for logout/sair button
-  const logoutButton = page.getByText('Sair', { exact: false });
+  await dismissWelcomeTour(page);
+  const logoutButton = page.getByRole('button', { name: /^sair$/i }).first();
+  await logoutButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   if (await logoutButton.isVisible()) {
     await logoutButton.click();
     // Confirm logout dialog if present
-    const confirmButton = page.getByRole('button', { name: /confirmar|sair/i });
+    const confirmButton = page.getByRole('alertdialog').getByRole('button', { name: /sair/i });
     if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await confirmButton.click();
     }
