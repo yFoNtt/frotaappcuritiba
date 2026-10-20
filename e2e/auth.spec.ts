@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAs, logout, TEST_ACCOUNTS } from './helpers/auth';
+import { loginAs, logout } from './helpers/auth';
 
 test.describe('Autenticação', () => {
   test('deve exibir formulário de login', async ({ page }) => {
