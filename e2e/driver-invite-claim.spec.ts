@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 import {
   loginViaApi,
   restInsert,
@@ -16,8 +17,8 @@ import {
  *  - token já usado não pode ser reclamado de novo
  */
 
-const LOCADOR = { email: 'locador.teste.a@frotaapp.dev', password: 'Teste@123456' };
-const MOTORISTA = { email: 'motorista.teste.b@frotaapp.dev', password: 'Teste@123456' };
+const LOCADOR = testAccount('locador.teste.a@frotaapp.dev');
+const MOTORISTA = testAccount('motorista.teste.b@frotaapp.dev');
 
 // Replica o algoritmo de public.validate_cnh (mod 11) pra gerar uma CNH
 // sintética válida — o trigger validate_driver_cnh rejeita qualquer outra.

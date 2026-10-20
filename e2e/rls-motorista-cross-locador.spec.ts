@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 import { loginViaApi, restGet } from './helpers/supabase-rest';
 
 /**
@@ -7,8 +8,8 @@ import { loginViaApi, restGet } from './helpers/supabase-rest';
  * return empty.
  */
 
-const MOTORISTA = { email: 'motorista.teste.a@frotaapp.dev', password: 'Teste@123456' };
-const LOCADOR_B = { email: 'locador.teste.b@frotaapp.dev', password: 'Teste@123456' };
+const MOTORISTA = testAccount('motorista.teste.a@frotaapp.dev');
+const LOCADOR_B = testAccount('locador.teste.b@frotaapp.dev');
 
 test('motorista não vê contratos/pagamentos de outro locador', async () => {
   const m = await loginViaApi(MOTORISTA.email, MOTORISTA.password);

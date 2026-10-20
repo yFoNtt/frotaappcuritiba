@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { derivePassword } from './helpers/testPasswords';
 import {
   loginViaApi,
   rpc,
@@ -49,10 +50,10 @@ test.describe.serial('admin: bloqueio + métricas sem PII', () => {
     const a = await loginViaApi(ADMIN_EMAIL, adminPassword);
     adminToken = a.accessToken;
     adminId = a.userId;
-    const m = await loginViaApi(MOTORISTA_EMAIL, 'Teste@123456');
+    const m = await loginViaApi(MOTORISTA_EMAIL, derivePassword(MOTORISTA_EMAIL));
     motoristaToken = m.accessToken;
     motoristaId = m.userId;
-    const l = await loginViaApi(LOCADOR_EMAIL, 'Teste@123456');
+    const l = await loginViaApi(LOCADOR_EMAIL, derivePassword(LOCADOR_EMAIL));
     locadorToken = l.accessToken;
     locadorId = l.userId;
 

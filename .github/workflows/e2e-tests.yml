@@ -82,6 +82,8 @@ jobs:
           });
           EOF
           npx playwright test --config=playwright.isolation.config.ts e2e/motorista-isolation.spec.ts -g "Motorista A não consegue"
+        env:
+          E2E_SEED_TOKEN: ${{ secrets.E2E_SEED_TOKEN }}
 
       - name: Upload isolation report
         uses: actions/upload-artifact@v4
@@ -126,6 +128,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+          E2E_SEED_TOKEN: ${{ secrets.E2E_SEED_TOKEN }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

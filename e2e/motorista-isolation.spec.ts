@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 
 /**
  * E2E test: validates that two distinct motoristas CANNOT access each other's
@@ -13,14 +14,8 @@ const SUPABASE_URL = 'https://bohycsldnskyuwsdxrqt.supabase.co';
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvaHljc2xkbnNreXV3c2R4cnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODQ1OTIsImV4cCI6MjA4NDE2MDU5Mn0.6Op1rKmqr8bmfXlM_iCPC1yP36DaZ1TnRwKQqXc4jZQ';
 
-const MOTORISTA_A = {
-  email: 'motorista.teste.a@frotaapp.dev',
-  password: 'Teste@123456',
-};
-const MOTORISTA_B = {
-  email: 'motorista.teste.b@frotaapp.dev',
-  password: 'Teste@123456',
-};
+const MOTORISTA_A = testAccount('motorista.teste.a@frotaapp.dev');
+const MOTORISTA_B = testAccount('motorista.teste.b@frotaapp.dev');
 
 /**
  * Login via Supabase Auth REST API directly (bypasses rate-limited login edge

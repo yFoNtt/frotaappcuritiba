@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { testAccount } from './helpers/testPasswords';
 import { loginViaApi, restGet, restPatch, restDelete, restInsert } from './helpers/supabase-rest';
 
 /**
@@ -9,8 +10,8 @@ import { loginViaApi, restGet, restPatch, restDelete, restInsert } from './helpe
  * that both locador.teste.a@ and locador.teste.b@ exist with seed data.
  */
 
-const A = { email: 'locador.teste.a@frotaapp.dev', password: 'Teste@123456' };
-const B = { email: 'locador.teste.b@frotaapp.dev', password: 'Teste@123456' };
+const A = testAccount('locador.teste.a@frotaapp.dev');
+const B = testAccount('locador.teste.b@frotaapp.dev');
 
 // Tables owned by locador and the column we use to scope a B-only fetch via service-less REST.
 // We discover B's row id by logging in as B (allowed by RLS).
