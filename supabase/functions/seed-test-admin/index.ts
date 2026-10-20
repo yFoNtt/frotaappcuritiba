@@ -86,5 +86,11 @@ Deno.serve(async (req) => {
       { onConflict: "user_id" },
     );
 
-  return json({ ok: true, user_id: userId, email: ADMIN_EMAIL, password });
+  // Never return credentials, tokens, hashes or user IDs — counts/status only.
+  return json({
+    ok: true,
+    accounts_total: 1,
+    accounts_created: existing ? 0 : 1,
+    accounts_updated: existing ? 1 : 0,
+  });
 });
