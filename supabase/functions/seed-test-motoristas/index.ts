@@ -149,6 +149,22 @@ Deno.serve(async (req) => {
       );
     if (roleErr) log.warn_role = roleErr.message;
 
+    // ---- Ensure profile row (required by MFA restrictive RLS) --------------
+    // private.is_mfa_session_verified() returns false without a profile row,
+    // which hides the driver's own `drivers` row from RLS-protected queries.
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!existingProfile) {
+      const { error: pErr } = await admin
+        .from("profiles")
+        .insert({ user_id: userId, full_name: m.name, mfa_enabled: false });
+      if (pErr) log.warn_profile = pErr.message;
+      else log.profile_created = true;
+    }
+
     // ---- Ensure driver row linked to test locador --------------------------
     const { data: existingDriver } = await admin
       .from("drivers")
