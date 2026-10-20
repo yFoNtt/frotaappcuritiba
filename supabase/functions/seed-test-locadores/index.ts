@@ -32,13 +32,13 @@ const LOCADORES = [
     email: "locador.teste.a@frotaapp.dev",
     name: "Locador Teste A",
     vehicle: { brand: "Fiat", model: "Mobi A", plate: "TSTAAA1", color: "Branco" },
-    driver: { name: "Driver of A", cnh_number: "11122233344", email: "drvA@frotaapp.dev", phone: "+5511900000001" },
+    driver: { name: "Driver of A", cnh_number: "11122233369", email: "drvA@frotaapp.dev", phone: "+5511900000001" },
   },
   {
     email: "locador.teste.b@frotaapp.dev",
     name: "Locador Teste B",
     vehicle: { brand: "VW", model: "Gol B", plate: "TSTBBB2", color: "Preto" },
-    driver: { name: "Driver of B", cnh_number: "55566677788", email: "drvB@frotaapp.dev", phone: "+5511900000002" },
+    driver: { name: "Driver of B", cnh_number: "55566677700", email: "drvB@frotaapp.dev", phone: "+5511900000002" },
   },
 ] as const;
 
@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
         const { error: mErr } = await admin.from("maintenances").insert({
           locador_id: userId,
           vehicle_id: vehicleId,
-          type: "preventive",
+          type: "revision",
           description: "Seed maintenance",
           performed_at: "2025-01-01",
           status: "completed",
