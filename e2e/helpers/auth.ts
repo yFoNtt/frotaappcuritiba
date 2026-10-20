@@ -1,18 +1,23 @@
 import { type Page, expect } from '@playwright/test';
+import { testAccount } from './testPasswords';
 
-// Test accounts
+// Contas criadas pelas funções de seed (seed-test-locadores / seed-test-motoristas).
+// A senha é derivada de E2E_SEED_TOKEN no momento do acesso; sem o token, um erro claro é lançado.
 export const TEST_ACCOUNTS = {
-  locador: {
-    email: 'locador.teste@frotaapp.com',
-    password: 'Teste@1234',
-    dashboardUrl: '/locador',
-  },
-  motorista: {
-    email: 'motorista.teste@frotaapp.com',
-    password: 'Teste@1234',
-    dashboardUrl: '/motorista',
-  },
-} as const;
+  locador: withDashboard('locador.teste.a@frotaapp.dev', '/locador'),
+  motorista: withDashboard('motorista.teste.a@frotaapp.dev', '/motorista'),
+};
+
+function withDashboard(email: string, dashboardUrl: string) {
+  const account = testAccount(email);
+  return {
+    email,
+    dashboardUrl,
+    get password() {
+      return account.password;
+    },
+  };
+}
 
 type AccountRole = keyof typeof TEST_ACCOUNTS;
 
