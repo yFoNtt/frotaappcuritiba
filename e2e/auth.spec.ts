@@ -28,7 +28,7 @@ test.describe('Autenticação', () => {
     await page.click('button[type="submit"]');
 
     // Should show error toast or message
-    await expect(page.getByText(/incorreto|inválid|erro/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/incorreto|inválid|erro/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('deve alternar entre login e cadastro', async ({ page }) => {

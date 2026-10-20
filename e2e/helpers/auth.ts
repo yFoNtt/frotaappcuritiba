@@ -46,8 +46,10 @@ export async function loginAs(page: Page, role: AccountRole) {
  * após o login, para não cobrir botões da tela. Não altera o app.
  */
 export async function dismissWelcomeTour(page: Page) {
-  const dialog = page.getByRole('dialog').filter({ hasText: /bem-vindo ao frotaapp/i });
-  if (await dialog.isVisible({ timeout: 3000 }).catch(() => false)) {
+  const dialog = page.getByRole('dialog', { name: /bem-vindo ao frotaapp/i });
+  // A janela abre alguns instantes após o carregamento do painel.
+  const appeared = await dialog.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+  if (appeared) {
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden({ timeout: 5000 });
   }
