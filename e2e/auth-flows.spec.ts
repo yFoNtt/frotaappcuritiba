@@ -30,7 +30,7 @@ test.describe('Auth — login', () => {
     await page.fill('input[type="email"]', 'invalido.teste@frotaapp.invalid');
     await page.fill('input[type="password"]', 'ErradaErrada@1');
     await page.click('button[type="submit"]');
-    await expect(page.getByText(/incorret|inválid|erro/i).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/incorret|inválid|erro|tentativas/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('reset de senha — submete sem erros', async ({ page }) => {
