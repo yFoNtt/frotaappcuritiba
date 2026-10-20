@@ -4,7 +4,9 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  retries: 1,
+  // In CI, stop after 10 failures to avoid wasting time on block failures.
+  maxFailures: process.env.CI ? 10 : undefined,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['html', { open: 'never' }],
