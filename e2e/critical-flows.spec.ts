@@ -21,9 +21,16 @@ test.describe('Fluxo crítico 1 — Login do locador', () => {
     // Confirma URL e que algum conteúdo do dashboard renderizou
     await expect(page).toHaveURL(/\/locador(\/|$)/);
 
-    // Sidebar/menu do locador deve estar visível
-    const veiculosLink = page.getByRole('link', { name: /ve[ií]culos/i }).first();
-    await expect(veiculosLink).toBeVisible({ timeout: 10_000 });
+    // No celular o menu fica atrás do botão hambúrguer da barra superior.
+    const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
+    if (isMobile) {
+      await page.locator('div.md\\:hidden').first().getByRole('button').first().click();
+      const sheet = page.getByRole('dialog');
+      await expect(sheet.getByRole('link', { name: /ve[ií]culos/i }).first()).toBeVisible({ timeout: 10_000 });
+    } else {
+      const veiculosLink = page.getByRole('link', { name: /ve[ií]culos/i }).first();
+      await expect(veiculosLink).toBeVisible({ timeout: 10_000 });
+    }
   });
 
   test('credenciais inválidas mostram erro e não redirecionam', async ({ page }) => {
@@ -51,7 +58,8 @@ test.describe('Fluxo crítico 2 — Marketplace público (visitante anon)', () =
   });
 
   test('listagem do marketplace é acessível e exibe veículos ou estado vazio', async ({ page }) => {
-    await page.goto('/marketplace');
+    // A vitrine pública fica em /veiculos (publicRoutes.tsx).
+    await page.goto('/veiculos');
 
     // A rota deve responder sem redirecionar para /login
     await expect(page).not.toHaveURL(/\/login/);

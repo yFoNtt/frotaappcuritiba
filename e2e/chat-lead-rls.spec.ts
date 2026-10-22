@@ -20,13 +20,20 @@ import { TEST_ACCOUNTS } from './helpers/auth';
 const LOCADOR = TEST_ACCOUNTS.locador;
 const MOTORISTA = TEST_ACCOUNTS.motorista;
 
-async function getPublicVehicleForLocador(): Promise<{ id: string; locador_id: string }> {
+async function getPublicVehicleForLocador(token?: string): Promise<{ id: string; locador_id: string }> {
+  // A listagem pública não expõe locador_id; o detalhe (get_public_vehicle) devolve
+  // o locador_id apenas para usuários autenticados.
   const res = await rpc('get_public_vehicles', undefined, {});
   expect(res.ok, `get_public_vehicles falhou: ${res.raw}`).toBeTruthy();
-  const rows = (res.body as Array<{ id: string; locador_id: string }>) || [];
+  const rows = (res.body as Array<{ id: string }>) || [];
   const v = rows[0];
   expect(v, 'Nenhum veículo público disponível para o teste').toBeTruthy();
-  return { id: v.id, locador_id: v.locador_id };
+  if (!token) return { id: v.id, locador_id: '' };
+  const detail = await rpc('get_public_vehicle', token, { _vehicle_id: v.id });
+  expect(detail.ok, `get_public_vehicle falhou: ${detail.raw}`).toBeTruthy();
+  const row = ((detail.body as Array<{ id: string; locador_id: string }>) || [])[0];
+  expect(row?.locador_id, 'locador_id ausente no detalhe do veículo').toBeTruthy();
+  return { id: row.id, locador_id: row.locador_id };
 }
 
 test.describe('Chat lead — RLS no marketplace', () => {

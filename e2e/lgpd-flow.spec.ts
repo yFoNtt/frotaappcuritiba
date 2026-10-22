@@ -14,9 +14,15 @@ test.describe('LGPD — fluxos de privacidade', () => {
       await passwordInputs.nth(1).fill('SenhaForte@123');
     }
 
-    // O botão de submit deve estar desabilitado enquanto o checkbox não é marcado
+    // O botão fica habilitado; a validação acontece no envio e mostra a mensagem do aceite.
     const submit = page.getByRole('button', { name: /criar conta/i });
-    await expect(submit).toBeDisabled();
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(
+      page.getByText(/precisa aceitar os termos de uso e a pol[ií]tica de privacidade/i),
+    ).toBeVisible();
+    // Continua no cadastro: nenhuma conta foi criada.
+    await expect(page).toHaveURL(/\/cadastro/);
   });
 
   test('locador consegue exportar seus dados em JSON', async ({ page }) => {
