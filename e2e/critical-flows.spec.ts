@@ -68,7 +68,7 @@ test.describe('Fluxo crítico 2 — Marketplace público (visitante anon)', () =
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 
     const hasCards = await page
-      .locator('[data-testid="vehicle-card"], article, .vehicle-card')
+      .getByRole('link', { name: /ver detalhes/i })
       .first()
       .isVisible()
       .catch(() => false);
