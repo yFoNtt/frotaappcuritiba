@@ -42,7 +42,7 @@ test.describe('Chat lead — RLS no marketplace', () => {
       MOTORISTA.email,
       MOTORISTA.password,
     );
-    const vehicle = await getPublicVehicleForLocador();
+    const vehicle = await getPublicVehicleForLocador(motoristaToken);
 
     const insert = await restInsert('conversations', motoristaToken, {
       locador_id: vehicle.locador_id,
