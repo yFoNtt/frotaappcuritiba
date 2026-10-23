@@ -3,6 +3,7 @@ import {
   loginViaApi,
   restInsert,
   restDelete,
+  restGet,
   rpc,
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -42,7 +43,7 @@ test.describe('Chat lead — RLS no marketplace', () => {
       MOTORISTA.email,
       MOTORISTA.password,
     );
-    const vehicle = await getPublicVehicleForLocador();
+    const vehicle = await getPublicVehicleForLocador(motoristaToken);
 
     const insert = await restInsert('conversations', motoristaToken, {
       locador_id: vehicle.locador_id,
@@ -50,6 +51,21 @@ test.describe('Chat lead — RLS no marketplace', () => {
       interested_user_id: motoristaId,
       vehicle_id: vehicle.id,
     });
+
+    // Não existe política de DELETE em conversations, então um lead criado numa rodada
+    // anterior permanece. A restrição única (locador, interessado) devolve 409 nesse caso;
+    // aí confirmamos pela leitura (RLS) que o lead já existe e pertence ao motorista.
+    if (insert.status === 409 && insert.raw.includes('conversations_locador_interested_uniq')) {
+      const existing = await restGet(
+        'conversations',
+        `select=id,interested_user_id,driver_id&locador_id=eq.${vehicle.locador_id}&interested_user_id=eq.${motoristaId}`,
+        motoristaToken,
+      );
+      const rows = (existing.body as Array<{ id: string; driver_id: string | null }>) || [];
+      expect(rows.length, `Lead existente não visível: ${existing.raw}`).toBe(1);
+      expect(rows[0].driver_id).toBeNull();
+      return;
+    }
 
     expect(
       insert.ok,
@@ -65,7 +81,10 @@ test.describe('Chat lead — RLS no marketplace', () => {
   });
 
   test('visitante anônimo é bloqueado pela RLS', async () => {
-    const vehicle = await getPublicVehicleForLocador();
+    // locador_id real (obtido com sessão de motorista) para que a recusa venha da RLS,
+    // e não de um UUID inválido.
+    const { accessToken } = await loginViaApi(MOTORISTA.email, MOTORISTA.password);
+    const vehicle = await getPublicVehicleForLocador(accessToken);
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/conversations`, {
       method: 'POST',
@@ -91,7 +110,7 @@ test.describe('Chat lead — RLS no marketplace', () => {
       LOCADOR.email,
       LOCADOR.password,
     );
-    const vehicle = await getPublicVehicleForLocador();
+    const vehicle = await getPublicVehicleForLocador(locadorToken);
 
     // Tenta se passar por "interessado" em outro locador (ou no próprio): role != motorista
     const insert = await restInsert('conversations', locadorToken, {

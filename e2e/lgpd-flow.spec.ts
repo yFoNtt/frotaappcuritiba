@@ -63,6 +63,9 @@ test.describe('LGPD — fluxos de privacidade', () => {
       .getByRole('button', { name: /revogar consentimento/i })
       .click();
 
+    // Espera a revogação ser gravada antes de navegar (evita corrida com o PATCH).
+    await expect(page.getByText(/consentimento revogado\. para continuar/i)).toBeVisible({ timeout: 10000 });
+
     // Navega — espera ser redirecionado para /consent-required
     await page.goto('/locador');
     await expect(page).toHaveURL(/\/consent-required/, { timeout: 10000 });
